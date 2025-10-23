@@ -20,6 +20,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -37,7 +38,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
-        compose = false
+        compose = true
     }
 }
 
