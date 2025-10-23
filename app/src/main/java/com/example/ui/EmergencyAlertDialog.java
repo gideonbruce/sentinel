@@ -1,4 +1,4 @@
-package com.example.data;
+package com.example.ui;
 
 
 import android.app.AlertDialog;
@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.telephony.SmsManager;
 import android.widget.Toast;
+
+import com.example.data.EmergencyContactManager;
 
 public class EmergencyAlertDialog {
 
