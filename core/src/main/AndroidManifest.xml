@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Sentinel">
         <activity
-            android:name=".CoreActivity"
+            android:name=".EmergencyAlertActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

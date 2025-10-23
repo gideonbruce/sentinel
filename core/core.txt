@@ -1,0 +1,1 @@
+Core module provides shared utilities and low-level functionality that multiple features depend on. For your app, core includes sensor access (accelerometer for shake detection), notification handling, background service management, and common utilities. Core is like the foundation—features and other modules build on top of it.
