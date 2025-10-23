@@ -1,4 +1,4 @@
-package com.example.feature;
+package com.example.core;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
