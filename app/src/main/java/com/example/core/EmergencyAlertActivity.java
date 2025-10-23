@@ -3,6 +3,8 @@ package com.example.core;
 import android.app.Activity;
 import android.os.Bundle;
 
+import com.example.ui.EmergencyAlertDialog;
+
 public class EmergencyAlertActivity extends Activity {
 
     @Override
