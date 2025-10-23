@@ -1,4 +1,4 @@
-package com.example.sentinel
+package com.example.sentinel;
 
 import android.Manifest;
 import android.content.Intent;
@@ -118,4 +118,4 @@ public class MainActivity extends AppCompatActivity {
             tvStatus.setText("No emergency contact set");
         }
     }
-}}
+}
