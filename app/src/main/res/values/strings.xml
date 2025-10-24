@@ -2,4 +2,19 @@
     <string name="app_name">Sentinel</string>
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
+    <string name="set_emergency">Setup required - Add emergency contact</string>
+    <string name="ready">Ready - Tap \'Start Detection' to activate</string>
+    <string name="running">Protection active - Shake detection running</string>
+    <string name="google">Continue with Google</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="don_t_have_an_account">Don\'t have an account?</string>
+    <string name="or">OR</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="password">Password</string>
+    <string name="email">Email</string>
+    <string name="sign_in_to_continue">Sign in to continue</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="your_pocket_guardian">Your pocket guardian</string>
+    <string name="sentinel">Sentinel</string>
 </resources>
