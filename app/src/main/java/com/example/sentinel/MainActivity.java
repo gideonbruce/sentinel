@@ -155,13 +155,17 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.SEND_SMS,
                     Manifest.permission.READ_PHONE_STATE,
                     Manifest.permission.POST_NOTIFICATIONS,
-                    Manifest.permission.READ_CONTACTS
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
             };
         } else {
             permissions = new String[]{
                     Manifest.permission.SEND_SMS,
                     Manifest.permission.READ_PHONE_STATE,
-                    Manifest.permission.READ_CONTACTS
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
             };
         }
 
