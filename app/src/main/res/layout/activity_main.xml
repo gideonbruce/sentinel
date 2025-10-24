@@ -20,8 +20,10 @@
         android:layout_height="wrap_content"
         android:text="No emergency contact set"
         android:textSize="16sp"
-        android:layout_marginBottom="24dp"
-        android:gravity="center" />
+        android:textStyle="bold"
+        android:padding="8dp"
+        android:background="#E3F2FD"
+        android:layout_marginBottom="24dp" />
 
     <TextView
         android:layout_width="match_parent"
@@ -35,7 +37,7 @@
         android:id="@+id/et_contact_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Contact Name (Optional)"
+        android:hint="Contact Name"
         android:inputType="textPersonName"
         android:layout_marginBottom="8dp" />
 
@@ -45,19 +47,33 @@
         android:layout_height="wrap_content"
         android:hint="Phone Number *"
         android:inputType="phone"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/btn_pick_contact"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📱 Pick from Contacts"
+        android:textAllCaps="false"
+        android:layout_marginBottom="8dp" />
 
     <Button
         android:id="@+id/btn_save_contact"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Emergency Contact"
+        android:text="💾 Save Contact"
         android:layout_marginBottom="32dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginBottom="24dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Shake Detection Control"
+        android:text="Shake Detection Service"
         android:textSize="18sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -66,14 +82,18 @@
         android:id="@+id/btn_start_service"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Start Shake Detection"
+        android:text="▶️ Start Service"
+        android:textAllCaps="false"
+        android:backgroundTint="#4CAF50"
         android:layout_marginBottom="8dp" />
 
     <Button
         android:id="@+id/btn_stop_service"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Stop Shake Detection" />
+        android:text="⏹️ Stop Sentinel"
+        android:textAllCaps="false"
+        android:backgroundTint="#F44336" />
 
     <TextView
         android:layout_width="match_parent"
