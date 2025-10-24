@@ -4,12 +4,16 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -20,20 +24,28 @@ import androidx.core.content.ContextCompat;
 
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
 
-    private EditText etContactName;
-    private EditText etContactPhone;
+    private TextInputEditText etContactName;
+    private TextInputEditText etContactPhone;
     private Button btnPickContact;
     private Button btnSaveContact;
     private Button btnStartService;
     private Button btnStopService;
     private TextView tvStatus;
+    private View statusIndicator;
+    private LinearLayout contactDisplay;
+    private LinearLayout contactForm;
+    private TextView tvContactNameDisplay;
+    private TextView tvContactPhoneDisplay;
+    private ImageButton btnEditContact;
 
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
+    private boolean isServiceRunning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,11 +76,18 @@ public class MainActivity extends AppCompatActivity {
         btnStartService = findViewById(R.id.btn_start_service);
         btnStopService = findViewById(R.id.btn_stop_service);
         tvStatus = findViewById(R.id.tv_status);
+        statusIndicator = findViewById(R.id.status_indicator);
+        contactDisplay = findViewById(R.id.contact_display);
+        contactForm = findViewById(R.id.contact_form);
+        tvContactNameDisplay = findViewById(R.id.tv_contact_name_display);
+        tvContactPhoneDisplay = findViewById(R.id.tv_contact_phone_display);
+        btnEditContact = findViewById(R.id.btn_edit_contact);
 
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnStartService.setOnClickListener(v -> startShakeService());
         btnStopService.setOnClickListener(v -> stopShakeService());
+        btnEditContact.setOnClickListener(v -> editContact());
     }
 
     private void checkPermissions() {
@@ -104,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void pickContact() {
-        // Check if READ_CONTACTS permission is granted
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
                 != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Please grant contacts permission", Toast.LENGTH_SHORT).show();
@@ -141,7 +159,6 @@ public class MainActivity extends AppCompatActivity {
                     String name = cursor.getString(nameIndex);
                     String phoneNumber = cursor.getString(numberIndex);
 
-                    // Clean phone number (remove spaces, dashes, etc.)
                     phoneNumber = phoneNumber.replaceAll("[\\s()-]", "");
 
                     etContactName.setText(name);
@@ -172,6 +189,11 @@ public class MainActivity extends AppCompatActivity {
         updateUI();
     }
 
+    private void editContact() {
+        contactDisplay.setVisibility(View.GONE);
+        contactForm.setVisibility(View.VISIBLE);
+    }
+
     private void startShakeService() {
         if (!contactManager.hasEmergencyContact()) {
             Toast.makeText(this, "Please set emergency contact first",
@@ -185,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             startService(serviceIntent);
         }
+        isServiceRunning = true;
         Toast.makeText(this, "Shake detection started", Toast.LENGTH_SHORT).show();
         updateUI();
     }
@@ -192,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
     private void stopShakeService() {
         Intent serviceIntent = new Intent(this, EmergencyShakeService.class);
         stopService(serviceIntent);
+        isServiceRunning = false;
         Toast.makeText(this, "Shake detection stopped", Toast.LENGTH_SHORT).show();
         updateUI();
     }
@@ -200,12 +224,39 @@ public class MainActivity extends AppCompatActivity {
         if (contactManager.hasEmergencyContact()) {
             String name = contactManager.getContactName();
             String phone = contactManager.getContactPhone();
-            tvStatus.setText("Emergency Contact: " +
-                    (name != null && !name.isEmpty() ? name + " - " : "") + phone);
+
+            // Show contact display, hide form
+            contactDisplay.setVisibility(View.VISIBLE);
+            contactForm.setVisibility(View.GONE);
+
+            tvContactNameDisplay.setText(name != null && !name.isEmpty() ? name : "Emergency Contact");
+            tvContactPhoneDisplay.setText(phone);
+
+            // Populate form fields (hidden)
             etContactName.setText(name);
             etContactPhone.setText(phone);
         } else {
-            tvStatus.setText("No emergency contact set");
+            // Show form, hide display
+            contactDisplay.setVisibility(View.GONE);
+            contactForm.setVisibility(View.VISIBLE);
+        }
+
+        // Update status
+        updateStatusIndicator();
+    }
+
+    private void updateStatusIndicator() {
+        GradientDrawable drawable = (GradientDrawable) statusIndicator.getBackground();
+
+        if (isServiceRunning && contactManager.hasEmergencyContact()) {
+            drawable.setColor(Color.parseColor("#4CAF50"));
+            tvStatus.setText("Protection active - Shake detection running");
+        } else if (contactManager.hasEmergencyContact()) {
+            drawable.setColor(Color.parseColor("#FF9800"));
+            tvStatus.setText("Ready - Tap 'Start Detection' to activate");
+        } else {
+            drawable.setColor(Color.parseColor("#BDBDBD"));
+            tvStatus.setText("Setup required - Add emergency contact");
         }
     }
 }
