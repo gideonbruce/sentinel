@@ -28,27 +28,25 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
 
     private TextInputEditText etContactName;
     private TextInputEditText etContactPhone;
-    private Button btnPickContact;
-    private Button btnSaveContact;
-    private Button btnStartService;
-    private Button btnStopService;
     private TextView tvStatus;
     private View statusIndicator;
     private LinearLayout contactDisplay;
     private LinearLayout contactForm;
     private TextView tvContactNameDisplay;
     private TextView tvContactPhoneDisplay;
-    private ImageButton btnEditContact;
     private DrawerLayout drawerLayout;
-    private NavigationView navigationView;
     private ActionBarDrawerToggle toggle;
 
     private EmergencyContactManager contactManager;
@@ -79,17 +77,17 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         etContactName = findViewById(R.id.et_contact_name);
         etContactPhone = findViewById(R.id.et_contact_phone);
-        btnPickContact = findViewById(R.id.btn_pick_contact);
-        btnSaveContact = findViewById(R.id.btn_save_contact);
-        btnStartService = findViewById(R.id.btn_start_service);
-        btnStopService = findViewById(R.id.btn_stop_service);
+        Button btnPickContact = findViewById(R.id.btn_pick_contact);
+        Button btnSaveContact = findViewById(R.id.btn_save_contact);
+        Button btnStartService = findViewById(R.id.btn_start_service);
+        Button btnStopService = findViewById(R.id.btn_stop_service);
         tvStatus = findViewById(R.id.tv_status);
         statusIndicator = findViewById(R.id.status_indicator);
         contactDisplay = findViewById(R.id.contact_display);
         contactForm = findViewById(R.id.contact_form);
         tvContactNameDisplay = findViewById(R.id.tv_contact_name_display);
         tvContactPhoneDisplay = findViewById(R.id.tv_contact_phone_display);
-        btnEditContact = findViewById(R.id.btn_edit_contact);
+        ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
 
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
 
         //initializing drawer
         drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.navigation_view);
+        NavigationView navigationView = findViewById(R.id.navigation_view);
         //setup action bar toggle
         toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, R.string.drawer_open, R.string.drawer_close
@@ -144,6 +142,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (id == R.id.nav_about) {
             Toast.makeText(this, "About", Toast.LENGTH_SHORT).show();
             //TODO: open  about dialog
+        } else if (id == R.id.nav_sign_out) {
+            signOut();
         }
     }
 
@@ -237,8 +237,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveContact() {
-        String name = etContactName.getText().toString().trim();
-        String phone = etContactPhone.getText().toString().trim();
+        String name = Objects.requireNonNull(etContactName.getText()).toString().trim();
+        String phone = Objects.requireNonNull(etContactPhone.getText()).toString().trim();
 
         if (phone.isEmpty()) {
             Toast.makeText(this, "Phone number is required", Toast.LENGTH_SHORT).show();
@@ -311,13 +311,33 @@ public class MainActivity extends AppCompatActivity {
 
         if (isServiceRunning && contactManager.hasEmergencyContact()) {
             drawable.setColor(Color.parseColor("#4CAF50"));
-            tvStatus.setText("Protection active - Shake detection running");
+            tvStatus.setText(R.string.running);
         } else if (contactManager.hasEmergencyContact()) {
             drawable.setColor(Color.parseColor("#FF9800"));
-            tvStatus.setText("Ready - Tap 'Start Detection' to activate");
+            tvStatus.setText(R.string.ready);
         } else {
             drawable.setColor(Color.parseColor("#BDBDBD"));
-            tvStatus.setText("Setup required - Add emergency contact");
+            tvStatus.setText(R.string.set_emergency);
         }
+    }
+
+    private void signOut() {
+        //FIREBASE signout
+        FirebaseAuth.getInstance().signOut();
+
+        //google signout
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+        googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            //navigate back to login
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 }
