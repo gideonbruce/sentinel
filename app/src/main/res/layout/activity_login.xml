@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/login_gradient_background">
-    
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -17,7 +17,7 @@
             android:padding="24dp"
             android:gravity="center">
 
-            <!-- Spacer for vertical centering -->
+            <!--  vertical centering spacer -->
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
