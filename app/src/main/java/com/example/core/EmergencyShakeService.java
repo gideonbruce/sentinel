@@ -13,10 +13,22 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.telephony.SmsManager;
+import android.os.Looper;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ActivityCompat;
 
 import com.example.data.EmergencyContactManager;
 import com.example.sentinel.MainActivity;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.Priority;
 
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
@@ -27,6 +39,10 @@ public class EmergencyShakeService extends Service {
     private ShakeDetector shakeDetector;
     private EmergencyContactManager contactManager;
     private PowerManager.WakeLock wakeLock;
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location lastKnownLocation;
+    private LocationCallback locationCallback;
 
     @Override
     public void onCreate() {
@@ -41,7 +57,8 @@ public class EmergencyShakeService extends Service {
 
         shakeDetector.setOnShakeListener(count -> {
             if (count >= 3) {
-                sendEmergencySMS();
+                //sendEmergencySMS();
+                getLocationAndSendSMS();
             }
         });
 
@@ -50,6 +67,9 @@ public class EmergencyShakeService extends Service {
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
         wakeLock.acquire();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        startLocationUpdates();
     }
 
     @Override
@@ -79,6 +99,66 @@ public class EmergencyShakeService extends Service {
         return START_STICKY;
     }
 
+    private void startLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
+        LocationRequest locationRequest = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY, 30000) // Update every 30 seconds
+                .setMinUpdateIntervalMillis(15000) // Fastest update every 15 seconds
+                .build();
+
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult != null) {
+                    lastKnownLocation = locationResult.getLastLocation();
+                }
+            }
+        };
+
+        fusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback, Looper.getMainLooper());
+
+        // Also get last known location immediately
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        lastKnownLocation = location;
+                    }
+                });
+    }
+
+    private void getLocationAndSendSMS() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
+            sendEmergencySMS(null);
+            return;
+        }
+
+        // Try to get fresh location first
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                .addOnSuccessListener(location -> {
+                    if (location != null) {
+                        sendEmergencySMS(location);
+                    } else if (lastKnownLocation != null) {
+                        sendEmergencySMS(lastKnownLocation);
+                    } else {
+                        sendEmergencySMS(null);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    // Fall back to last known location or send without location
+                    sendEmergencySMS(lastKnownLocation);
+                });
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -86,6 +166,11 @@ public class EmergencyShakeService extends Service {
         // Unregister sensor listener
         if (sensorManager != null && shakeDetector != null) {
             sensorManager.unregisterListener(shakeDetector);
+        }
+
+        // stop location updates
+        if (fusedLocationClient != null && locationCallback != null) {
+            fusedLocationClient.removeLocationUpdates(locationCallback);
         }
 
         // Release wake lock
@@ -115,7 +200,7 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    private void sendEmergencySMS() {
+    private void sendEmergencySMS(Location location) {
         if (!contactManager.hasEmergencyContact()) {
             return;
         }
@@ -123,21 +208,39 @@ public class EmergencyShakeService extends Service {
         String phoneNumber = contactManager.getContactPhone();
         String message = "EMERGENCY! This is an automated alert. Please check on me immediately.";
 
+        if (location != null) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            String locationUrl = "https://maps.google.com/?q="+ latitude + "," + longitude;
+            message += "\n\nMy location:\nLat: " + latitude + "\nLong: " + longitude + "\nMap: " + locationUrl;
+        } else {
+            message += "\n\n(Location unavalable)";
+        }
         try {
             SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+            //split message if its too long
+            if (message.length() > 160) {
+                smsManager.sendMultipartTextMessage(phoneNumber, null, smsManager.divideMessage(message), null, null);
+            } else {
+                smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+            }
+            //smsManager.sendTextMessage(phoneNumber, null, message, null, null);
 
             // Show notification that SMS was sent
-            showSMSSentNotification();
+            showSMSSentNotification(location != null);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void showSMSSentNotification() {
+    private void showSMSSentNotification(boolean withLocation) {
+        String contentText = withLocation ?
+                "Alert with location sent to emergency contact" :
+                "Alert sent to emergency contact (location unavailable)";
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Emergency SMS Sent")
-                .setContentText("Alert sent to emergency contact")
+                .setContentText(contentText)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
