@@ -16,15 +16,20 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.view.MenuItem;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.navigation.NavigationView;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
@@ -42,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvContactNameDisplay;
     private TextView tvContactPhoneDisplay;
     private ImageButton btnEditContact;
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+    private ActionBarDrawerToggle toggle;
 
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
@@ -88,6 +96,55 @@ public class MainActivity extends AppCompatActivity {
         btnStartService.setOnClickListener(v -> startShakeService());
         btnStopService.setOnClickListener(v -> stopShakeService());
         btnEditContact.setOnClickListener(v -> editContact());
+
+        //initializing drawer
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.navigation_view);
+        //setup action bar toggle
+        toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, R.string.drawer_open, R.string.drawer_close
+        );
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+        //handle nav item clicks
+        navigationView.setNavigationItemSelectedListener(item -> {
+            handleNavigationItemSelected(item);
+            drawerLayout.closeDrawers();
+            return true;
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (toggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void handleNavigationItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.nav_home) {
+            //already on home
+            Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.nav_settings) {
+            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
+            //TODO: open settings activity
+        } else if (id == R.id.nav_history) {
+            Toast.makeText(this, "Alert History", Toast.LENGTH_SHORT).show();
+            //TODO: open history activity
+        } else if (id == R.id.nav_help) {
+            Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
+            //TODO: open help activity
+        } else if (id == R.id.nav_about) {
+            Toast.makeText(this, "About", Toast.LENGTH_SHORT).show();
+            //TODO: open  about dialog
+        }
     }
 
     private void checkPermissions() {
