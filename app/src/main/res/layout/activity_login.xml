@@ -42,7 +42,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sentinel"
+                    android:text="@string/sentinel"
                     android:textSize="36sp"
                     android:textStyle="bold"
                     android:textColor="@android:color/white"
@@ -51,7 +51,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Your Safety Companion"
+                    android:text="@string/your_pocket_guardian"
                     android:textSize="16sp"
                     android:textColor="#E0E0E0"
                     android:layout_marginTop="8dp" />
@@ -75,7 +75,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Welcome Back"
+                        android:text="@string/welcome_back"
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
@@ -84,7 +84,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sign in to continue"
+                        android:text="@string/sign_in_to_continue"
                         android:textSize="14sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="32dp" />
@@ -107,7 +107,7 @@
                             android:id="@+id/et_email"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Email"
+                            android:hint="@string/email"
                             android:inputType="textEmailAddress"
                             android:textSize="16sp" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -131,7 +131,7 @@
                             android:id="@+id/et_password"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Password"
+                            android:hint="@string/password"
                             android:inputType="textPassword"
                             android:textSize="16sp" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -141,7 +141,7 @@
                         android:id="@+id/tv_forgot_password"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Forgot Password?"
+                        android:text="@string/forgot_password"
                         android:textSize="14sp"
                         android:textColor="#1976D2"
                         android:textStyle="bold"
@@ -157,7 +157,7 @@
                         android:id="@+id/btn_sign_in"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:text="Sign In"
+                        android:text="@string/sign_in"
                         android:textAllCaps="false"
                         android:textSize="16sp"
                         android:textStyle="bold"
@@ -182,7 +182,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="OR"
+                            android:text="@string/or"
                             android:textSize="12sp"
                             android:textColor="#757575"
                             android:paddingStart="16dp"
@@ -200,7 +200,7 @@
                         android:id="@+id/btn_google_sign_in"
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
-                        android:text="Continue with Google"
+                        android:text="@string/google"
                         android:textAllCaps="false"
                         android:textSize="16sp"
                         android:textColor="#212121"
@@ -226,7 +226,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Don't have an account? "
+                    android:text="@string/don_t_have_an_account"
                     android:textSize="14sp"
                     android:textColor="@android:color/white" />
 
@@ -234,7 +234,7 @@
                     android:id="@+id/tv_sign_up"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sign Up"
+                    android:text="@string/sign_up"
                     android:textSize="14sp"
                     android:textColor="@android:color/white"
                     android:textStyle="bold"
