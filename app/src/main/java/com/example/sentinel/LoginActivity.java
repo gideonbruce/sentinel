@@ -8,11 +8,9 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -41,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Initialize Firebase Auth
+        // init Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
         // Check if user is already signed in
@@ -216,8 +214,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void navigateToSignUp() {
-        // TODO: Create and navigate to SignUpActivity
-        Toast.makeText(this, "Sign up screen coming soon", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
+        startActivity(intent);
     }
 
     private void navigateToMain() {
