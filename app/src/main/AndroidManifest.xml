@@ -37,6 +37,12 @@
             </intent-filter>
         </activity>
 
+        <!-- SignUp Activity-->
+        <activity
+            android:name=".SignUpActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
+
         <!--LAUNCH ACTIVITY -->
     <!--    <activity
             android:name=".LaunchActivity"
