@@ -1,6 +1,5 @@
 package com.example.ui;
 
-
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -63,16 +62,29 @@ public class EmergencyAlertDialog {
         String message = "EMERGENCY ALERT: I need help! This is an automated message from my emergency app.";
 
         try {
-            // Try to send SMS
+            // Try to send SMS directly
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(phoneNumber, null, message, null, null);
             Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             // Fallback to SMS intent if direct SMS fails
-            Intent smsIntent = new Intent(Intent.ACTION_VIEW);
-            smsIntent.setData(Uri.parse("sms:" + phoneNumber));
-            smsIntent.putExtra("sms_body", message);
-            context.startActivity(smsIntent);
+            try {
+                Uri uri = Uri.parse("smsto:" + phoneNumber);
+                Intent smsIntent = new Intent(Intent.ACTION_SENDTO, uri);
+                smsIntent.putExtra("sms_body", message);
+
+                // Check if there's an app that can handle this intent
+                if (smsIntent.resolveActivity(context.getPackageManager()) != null) {
+                    smsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(smsIntent);
+                } else {
+                    Toast.makeText(context, "No SMS app found", Toast.LENGTH_LONG).show();
+                }
+            } catch (Exception ex) {
+                Toast.makeText(context, "Failed to send alert: " + ex.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                ex.printStackTrace();
+            }
         }
     }
 }
