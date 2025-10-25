@@ -3,7 +3,7 @@
     <string name="drawer_open">Open navigation drawer</string>
     <string name="drawer_close">Close navigation drawer</string>
     <string name="set_emergency">Setup required - Add emergency contact</string>
-    <string name="ready">Ready - Tap \'Start Detection' to activate</string>
+    <string name="ready">Ready - Tap Start Detection to activate</string>
     <string name="running">Protection active - Shake detection running</string>
     <string name="google">Continue with Google</string>
     <string name="sign_in">Sign In</string>
@@ -17,4 +17,10 @@
     <string name="welcome_back">Welcome Back</string>
     <string name="your_pocket_guardian">Your pocket guardian</string>
     <string name="sentinel">Sentinel</string>
+    <string name="create_account">Create Account</string>
+    <string name="sign_up_to_get_started">Sign up to get started</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="sign_up_with_google">Sign up with Google</string>
+    <string name="already_have_account">Already have an account?</string>
 </resources>
