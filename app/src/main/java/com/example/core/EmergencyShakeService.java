@@ -30,6 +30,8 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
+import java.util.ArrayList;
+
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
     private static final int NOTIFICATION_ID = 1;
@@ -217,9 +219,22 @@ public class EmergencyShakeService extends Service {
             message += "\n\n(Location unavalable)";
         }
         try {
-            SmsManager smsManager = SmsManager.getDefault();
+            SmsManager smsManager;
+            // Handle dual SIM devices
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+                if (defaultSmsSubscriptionId != -1) {
+                    smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                } else {
+                    smsManager = SmsManager.getDefault();
+                }
+            } else {
+                smsManager = SmsManager.getDefault();
+            }
+
             //split message if its too long
             if (message.length() > 160) {
+                ArrayList<String> parts = smsManager.divideMessage(message);
                 smsManager.sendMultipartTextMessage(phoneNumber, null, smsManager.divideMessage(message), null, null);
             } else {
                 smsManager.sendTextMessage(phoneNumber, null, message, null, null);
@@ -230,6 +245,21 @@ public class EmergencyShakeService extends Service {
             showSMSSentNotification(location != null);
         } catch (Exception e) {
             e.printStackTrace();
+            showSMSFailedNotification();
+        }
+    }
+
+    private void showSMSFailedNotification() {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Emergency SMS Failed")
+                .setContentText("Failed to send alert to emergency contact")
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(3, builder.build());
         }
     }
 
