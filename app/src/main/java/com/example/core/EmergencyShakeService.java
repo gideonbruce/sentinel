@@ -5,7 +5,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -13,20 +12,23 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.view.KeyEvent;
-
+import android.view.View;
+import android.view.WindowManager;
+import android.view.Gravity;
+import android.graphics.PixelFormat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
 import com.example.data.EmergencyContactManager;
+import com.example.gestures.VolumeButtonGestureDetector;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -50,7 +52,8 @@ public class EmergencyShakeService extends Service {
     private FusedLocationProviderClient fusedLocationClient;
     private Location lastKnownLocation;
     private LocationCallback locationCallback;
-    private BroadcastReceiver volumeButtonReceiver;
+    private WindowManager windowManager;
+    private View overlayView;
 
     private VolumeButtonGestureDetector volumeGestureDetector;
 
@@ -72,55 +75,100 @@ public class EmergencyShakeService extends Service {
             }
         });
 
+        // Acquire wake lock to keep CPU running
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "Sentinel::ShakeDetectionWakeLock");
+        wakeLock.acquire(10*60*1000L /*10 minutes*/);
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        startLocationUpdates();
+
+        // Initialize volume gesture detection
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {
                 getLocationAndSendSMS("SILENT EMERGENCY");
             }
-
             @Override
             public void onPoliceNeeded() {
                 getLocationAndSendSMS("POLICE NEEDED");
             }
-
             @Override
             public void onMedicalEmergency() {
                 getLocationAndSendSMS("MEDICAL EMERGENCY");
             }
-
             @Override
             public void onPanicAlert() {
                 getLocationAndSendSMS("PANIC ALERT");
             }
         });
 
-        volumeButtonReceiver = new BroadcastReceiver() {
+        if (Settings.canDrawOverlays(this)) {
+            setupOverlayForVolumeDetection();
+        }
+    }
+
+    private void setupOverlayForVolumeDetection() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+        overlayView = new View(this) {
             @Override
-            public void onReceive(Context context, Intent intent) {
-                if ("com.example.sentinel.VOLUME_BUTTON_EVENT".equals(intent.getAction())) {
-                    int keyCode = intent.getIntExtra("keyCode", -1);
-                    boolean isKeyDown = intent.getBooleanExtra("isKeyDown", false);
-                    handleVolumeButtonEvent(keyCode, isKeyDown);
+            public boolean dispatchKeyEvent(KeyEvent event) {
+                int keyCode = event.getKeyCode();
+                if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                        keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                    handleVolumeButtonEvent(keyCode, event.getAction() == KeyEvent.ACTION_DOWN);
+                    return true;
                 }
+                return super.dispatchKeyEvent(event);
             }
         };
 
-        IntentFilter filter = new IntentFilter("com.example.sentinel.VOLUME_BUTTON_EVENT");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(volumeButtonReceiver, filter);
+        overlayView.setFocusableInTouchMode(true);
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                1, 1,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+
+        params.gravity = Gravity.TOP | Gravity.START;
+
+        try {
+            windowManager.addView(overlayView, params);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
+        if (volumeGestureDetector == null) {
+            return false;
         }
 
-        // Acquire wake lock to keep CPU running
-        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                "Sentinel::ShakeDetectionWakeLock");
-        wakeLock.acquire();
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (isKeyDown) {
+                return volumeGestureDetector.onVolumeDown();
+            } else {
+                return volumeGestureDetector.onVolumeUp();
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
+            return volumeGestureDetector.onVolumeUpButton();
+        }
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        startLocationUpdates();
+        return false;
     }
+
+    private void getLocationAndSendSMS() {
+        getLocationAndSendSMS(null);
+    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -147,23 +195,6 @@ public class EmergencyShakeService extends Service {
         }
 
         return START_STICKY;
-    }
-
-    public boolean handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
-        if (volumeGestureDetector == null) {
-            return false;
-        }
-
-        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN) {
-            if (isKeyDown) {
-                return volumeGestureDetector.onVolumeDown();
-            } else {
-                return volumeGestureDetector.onVolumeUp();
-            }
-        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
-            return volumeGestureDetector.onVolumeUpButton();
-        }
-        return false;
     }
 
     private void startLocationUpdates() {
@@ -199,9 +230,6 @@ public class EmergencyShakeService extends Service {
                     }
                 });
     }
-    private void getLocationAndSendSMS() {
-        getLocationAndSendSMS(null);
-    }
 
     private void getLocationAndSendSMS(String emergencyType) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -212,7 +240,6 @@ public class EmergencyShakeService extends Service {
             return;
         }
 
-        // Try to get fresh location first
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(location -> {
                     if (location != null) {
@@ -224,7 +251,6 @@ public class EmergencyShakeService extends Service {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Fall back to last known location or send without location
                     sendEmergencySMS(lastKnownLocation, emergencyType);
                 });
     }
@@ -232,10 +258,6 @@ public class EmergencyShakeService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        if (volumeButtonReceiver != null) {
-            unregisterReceiver(volumeButtonReceiver);
-        }
 
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
@@ -254,6 +276,16 @@ public class EmergencyShakeService extends Service {
         // Release wake lock
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
+        }
+
+        //removes overlay
+        if (overlayView != null && windowManager != null) {
+            try {
+                windowManager.removeView(overlayView);
+                overlayView = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
