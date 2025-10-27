@@ -9,6 +9,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.view.View;
 import android.widget.Button;
@@ -17,7 +18,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.MenuItem;
+import android.content.ComponentName;
+import android.content.ServiceConnection;
 import android.view.KeyEvent;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,7 +39,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
-import com.example.gestures.GestureDetectionService;
 
 import java.util.Objects;
 
@@ -52,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvContactPhoneDisplay;
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle toggle;
+
+    private EmergencyShakeService serviceInstance;
+    private boolean isBound = false;
 
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
@@ -118,6 +124,46 @@ public class MainActivity extends AppCompatActivity {
             drawerLayout.closeDrawers();
             return true;
         });
+    }
+
+    private  ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            //
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            serviceInstance = null;
+            isBound = false;
+        }
+    };
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (isServiceRunning && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                                 keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
+            // sending broadcast to service
+            Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
+            intent.putExtra("keyCode", keyCode);
+            intent.putExtra("isKeyDown", true);
+            sendBroadcast(intent);
+            return true;  // consume event
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+    @Override
+    public  boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (isServiceRunning && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                                 keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
+            //send broadcast to service
+            Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
+            intent.putExtra("keyCode", keyCode);
+            intent.putExtra("isKeyDown", false);
+            sendBroadcast(intent);
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override
