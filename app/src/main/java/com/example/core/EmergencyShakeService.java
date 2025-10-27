@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -24,6 +25,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.Gravity;
 import android.graphics.PixelFormat;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
@@ -55,6 +58,8 @@ public class EmergencyShakeService extends Service {
     private WindowManager windowManager;
     private View overlayView;
 
+    private BroadcastReceiver volumeButtonReceiver;
+
     private VolumeButtonGestureDetector volumeGestureDetector;
 
     @Override
@@ -74,6 +79,11 @@ public class EmergencyShakeService extends Service {
                 getLocationAndSendSMS();
             }
         });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                Settings.canDrawOverlays(this)) {
+            setupOverlayForVolumeDetection();
+        }
 
         // Acquire wake lock to keep CPU running
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -106,6 +116,24 @@ public class EmergencyShakeService extends Service {
 
         if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
+        }
+
+        volumeButtonReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.sentinel.VOLUME_BUTTON_EVENT".equals(intent.getAction())) {
+                    int keyCode = intent.getIntExtra("keyCode", -1);
+                    boolean isKeyDown = intent.getBooleanExtra("isKeyDown", false);
+                    handleVolumeButtonEvent(keyCode, isKeyDown);
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter("com.example.sentinel.VOLUME_BUTTON_EVENT");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(volumeButtonReceiver, filter);
         }
     }
 
@@ -276,6 +304,11 @@ public class EmergencyShakeService extends Service {
         // Release wake lock
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
+        }
+
+        //unregister broadcast reciever
+        if (volumeButtonReceiver != null) {
+            unregisterReceiver(volumeButtonReceiver);
         }
 
         //removes overlay
