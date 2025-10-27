@@ -8,7 +8,7 @@ public class EmergencyContactManager {
     private static final String KEY_CONTACT_NAME = "emergency_contact_name";
     private static final String KEY_CONTACT_PHONE = "emergency_contact_phone";
 
-    private SharedPreferences prefs;
+    private final SharedPreferences prefs;
 
     public EmergencyContactManager(Context context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
