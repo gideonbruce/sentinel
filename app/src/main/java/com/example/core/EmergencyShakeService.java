@@ -19,19 +19,18 @@ import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.Gravity;
 import android.graphics.PixelFormat;
-import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
+
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
 import com.example.data.EmergencyContactManager;
-import com.example.core.VolumeButtonGestureDetector;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -80,8 +79,7 @@ public class EmergencyShakeService extends Service {
             }
         });
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                Settings.canDrawOverlays(this)) {
+        if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
         }
 
@@ -157,9 +155,7 @@ public class EmergencyShakeService extends Service {
 
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 1, 1,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
-                        WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
                         WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
@@ -175,22 +171,21 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    public boolean handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
+    public void handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
         if (volumeGestureDetector == null) {
-            return false;
+            return;
         }
 
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             if (isKeyDown) {
-                return volumeGestureDetector.onVolumeDown();
+                volumeGestureDetector.onVolumeDown();
             } else {
-                return volumeGestureDetector.onVolumeUp();
+                volumeGestureDetector.onVolumeUp();
             }
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
-            return volumeGestureDetector.onVolumeUpButton();
+            volumeGestureDetector.onVolumeUpButton();
         }
 
-        return false;
     }
 
     private void getLocationAndSendSMS() {
@@ -240,10 +235,8 @@ public class EmergencyShakeService extends Service {
 
         locationCallback = new LocationCallback() {
             @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult != null) {
-                    lastKnownLocation = locationResult.getLastLocation();
-                }
+            public void onLocationResult(@NonNull LocationResult locationResult) {
+                lastKnownLocation = locationResult.getLastLocation();
             }
         };
 
@@ -328,18 +321,16 @@ public class EmergencyShakeService extends Service {
     }
 
     private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Emergency Shake Detection",
-                    NotificationManager.IMPORTANCE_LOW
-            );
-            channel.setDescription("Monitors shake gestures for emergency alerts");
+        NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                "Emergency Shake Detection",
+                NotificationManager.IMPORTANCE_LOW
+        );
+        channel.setDescription("Monitors shake gestures for emergency alerts");
 
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.createNotificationChannel(channel);
         }
     }
 
@@ -349,28 +340,13 @@ public class EmergencyShakeService extends Service {
         }
 
         String phoneNumber = contactManager.getContactPhone();
-        String message = emergencyType != null ?
-                emergencyType + "! This is an automated alert. Please check on me immediately." :
-                "EMERGENCY! This is an automated alert. Please check on me immediately.";
-
-        if (location != null) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
-            String locationUrl = "https://maps.google.com/?q="+ latitude + "," + longitude;
-            message += "\n\nMy location:\nLat: " + latitude + "\nLong: " + longitude + "\nMap: " + locationUrl;
-        } else {
-            message += "\n\n(Location unavalable)";
-        }
+        String message = getMessage(location, emergencyType);
         try {
             SmsManager smsManager;
             // Handle dual SIM devices
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
-                if (defaultSmsSubscriptionId != -1) {
-                    smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
-                } else {
-                    smsManager = SmsManager.getDefault();
-                }
+            int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+            if (defaultSmsSubscriptionId != -1) {
+                smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
             } else {
                 smsManager = SmsManager.getDefault();
             }
@@ -390,6 +366,23 @@ public class EmergencyShakeService extends Service {
             e.printStackTrace();
             showSMSFailedNotification();
         }
+    }
+
+    @NonNull
+    private static String getMessage(Location location, String emergencyType) {
+        String message = emergencyType != null ?
+                emergencyType + "! This is an automated alert. Please check on me immediately." :
+                "EMERGENCY! This is an automated alert. Please check on me immediately.";
+
+        if (location != null) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            String locationUrl = "https://maps.google.com/?q="+ latitude + "," + longitude;
+            message += "\n\nMy location:\nLat: " + latitude + "\nLong: " + longitude + "\nMap: " + locationUrl;
+        } else {
+            message += "\n\n(Location unavalable)";
+        }
+        return message;
     }
 
     private void showSMSFailedNotification() {
