@@ -22,7 +22,7 @@ public class VolumeButtonGestureDetector {
     private long volumeDownPressStartTime = 0;
     private boolean volumeDownPressed = false;
 
-    private OnVolumeGestureListener listener;
+    private final OnVolumeGestureListener listener;
 
     public interface OnVolumeGestureListener {
         void onSilentEmergency();    // 5x Volume Down rapidly
@@ -39,7 +39,7 @@ public class VolumeButtonGestureDetector {
     /**
      * Call this when volume button is pressed down
      */
-    public boolean onVolumeDown() {
+    public void onVolumeDown() {
         long currentTime = System.currentTimeMillis();
 
         if (!volumeDownPressed) {
@@ -54,26 +54,23 @@ public class VolumeButtonGestureDetector {
             checkRapidPresses();
         }
 
-        return true; // Consume event
     }
 
     /**
      * Call this when volume button is released
      */
-    public boolean onVolumeUp() {
+    public void onVolumeUp() {
         volumeDownPressed = false;
         handler.removeCallbacks(longPressCheck);
-        return true;
     }
 
     /**
      * Call this when volume UP button is pressed
      */
-    public boolean onVolumeUpButton() {
+    public void onVolumeUpButton() {
         long currentTime = System.currentTimeMillis();
         volumeUpPresses.add(currentTime);
         checkRapidPresses();
-        return true;
     }
 
     private void checkRapidPresses() {
