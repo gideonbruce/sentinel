@@ -23,6 +23,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
+import java.util.Objects;
+
 public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText etEmail, etPassword;
@@ -91,8 +93,8 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void signInWithEmail() {
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
+        String email = Objects.requireNonNull(etEmail.getText()).toString().trim();
+        String password = Objects.requireNonNull(etPassword.getText()).toString().trim();
 
         // Validate inputs
         if (email.isEmpty()) {
@@ -134,7 +136,7 @@ public class LoginActivity extends AppCompatActivity {
                     } else {
                         // Sign in failed
                         Toast.makeText(LoginActivity.this,
-                                "Authentication failed: " + task.getException().getMessage(),
+                                "Authentication failed: " + Objects.requireNonNull(task.getException()).getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
                 });
@@ -174,14 +176,14 @@ public class LoginActivity extends AppCompatActivity {
                     } else {
                         // Sign in failed
                         Toast.makeText(LoginActivity.this,
-                                "Authentication failed: " + task.getException().getMessage(),
+                                "Authentication failed: " + Objects.requireNonNull(task.getException()).getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
     private void handleForgotPassword() {
-        String email = etEmail.getText().toString().trim();
+        String email = Objects.requireNonNull(etEmail.getText()).toString().trim();
 
         if (email.isEmpty()) {
             Toast.makeText(this, "Please enter your email first",
@@ -207,7 +209,7 @@ public class LoginActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show();
                     } else {
                         Toast.makeText(LoginActivity.this,
-                                "Failed to send reset email: " + task.getException().getMessage(),
+                                "Failed to send reset email: " + Objects.requireNonNull(task.getException()).getMessage(),
                                 Toast.LENGTH_LONG).show();
                     }
                 });
