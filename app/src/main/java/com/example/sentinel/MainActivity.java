@@ -235,24 +235,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                // Show explanation dialog
-                new androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("Overlay Permission Needed")
-                        .setMessage("To detect volume button gestures for emergency alerts, this app needs permission to display over other apps. This allows volume button detection to work even when the app is in the background.")
-                        .setPositiveButton("Grant Permission", (dialog, which) -> {
-                            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    Uri.parse("package:" + getPackageName()));
-                            startActivityForResult(intent, 1234);
-                        })
-                        .setNegativeButton("Skip", (dialog, which) -> {
-                            Toast.makeText(this,
-                                    "Volume button gestures will not work without overlay permission",
-                                    Toast.LENGTH_LONG).show();
-                        })
-                        .show();
-            }
+        if (!Settings.canDrawOverlays(this)) {
+            // Show explanation dialog
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Overlay Permission Needed")
+                    .setMessage("To detect volume button gestures for emergency alerts, this app needs permission to display over other apps. This allows volume button detection to work even when the app is in the background.")
+                    .setPositiveButton("Grant Permission", (dialog, which) -> {
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:" + getPackageName()));
+                        startActivityForResult(intent, 1234);
+                    })
+                    .setNegativeButton("Skip", (dialog, which) -> {
+                        Toast.makeText(this,
+                                "Volume button gestures will not work without overlay permission",
+                                Toast.LENGTH_LONG).show();
+                    })
+                    .show();
         }
     }
 
@@ -261,14 +259,12 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == 1234) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (Settings.canDrawOverlays(this)) {
-                    Toast.makeText(this, "Overlay permission granted - Volume gestures enabled",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Overlay permission denied - Volume gestures won't work",
-                            Toast.LENGTH_LONG).show();
-                }
+            if (Settings.canDrawOverlays(this)) {
+                Toast.makeText(this, "Overlay permission granted - Volume gestures enabled",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Overlay permission denied - Volume gestures won't work",
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -353,11 +349,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Intent serviceIntent = new Intent(this, EmergencyShakeService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
+        startForegroundService(serviceIntent);
         isServiceRunning = true;
         Toast.makeText(this, "Shake detection started", Toast.LENGTH_SHORT).show();
         updateUI();
