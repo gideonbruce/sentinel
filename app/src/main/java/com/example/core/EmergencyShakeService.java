@@ -5,6 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -17,6 +18,8 @@ import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.location.LocationManager;
 import android.view.KeyEvent;
 
@@ -47,6 +50,7 @@ public class EmergencyShakeService extends Service {
     private FusedLocationProviderClient fusedLocationClient;
     private Location lastKnownLocation;
     private LocationCallback locationCallback;
+    private BroadcastReceiver volumeButtonReceiver;
 
     private VolumeButtonGestureDetector volumeGestureDetector;
 
@@ -89,6 +93,24 @@ public class EmergencyShakeService extends Service {
                 getLocationAndSendSMS("PANIC ALERT");
             }
         });
+
+        volumeButtonReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.sentinel.VOLUME_BUTTON_EVENT".equals(intent.getAction())) {
+                    int keyCode = intent.getIntExtra("keyCode", -1);
+                    boolean isKeyDown = intent.getBooleanExtra("isKeyDown", false);
+                    handleVolumeButtonEvent(keyCode, isKeyDown);
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter("com.example.sentinel.VOLUME_BUTTON_EVENT");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(volumeButtonReceiver, filter);
+        }
 
         // Acquire wake lock to keep CPU running
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -210,6 +232,10 @@ public class EmergencyShakeService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        if (volumeButtonReceiver != null) {
+            unregisterReceiver(volumeButtonReceiver);
+        }
 
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
