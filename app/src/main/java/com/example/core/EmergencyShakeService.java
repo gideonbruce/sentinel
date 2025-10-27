@@ -18,6 +18,8 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.view.KeyEvent;
+
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
@@ -46,6 +48,8 @@ public class EmergencyShakeService extends Service {
     private Location lastKnownLocation;
     private LocationCallback locationCallback;
 
+    private VolumeButtonGestureDetector volumeGestureDetector;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -61,6 +65,28 @@ public class EmergencyShakeService extends Service {
             if (count >= 3) {
                 //sendEmergencySMS();
                 getLocationAndSendSMS();
+            }
+        });
+
+        volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
+            @Override
+            public void onSilentEmergency() {
+                getLocationAndSendSMS("SILENT EMERGENCY");
+            }
+
+            @Override
+            public void onPoliceNeeded() {
+                getLocationAndSendSMS("POLICE NEEDED");
+            }
+
+            @Override
+            public void onMedicalEmergency() {
+                getLocationAndSendSMS("MEDICAL EMERGENCY");
+            }
+
+            @Override
+            public void onPanicAlert() {
+                getLocationAndSendSMS("PANIC ALERT");
             }
         });
 
@@ -101,6 +127,23 @@ public class EmergencyShakeService extends Service {
         return START_STICKY;
     }
 
+    public boolean handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
+        if (volumeGestureDetector == null) {
+            return false;
+        }
+
+        if (keyCode == android.view.KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (isKeyDown) {
+                return volumeGestureDetector.onVolumeDown();
+            } else {
+                return volumeGestureDetector.onVolumeUp();
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
+            return volumeGestureDetector.onVolumeUpButton();
+        }
+        return false;
+    }
+
     private void startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
@@ -134,13 +177,16 @@ public class EmergencyShakeService extends Service {
                     }
                 });
     }
-
     private void getLocationAndSendSMS() {
+        getLocationAndSendSMS(null);
+    }
+
+    private void getLocationAndSendSMS(String emergencyType) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
-            sendEmergencySMS(null);
+            sendEmergencySMS(null, emergencyType);
             return;
         }
 
@@ -148,22 +194,26 @@ public class EmergencyShakeService extends Service {
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        sendEmergencySMS(location);
+                        sendEmergencySMS(location, emergencyType);
                     } else if (lastKnownLocation != null) {
-                        sendEmergencySMS(lastKnownLocation);
+                        sendEmergencySMS(lastKnownLocation, emergencyType);
                     } else {
-                        sendEmergencySMS(null);
+                        sendEmergencySMS(null, emergencyType);
                     }
                 })
                 .addOnFailureListener(e -> {
                     // Fall back to last known location or send without location
-                    sendEmergencySMS(lastKnownLocation);
+                    sendEmergencySMS(lastKnownLocation, emergencyType);
                 });
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        if (volumeGestureDetector != null) {
+            volumeGestureDetector.cleanup();
+        }
 
         // Unregister sensor listener
         if (sensorManager != null && shakeDetector != null) {
@@ -202,13 +252,13 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    private void sendEmergencySMS(Location location) {
+    private void sendEmergencySMS(Location location, String emergencyType) {
         if (!contactManager.hasEmergencyContact()) {
             return;
         }
 
         String phoneNumber = contactManager.getContactPhone();
-        String message = "EMERGENCY! This is an automated alert. Please check on me immediately.";
+        String message = emergencyType != null ? emergencyType + "EMERGENCY! This is an automated alert. Please check on me immediately.";
 
         if (location != null) {
             double latitude = location.getLatitude();
