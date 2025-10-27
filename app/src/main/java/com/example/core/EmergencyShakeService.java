@@ -284,7 +284,9 @@ public class EmergencyShakeService extends Service {
         }
 
         String phoneNumber = contactManager.getContactPhone();
-        String message = emergencyType != null ? emergencyType + "EMERGENCY! This is an automated alert. Please check on me immediately.";
+        String message = emergencyType != null ?
+                emergencyType + "! This is an automated alert. Please check on me immediately." :
+                "EMERGENCY! This is an automated alert. Please check on me immediately.";
 
         if (location != null) {
             double latitude = location.getLatitude();
