@@ -256,6 +256,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1234) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Settings.canDrawOverlays(this)) {
+                    Toast.makeText(this, "Overlay permission granted - Volume gestures enabled",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Overlay permission denied - Volume gestures won't work",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
+
     private void pickContact() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
                 != PackageManager.PERMISSION_GRANTED) {
