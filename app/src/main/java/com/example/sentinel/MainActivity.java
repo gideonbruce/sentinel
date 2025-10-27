@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -230,6 +231,28 @@ public class MainActivity extends AppCompatActivity {
 
         if (!allGranted) {
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    private void requestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                // Show explanation dialog
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Overlay Permission Needed")
+                        .setMessage("To detect volume button gestures for emergency alerts, this app needs permission to display over other apps. This allows volume button detection to work even when the app is in the background.")
+                        .setPositiveButton("Grant Permission", (dialog, which) -> {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:" + getPackageName()));
+                            startActivityForResult(intent, 1234);
+                        })
+                        .setNegativeButton("Skip", (dialog, which) -> {
+                            Toast.makeText(this,
+                                    "Volume button gestures will not work without overlay permission",
+                                    Toast.LENGTH_LONG).show();
+                        })
+                        .show();
+            }
         }
     }
 
