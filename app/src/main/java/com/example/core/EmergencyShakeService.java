@@ -28,7 +28,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
 import com.example.data.EmergencyContactManager;
-import com.example.gestures.VolumeButtonGestureDetector;
+import com.example.core.VolumeButtonGestureDetector;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
