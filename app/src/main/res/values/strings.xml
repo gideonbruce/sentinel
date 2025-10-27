@@ -23,4 +23,10 @@
     <string name="confirm_password">Confirm Password</string>
     <string name="sign_up_with_google">Sign up with Google</string>
     <string name="already_have_account">Already have an account?</string>
+    <string name="this_app_works_in_the_background_your_emergency_contact_will_receive_an_sms_when_you_shake_your_phone_3_times">This app works in the background. Your emergency contact will receive an SMS when you shake your phone 3 times.</string>
+    <string name="shake_your_phone_3_times_within_3_seconds_to_trigger_emergency_alert">Shake your phone 3 times within 3 seconds to trigger emergency alert</string>
+    <string name="detection_control">Detection Control</string>
+    <string name="save">Save</string>
+    <string name="pick_contact">Pick Contact</string>
+    <string name="phone_number">Phone Number *</string>
 </resources>
