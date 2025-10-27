@@ -214,7 +214,7 @@
                                 android:id="@+id/et_contact_phone"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="Phone Number *"
+                                android:hint="@string/phone_number"
                                 android:inputType="phone"
                                 android:drawableStart="@android:drawable/stat_sys_phone_call"
                                 android:drawablePadding="12dp" />
@@ -232,7 +232,7 @@
                                 android:layout_height="56dp"
                                 android:layout_weight="1"
                                 android:layout_marginEnd="8dp"
-                                android:text="Pick Contact"
+                                android:text="@string/pick_contact"
                                 android:textAllCaps="false"
                                 android:drawableStart="@android:drawable/ic_menu_search"
                                 android:drawablePadding="8dp"
@@ -244,7 +244,7 @@
                                 android:layout_height="56dp"
                                 android:layout_weight="1"
                                 android:layout_marginStart="8dp"
-                                android:text="Save"
+                                android:text="@string/save"
                                 android:textAllCaps="false"
                                 android:drawableStart="@android:drawable/ic_menu_save"
                                 android:drawablePadding="8dp"
@@ -271,7 +271,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Detection Control"
+                        android:text="@string/detection_control"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
@@ -280,7 +280,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Shake your phone 3 times within 3 seconds to trigger emergency alert"
+                        android:text="@string/shake_your_phone_3_times_within_3_seconds_to_trigger_emergency_alert"
                         android:textSize="14sp"
                         android:textColor="#757575"
                         android:layout_marginBottom="16dp" />
@@ -312,6 +312,8 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+
+
             <!-- Info Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -338,7 +340,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="This app works in the background. Your emergency contact will receive an SMS when you shake your phone 3 times."
+                        android:text="@string/this_app_works_in_the_background_your_emergency_contact_will_receive_an_sms_when_you_shake_your_phone_3_times"
                         android:textSize="12sp"
                         android:textColor="#E65100" />
                 </LinearLayout>
