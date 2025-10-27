@@ -21,4 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "Sentinel"
 include(":app")
- 
+include(":feature")
+include(":domain")
+include(":core")
+include(":data")
