@@ -12,16 +12,23 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.view.Gravity;
+import android.graphics.PixelFormat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
 import com.example.data.EmergencyContactManager;
+import com.example.gestures.VolumeButtonGestureDetector;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -45,6 +52,10 @@ public class EmergencyShakeService extends Service {
     private FusedLocationProviderClient fusedLocationClient;
     private Location lastKnownLocation;
     private LocationCallback locationCallback;
+    private WindowManager windowManager;
+    private View overlayView;
+
+    private VolumeButtonGestureDetector volumeGestureDetector;
 
     @Override
     public void onCreate() {
@@ -68,11 +79,96 @@ public class EmergencyShakeService extends Service {
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
-        wakeLock.acquire();
+        wakeLock.acquire(10*60*1000L /*10 minutes*/);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
+
+        // Initialize volume gesture detection
+        volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
+            @Override
+            public void onSilentEmergency() {
+                getLocationAndSendSMS("SILENT EMERGENCY");
+            }
+            @Override
+            public void onPoliceNeeded() {
+                getLocationAndSendSMS("POLICE NEEDED");
+            }
+            @Override
+            public void onMedicalEmergency() {
+                getLocationAndSendSMS("MEDICAL EMERGENCY");
+            }
+            @Override
+            public void onPanicAlert() {
+                getLocationAndSendSMS("PANIC ALERT");
+            }
+        });
+
+        if (Settings.canDrawOverlays(this)) {
+            setupOverlayForVolumeDetection();
+        }
     }
+
+    private void setupOverlayForVolumeDetection() {
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+
+        overlayView = new View(this) {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent event) {
+                int keyCode = event.getKeyCode();
+                if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+                        keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                    handleVolumeButtonEvent(keyCode, event.getAction() == KeyEvent.ACTION_DOWN);
+                    return true;
+                }
+                return super.dispatchKeyEvent(event);
+            }
+        };
+
+        overlayView.setFocusableInTouchMode(true);
+
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                1, 1,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY :
+                        WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+                        WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL |
+                        WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT
+        );
+
+        params.gravity = Gravity.TOP | Gravity.START;
+
+        try {
+            windowManager.addView(overlayView, params);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
+        if (volumeGestureDetector == null) {
+            return false;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (isKeyDown) {
+                return volumeGestureDetector.onVolumeDown();
+            } else {
+                return volumeGestureDetector.onVolumeUp();
+            }
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
+            return volumeGestureDetector.onVolumeUpButton();
+        }
+
+        return false;
+    }
+
+    private void getLocationAndSendSMS() {
+        getLocationAndSendSMS(null);
+    }
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -135,35 +231,37 @@ public class EmergencyShakeService extends Service {
                 });
     }
 
-    private void getLocationAndSendSMS() {
+    private void getLocationAndSendSMS(String emergencyType) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                         != PackageManager.PERMISSION_GRANTED) {
-            sendEmergencySMS(null);
+            sendEmergencySMS(null, emergencyType);
             return;
         }
 
-        // Try to get fresh location first
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(location -> {
                     if (location != null) {
-                        sendEmergencySMS(location);
+                        sendEmergencySMS(location, emergencyType);
                     } else if (lastKnownLocation != null) {
-                        sendEmergencySMS(lastKnownLocation);
+                        sendEmergencySMS(lastKnownLocation, emergencyType);
                     } else {
-                        sendEmergencySMS(null);
+                        sendEmergencySMS(null, emergencyType);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Fall back to last known location or send without location
-                    sendEmergencySMS(lastKnownLocation);
+                    sendEmergencySMS(lastKnownLocation, emergencyType);
                 });
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        if (volumeGestureDetector != null) {
+            volumeGestureDetector.cleanup();
+        }
 
         // Unregister sensor listener
         if (sensorManager != null && shakeDetector != null) {
@@ -178,6 +276,16 @@ public class EmergencyShakeService extends Service {
         // Release wake lock
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
+        }
+
+        //removes overlay
+        if (overlayView != null && windowManager != null) {
+            try {
+                windowManager.removeView(overlayView);
+                overlayView = null;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -202,13 +310,15 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    private void sendEmergencySMS(Location location) {
+    private void sendEmergencySMS(Location location, String emergencyType) {
         if (!contactManager.hasEmergencyContact()) {
             return;
         }
 
         String phoneNumber = contactManager.getContactPhone();
-        String message = "EMERGENCY! This is an automated alert. Please check on me immediately.";
+        String message = emergencyType != null ?
+                emergencyType + "! This is an automated alert. Please check on me immediately." :
+                "EMERGENCY! This is an automated alert. Please check on me immediately.";
 
         if (location != null) {
             double latitude = location.getLatitude();
