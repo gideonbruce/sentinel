@@ -58,6 +58,11 @@
             android:label="Alert History"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
 
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Settings"
+            android:parentActivityName=".MainActivity" />
+
         <!--  EMERGENCY ALERT ACTIVITY -->
         <activity
             android:name="com.example.core.EmergencyAlertActivity"
