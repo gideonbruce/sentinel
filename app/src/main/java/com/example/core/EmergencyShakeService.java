@@ -87,7 +87,7 @@ public class EmergencyShakeService extends Service {
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
-        wakeLock.acquire(10*60*1000L /*10 minutes*/);
+        wakeLock.acquire();
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
@@ -324,7 +324,7 @@ public class EmergencyShakeService extends Service {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "Emergency Shake Detection",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_HIGH
         );
         channel.setDescription("Monitors shake gestures for emergency alerts");
 
