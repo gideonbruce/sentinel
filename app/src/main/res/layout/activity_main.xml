@@ -29,14 +29,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="🛡️"
-                    android:textSize="48sp"
-                    android:layout_marginBottom="8dp" />
+                    android:textSize="64sp"
+                    android:layout_marginBottom="12dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Sentinel"
-                    android:textSize="28sp"
+                    android:textSize="32sp"
                     android:textStyle="bold"
                     android:textColor="#1976D2" />
 
@@ -70,7 +70,9 @@
                         android:textSize="12sp"
                         android:textColor="#757575"
                         android:textStyle="bold"
-                        android:layout_marginBottom="8dp" />
+                        android:textAllCaps="true"
+                        android:letterSpacing="0.1"
+                        android:layout_marginBottom="12dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -120,65 +122,81 @@
                         android:textColor="#212121"
                         android:layout_marginBottom="16dp" />
 
-                    <!-- Contact Display (shown when contact is set) -->
+                    <!-- Contact Display -->
                     <LinearLayout
                         android:id="@+id/contact_display"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:background="#E3F2FD"
-                        android:padding="12dp"
-                        android:layout_marginBottom="12dp"
+                        android:orientation="vertical"
                         android:visibility="gone">
 
-                        <TextView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:text="👤"
-                            android:textSize="24sp"
-                            android:gravity="center"
-                            android:background="@drawable/circle_background"
-                            android:layout_marginEnd="12dp" />
-
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:orientation="horizontal"
+                            android:background="#E3F2FD"
+                            android:padding="12dp"
+                            android:layout_marginBottom="12dp"
+                            android:gravity="center_vertical">
 
                             <TextView
-                                android:id="@+id/tv_contact_name_display"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="John Doe"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:textColor="#212121" />
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:text="👤"
+                                android:textSize="24sp"
+                                android:gravity="center"
+                                android:background="@drawable/circle_background"
+                                android:layout_marginEnd="12dp" />
 
-                            <TextView
-                                android:id="@+id/tv_contact_phone_display"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:text="+1234567890"
-                                android:textSize="14sp"
-                                android:textColor="#757575" />
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tv_contact_name_display"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="John Doe"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#212121" />
+
+                                <TextView
+                                    android:id="@+id/tv_contact_phone_display"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="+1234567890"
+                                    android:textSize="14sp"
+                                    android:textColor="#757575" />
+                            </LinearLayout>
+
+                            <ImageButton
+                                android:id="@+id/btn_edit_contact"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:src="@android:drawable/ic_menu_edit"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Edit contact" />
                         </LinearLayout>
 
-                        <ImageButton
-                            android:id="@+id/btn_edit_contact"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:src="@android:drawable/ic_menu_edit"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Edit contact" />
+                        <Button
+                            android:id="@+id/btn_change_contact"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:text="Change Contact"
+                            android:textAllCaps="false"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
                     </LinearLayout>
 
-                    <!-- Contact Input Form -->
+                    <!-- Contact Form -->
                     <LinearLayout
                         android:id="@+id/contact_form"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
+                        android:orientation="vertical"
+                        android:visibility="visible">
 
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
@@ -275,7 +293,7 @@
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="8dp" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -312,7 +330,145 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
+            <!-- Quick Actions Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Quick Actions"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="3">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🤝"
+                                android:textSize="32sp"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Shake"
+                                android:textSize="12sp"
+                                android:textColor="#757575"
+                                android:gravity="center" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="3x"
+                                android:textSize="10sp"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:background="#E0E0E0"
+                            android:layout_marginVertical="8dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔇"
+                                android:textSize="32sp"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Silent"
+                                android:textSize="12sp"
+                                android:textColor="#757575"
+                                android:gravity="center" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vol ↓ 5x"
+                                android:textSize="10sp"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="1dp"
+                            android:layout_height="match_parent"
+                            android:background="#E0E0E0"
+                            android:layout_marginVertical="8dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🚓"
+                                android:textSize="32sp"
+                                android:layout_marginBottom="4dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Police"
+                                android:textSize="12sp"
+                                android:textColor="#757575"
+                                android:gravity="center" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Vol ↑ 3x"
+                                android:textSize="10sp"
+                                android:textColor="#1976D2"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
 
             <!-- Info Card -->
             <androidx.cardview.widget.CardView
@@ -320,7 +476,7 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFF3E0">
+                app:cardBackgroundColor="#E3F2FD">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -340,9 +496,9 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="@string/shake_your_phone_3_times_or_use_volume_buttons_for_different_alerts_5x_vol_down_silent_3x_vol_up_police_hold_vol_down_5s_medical"
+                        android:text="Make sure to enable all necessary permissions for the app to work properly. You can customize detection methods in Settings."
                         android:textSize="12sp"
-                        android:textColor="#E65100" />
+                        android:textColor="#1565C0" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
