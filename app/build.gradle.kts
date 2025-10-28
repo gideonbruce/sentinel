@@ -48,6 +48,7 @@ android {
 
 dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
+    implementation(libs.androidx.swiperefreshlayout)
     kapt ("androidx.room:room-compiler:2.8.3")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
    // implementation platform("com.google.firebase:firebase-bom:32.7.0")
