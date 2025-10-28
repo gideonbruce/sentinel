@@ -42,6 +42,14 @@ public class AlertRepository {
         });
     }
 
+    public void deleteAlert(AlertEntity alert, RepositoryCallback<Void> callback) {
+        executorService.execute(() -> {
+            alertDao.delete(alert);
+            if (callback != null) {
+                callback.onComplete(null);
+            }
+        });
+    }
 
     public interface RepositoryCallback<T> {
         void onComplete(T result);

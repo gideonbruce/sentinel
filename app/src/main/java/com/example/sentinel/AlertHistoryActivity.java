@@ -48,7 +48,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         tvEmptyState = findViewById(R.id.tv_empty_state);
         fabClearHistory = findViewById(R.id.fab_clear_history);
 
-        alertRepository = new AlertRepository(this);
+        alertRepository = new AlertRepository(getApplication());
 
         fabClearHistory.setOnClickListener(v -> showClearHistoryDialog());
     }
@@ -146,7 +146,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
                 .setTitle("Delete Alert")
                 .setMessage("Are you sure you want to delete this alert?")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    alertRepository.deleteAlert(alert, () -> runOnUiThread(() -> {
+                    alertRepository.deleteAlert(alert, (result) -> runOnUiThread(() -> {
                         Toast.makeText(this, "Alert deleted", Toast.LENGTH_SHORT).show();
                         loadAlertHistory();
                     }));
@@ -160,7 +160,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
                 .setTitle("Clear All History")
                 .setMessage("Are you sure you want to delete all alert history? This action cannot be undone.")
                 .setPositiveButton("Clear All", (dialog, which) -> {
-                    alertRepository.deleteAllAlerts(() -> runOnUiThread(() -> {
+                    alertRepository.deleteAllAlerts((result) -> runOnUiThread(() -> {
                         Toast.makeText(this, "History cleared", Toast.LENGTH_SHORT).show();
                         loadAlertHistory();
                     }));
