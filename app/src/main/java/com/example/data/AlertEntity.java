@@ -1,10 +1,16 @@
 package com.example.data;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.google.firebase.database.Exclude;
+import com.google.firebase.database.IgnoreExtraProperties;
+
+@IgnoreExtraProperties
 @Entity(tableName = "alert_history")
 public class AlertEntity {
+
     @PrimaryKey(autoGenerate = true)
     private int id;
 
@@ -16,8 +22,11 @@ public class AlertEntity {
     private String contactPhone;
     private boolean locationAvailable;
 
+    //firebase key for syncing  not stored in room
+    private String firebaseKey;
+
     public AlertEntity() {
-        // Default constructor required for calls to DataSnapshot.getValue(AlertEntity.class)
+        // Default constructor required for calls to DataSnapshot.getValue(AlertEntity.class) and for firebase
     }
 
     public AlertEntity(String alertType, long timestamp, Double latitude,
@@ -95,5 +104,33 @@ public class AlertEntity {
 
     public void setLocationAvailable(boolean locationAvailable) {
         this.locationAvailable = locationAvailable;
+    }
+
+    @Exclude
+    public String getFirebaseKey() {
+        return firebaseKey;
+    }
+
+    @Exclude
+    public void setFirebaseKey(String firebaseKey) {
+        this.firebaseKey = firebaseKey;
+    }
+
+    // Helper method to get formatted location string
+    @Exclude
+    public String getLocationString() {
+        if (locationAvailable && latitude != null && longitude != null) {
+            return String.format("%.6f, %.6f", latitude, longitude);
+        }
+        return "Location not available";
+    }
+
+    // Helper method to get Google Maps URL
+    @Exclude
+    public String getGoogleMapsUrl() {
+        if (locationAvailable && latitude != null && longitude != null) {
+            return "https://maps.google.com/?q=" + latitude + "," + longitude;
+        }
+        return null;
     }
 }
