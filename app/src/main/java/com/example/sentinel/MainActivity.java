@@ -37,9 +37,16 @@ import com.example.data.EmergencyContactManager;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.Priority;
+import com.google.android.gms.tasks.Task;
 
 import java.util.Objects;
 
@@ -63,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private boolean isServiceRunning = false;
+
+    private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -211,6 +221,16 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
+                    //Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            };
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions = new String[]{
+                    Manifest.permission.SEND_SMS,
+                    Manifest.permission.READ_PHONE_STATE,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                    //Manifest.permission.ACCESS_BACKGROUND_LOCATION
             };
         } else {
             permissions = new String[]{
@@ -233,6 +253,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (!allGranted) {
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            checkBackgroundLocationPermission();
         }
     }
 
@@ -254,6 +276,35 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .show();
         }
+    }
+
+    private void checkLocationSettings() {
+        LocationRequest locationRequest = new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY, 10000)
+                .build();
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(this)
+                .checkLocationSettings(builder.build());
+
+        task.addOnSuccessListener(this, locationSettingsResponse -> {
+            // Location settings are satisfied, start service
+        });
+
+        task.addOnFailureListener(this, e -> {
+            if (e instanceof ResolvableApiException) {
+                try {
+                    // Show dialog to enable location
+                    ResolvableApiException resolvable = (ResolvableApiException) e;
+                    resolvable.startResolutionForResult(this, 1001);
+                } catch (Exception sendEx) {
+                    Toast.makeText(this, "Please enable location services",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     @Override
@@ -350,6 +401,18 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        //checking location permission first
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Location permission required for emergency alerts",
+                    Toast.LENGTH_SHORT).show();
+            checkPermissions();
+            return;
+        }
+
+        checkLocationSettings();
+        requestOverlayPermission(); //for overlay buttons
+
         Intent serviceIntent = new Intent(this, EmergencyShakeService.class);
         startForegroundService(serviceIntent);
         isServiceRunning = true;
@@ -402,6 +465,69 @@ public class MainActivity extends AppCompatActivity {
         } else {
             drawable.setColor(Color.parseColor("#BDBDBD"));
             tvStatus.setText(R.string.set_emergency);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (allGranted) {
+                Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show();
+                // Now request background location if needed
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    checkBackgroundLocationPermission();
+                }
+            } else {
+                Toast.makeText(this, "Some permissions were denied. App may not work properly",
+                        Toast.LENGTH_LONG).show();
+            }
+        } else if (requestCode == BACKGROUND_LOCATION_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Background location permission granted",
+                        Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this,
+                        "Background location denied. Emergency alerts may not include location when app is closed",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void checkBackgroundLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                // Show explanation dialog first
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Background Location Permission")
+                        .setMessage("For emergency alerts to work properly when the app is in the background, " +
+                                "we need access to your location all the time.\n\n" +
+                                "Please select 'Allow all the time' in the next screen.")
+                        .setPositiveButton("Continue", (dialog, which) -> {
+                            ActivityCompat.requestPermissions(this,
+                                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                                    BACKGROUND_LOCATION_PERMISSION_CODE);
+                        })
+                        .setNegativeButton("Skip", (dialog, which) -> {
+                            Toast.makeText(this,
+                                    "Location may not work in background without this permission",
+                                    Toast.LENGTH_LONG).show();
+                        })
+                        .show();
+            }
         }
     }
 

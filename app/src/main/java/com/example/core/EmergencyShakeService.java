@@ -233,14 +233,18 @@ public class EmergencyShakeService extends Service {
         }
 
         LocationRequest locationRequest = new LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY, 30000) // Update every 30 seconds
-                .setMinUpdateIntervalMillis(15000) // Fastest update every 15 seconds
+                Priority.PRIORITY_HIGH_ACCURACY, 10000) // Update every 30 seconds
+                .setMinUpdateIntervalMillis(5000) // Fastest update every 15 seconds
+                .setWaitForAccurateLocation(false) // dont wait for perfect accuracy
                 .build();
 
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
-                lastKnownLocation = locationResult.getLastLocation();
+                if (locationResult != null && locationResult.getLastLocation() != null) {
+                    lastKnownLocation = locationResult.getLastLocation();
+                }
+                //lastKnownLocation = locationResult.getLastLocation();
             }
         };
 
@@ -265,19 +269,44 @@ public class EmergencyShakeService extends Service {
             return;
         }
 
+        //get current location with timeout
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(location -> {
                     if (location != null) {
                         sendEmergencySMS(location, emergencyType);
-                    } else if (lastKnownLocation != null) {
-                        sendEmergencySMS(lastKnownLocation, emergencyType);
                     } else {
-                        sendEmergencySMS(null, emergencyType);
+                        tryLastKnownLocation(emergencyType);
                     }
                 })
                 .addOnFailureListener(e -> {
-                    sendEmergencySMS(lastKnownLocation, emergencyType);
+                    tryLastKnownLocation(emergencyType);
                 });
+    }
+
+    private void tryLastKnownLocation(String emergencyType) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                        == PackageManager.PERMISSION_GRANTED) {
+
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(location -> {
+                        if (location != null) {
+                            sendEmergencySMS(location, emergencyType);
+                        } else if (lastKnownLocation != null) {
+                            sendEmergencySMS(lastKnownLocation, emergencyType);
+                        } else {
+                            // No location available at all
+                            sendEmergencySMS(null, emergencyType);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        // Use cached location or send without location
+                        sendEmergencySMS(lastKnownLocation, emergencyType);
+                    });
+        } else {
+            sendEmergencySMS(null, emergencyType);
+        }
     }
 
     @Override
