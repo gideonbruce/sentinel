@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -92,7 +93,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
-        Button btnEditContact = findViewById(R.id.btn_edit_contact);
+        ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
         Button btnChangeContact = findViewById(R.id.btn_change_contact);
 
         btnPickContact.setOnClickListener(v -> pickContact());
