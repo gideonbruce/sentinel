@@ -185,8 +185,10 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
             //TODO: open settings activity
         } else if (id == R.id.nav_history) {
-            Toast.makeText(this, "Alert History", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Alert History", Toast.LENGTH_SHORT).show();
             //TODO: open history activity
+            Intent intent = new Intent(this, AlertHistoryActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_help) {
             Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
             //TODO: open help activity
