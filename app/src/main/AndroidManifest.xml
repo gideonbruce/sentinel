@@ -50,6 +50,12 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:exported="false" />
 
+        <activity
+            android:name=".AlertHistoryActivity"
+            android:exported="false"
+            android:label="Alert History"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
+
         <!--  EMERGENCY ALERT ACTIVITY -->
         <activity
             android:name="com.example.core.EmergencyAlertActivity"
