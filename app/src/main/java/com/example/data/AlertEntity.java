@@ -16,6 +16,10 @@ public class AlertEntity {
     private String contactPhone;
     private boolean locationAvailable;
 
+    public AlertEntity() {
+        // Default constructor required for calls to DataSnapshot.getValue(AlertEntity.class)
+    }
+
     public AlertEntity(String alertType, long timestamp, Double latitude,
                        Double longitude, String contactName, String contactPhone,
                        boolean locationAvailable) {
