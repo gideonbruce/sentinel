@@ -30,6 +30,8 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
 
+import com.example.data.AlertEntity;
+import com.example.data.AlertRepository;
 import com.example.data.EmergencyContactManager;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -60,12 +62,14 @@ public class EmergencyShakeService extends Service {
     private BroadcastReceiver volumeButtonReceiver;
 
     private VolumeButtonGestureDetector volumeGestureDetector;
+    private AlertRepository alertRepository;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         contactManager = new EmergencyContactManager(this);
+        alertRepository = new AlertRepository(getApplication());
 
         // Initialize shake detection
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -362,6 +366,27 @@ public class EmergencyShakeService extends Service {
 
             // Show notification that SMS was sent
             showSMSSentNotification(location != null);
+
+            // Save the alert to the database
+            String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
+            long timestamp = System.currentTimeMillis();
+            Double latitude = (location != null) ? location.getLatitude() : null;
+            Double longitude = (location != null) ? location.getLongitude() : null;
+            String contactName = contactManager.getContactName();
+            String contactPhone = contactManager.getContactPhone();
+            boolean locationAvailable = (location != null);
+
+            AlertEntity alert = new AlertEntity(
+                    alertType,
+                    timestamp,
+                    latitude,
+                    longitude,
+                    contactName,
+                    contactPhone,
+                    locationAvailable
+            );
+            alertRepository.insert(alert);
+
         } catch (Exception e) {
             e.printStackTrace();
             showSMSFailedNotification();
