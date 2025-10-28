@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -12,10 +13,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.data.AlertEntity;
 import com.example.data.AlertRepository;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +30,9 @@ public class AlertHistoryActivity extends AppCompatActivity {
     private AlertRepository alertRepository;
     private TextView tvEmptyState;
     private FloatingActionButton fabClearHistory;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private ProgressBar progressBar;
+    private TextView tvSyncStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +47,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
 
         initViews();
         setupRecyclerView();
+        checkFirebaseAuth();
         loadAlertHistory();
     }
 
@@ -47,10 +55,28 @@ public class AlertHistoryActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.rv_alert_history);
         tvEmptyState = findViewById(R.id.tv_empty_state);
         fabClearHistory = findViewById(R.id.fab_clear_history);
+        swipeRefreshLayout = findViewById(R.id.swipe_refresh);
+        progressBar = findViewById(R.id.progress_bar);
+        tvSyncStatus = findViewById(R.id.tv_sync_status);
 
         alertRepository = new AlertRepository(getApplication());
 
         fabClearHistory.setOnClickListener(v -> showClearHistoryDialog());
+
+        //swipe to refresh
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            loadAlertHistory();
+            // force sync from firebase
+            alertRepository.forceSyncFromFirebase(success -> runOnUiThread(() -> {
+                swipeRefreshLayout.setRefreshing(false);
+                if (success) {
+                    Toast.makeText(this, "Synced with cloud", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Sync failed - showing local data",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }));
+        });
     }
 
     private void setupRecyclerView() {
@@ -75,9 +101,24 @@ public class AlertHistoryActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    private void checkFirebaseAuth() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            tvSyncStatus.setText("Synced with cloud ☁️");
+            tvSyncStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        } else {
+            tvSyncStatus.setText("Local storage only");
+            tvSyncStatus.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+        }
+    }
+
     private void loadAlertHistory() {
+        showLoading(true);
+
         alertRepository.getAllAlerts(alerts -> runOnUiThread(() -> {
-            if (alerts.isEmpty()) {
+            showLoading(false);
+
+            if (alerts == null || alerts.isEmpty()) {
                 tvEmptyState.setVisibility(View.VISIBLE);
                 recyclerView.setVisibility(View.GONE);
                 fabClearHistory.setVisibility(View.GONE);
@@ -90,39 +131,46 @@ public class AlertHistoryActivity extends AppCompatActivity {
         }));
     }
 
+    private void showLoading(boolean show) {
+        progressBar.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
     private void showAlertDetails(AlertEntity alert) {
         String details = buildAlertDetails(alert);
 
-        new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Alert Details")
                 .setMessage(details)
-                .setPositiveButton("Close", null)
-                .setNeutralButton("View on Map", (dialog, which) -> {
-                    if (alert.isLocationAvailable()) {
-                        openMap(alert);
-                    } else {
-                        Toast.makeText(this, "Location not available",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .show();
+                .setPositiveButton("Close", null);
+
+        if (alert.isLocationAvailable()) {
+            builder.setNeutralButton("View on Map", (dialog, which) -> openMap(alert));
+        }
+
+        builder.show();
     }
 
     private String buildAlertDetails(AlertEntity alert) {
         StringBuilder details = new StringBuilder();
-        details.append("Type: ").append(alert.getAlertType()).append("\n\n");
-        details.append("Time: ").append(
-                android.text.format.DateFormat.format("MMM dd, yyyy hh:mm:ss a",
-                        alert.getTimestamp())).append("\n\n");
-        details.append("Contact: ").append(alert.getContactName()).append("\n");
-        details.append("Phone: ").append(alert.getContactPhone()).append("\n\n");
+
+        details.append("🚨 Alert Type\n");
+        details.append(alert.getAlertType()).append("\n\n");
+
+        details.append("📅 Date & Time\n");
+        details.append(android.text.format.DateFormat.format(
+                "EEEE, MMM dd, yyyy\nhh:mm:ss a", alert.getTimestamp())).append("\n\n");
+
+        details.append("👤 Emergency Contact\n");
+        details.append(alert.getContactName()).append("\n");
+        details.append("📞 ").append(alert.getContactPhone()).append("\n\n");
 
         if (alert.isLocationAvailable()) {
-            details.append("Location:\n");
-            details.append("Latitude: ").append(alert.getLatitude()).append("\n");
-            details.append("Longitude: ").append(alert.getLongitude());
+            details.append("📍 Location\n");
+            details.append("Lat: ").append(String.format("%.6f", alert.getLatitude())).append("\n");
+            details.append("Long: ").append(String.format("%.6f", alert.getLongitude()));
         } else {
-            details.append("Location: Not available");
+            details.append("📍 Location\n");
+            details.append("Not available");
         }
 
         return details.toString();
@@ -135,20 +183,40 @@ public class AlertHistoryActivity extends AppCompatActivity {
             return;
         }
 
-        String uri = "https://maps.google.com/?q=" +
-                alert.getLatitude() + "," + alert.getLongitude();
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        startActivity(intent);
+        try {
+            String uri = alert.getGoogleMapsUrl();
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+            intent.setPackage("com.google.android.apps.maps");
+
+            // Try to open Google Maps, fallback to browser if not installed
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                intent.setPackage(null);
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to open map", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void deleteAlert(AlertEntity alert) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Alert")
-                .setMessage("Are you sure you want to delete this alert?")
+                .setMessage("Are you sure you want to delete this alert? This will remove it from both local storage and cloud.")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    alertRepository.deleteAlert(alert, (result) -> runOnUiThread(() -> {
-                        Toast.makeText(this, "Alert deleted", Toast.LENGTH_SHORT).show();
-                        loadAlertHistory();
+                    showLoading(true);
+
+                    alertRepository.deleteAlert(alert, success -> runOnUiThread(() -> {
+                        showLoading(false);
+
+                        if (success) {
+                            Toast.makeText(this, "Alert deleted", Toast.LENGTH_SHORT).show();
+                            loadAlertHistory();
+                        } else {
+                            Toast.makeText(this, "Failed to delete alert",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }));
                 })
                 .setNegativeButton("Cancel", null)
@@ -158,11 +226,23 @@ public class AlertHistoryActivity extends AppCompatActivity {
     private void showClearHistoryDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("Clear All History")
-                .setMessage("Are you sure you want to delete all alert history? This action cannot be undone.")
+                .setMessage("Are you sure you want to delete all alert history? " +
+                        "This will remove all alerts from both local storage and cloud. " +
+                        "This action cannot be undone.")
                 .setPositiveButton("Clear All", (dialog, which) -> {
-                    alertRepository.deleteAllAlerts((result) -> runOnUiThread(() -> {
-                        Toast.makeText(this, "History cleared", Toast.LENGTH_SHORT).show();
-                        loadAlertHistory();
+                    showLoading(true);
+
+                    alertRepository.deleteAllAlerts(success -> runOnUiThread(() -> {
+                        showLoading(false);
+
+                        if (success) {
+                            Toast.makeText(this, "All history cleared",
+                                    Toast.LENGTH_SHORT).show();
+                            loadAlertHistory();
+                        } else {
+                            Toast.makeText(this, "Failed to clear history",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     }));
                 })
                 .setNegativeButton("Cancel", null)
@@ -176,5 +256,19 @@ public class AlertHistoryActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Clean up repository resources if needed
+        if (alertRepository != null) {
+            alertRepository.cleanup();
+        }
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reload data when returning to this activity
+        loadAlertHistory();
     }
 }
