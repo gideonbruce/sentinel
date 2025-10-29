@@ -22,9 +22,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class AlertHistoryActivity extends AppCompatActivity {
+
     private RecyclerView recyclerView;
     private AlertHistoryAdapter adapter;
     private AlertRepository alertRepository;
@@ -63,10 +63,10 @@ public class AlertHistoryActivity extends AppCompatActivity {
 
         fabClearHistory.setOnClickListener(v -> showClearHistoryDialog());
 
-        //swipe to refresh
+        // Setup swipe to refresh
         swipeRefreshLayout.setOnRefreshListener(() -> {
             loadAlertHistory();
-            // force sync from firebase
+            // Force sync from Firebase
             alertRepository.forceSyncFromFirebase(success -> runOnUiThread(() -> {
                 swipeRefreshLayout.setRefreshing(false);
                 if (success) {
@@ -257,18 +257,21 @@ public class AlertHistoryActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // Clean up repository resources if needed
         if (alertRepository != null) {
+            alertRepository.stopListeningToFirebase();
             alertRepository.cleanup();
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        // Reload data when returning to this activity
-        loadAlertHistory();
+        // Don't reload automatically on resume to prevent constant loading
+        // User can manually refresh using swipe-to-refresh
     }
 }

@@ -7,10 +7,10 @@ import androidx.annotation.NonNull;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
@@ -23,25 +23,27 @@ import java.util.concurrent.Executors;
 public class AlertRepository {
 
     private static final String TAG = "AlertRepository";
-    private final AlertDao alertDao;
-    private final ExecutorService executorService;
+    private AlertDao alertDao;
+    private ExecutorService executorService;
     private DatabaseReference databaseReference;
-    private final FirebaseAuth firebaseAuth;
+    private FirebaseAuth firebaseAuth;
+
+    private ValueEventListener activeListener;
 
     public AlertRepository(Application application) {
         AlertDatabase db = AlertDatabase.getDatabase(application);
         alertDao = db.alertDao();
         executorService = Executors.newSingleThreadExecutor();
         firebaseAuth = FirebaseAuth.getInstance();
-        //databaseReference = FirebaseDatabase.getInstance().getReference("alerts");
 
-        //user-specific path
+        // Initialize Firebase reference with user-specific path
         initializeFirebaseReference();
     }
+
     private void initializeFirebaseReference() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
-            // each user has their own alerts path
+            // Each user has their own alerts path
             databaseReference = FirebaseDatabase.getInstance()
                     .getReference("users")
                     .child(currentUser.getUid())
@@ -52,31 +54,31 @@ public class AlertRepository {
     }
 
     /**
-     * Insert alert to both Room database and firebase
+     * Insert alert to both local Room database and Firebase
      */
     public void insert(AlertEntity alert, RepositoryCallback<String> callback) {
         executorService.execute(() -> {
             try {
-                // inserts to local database first
+                // Insert to local database first
                 alertDao.insert(alert);
 
-                //syncs to db if user is logged in
+                // Sync to Firebase if user is logged in
                 if (databaseReference != null) {
                     DatabaseReference newAlertRef = databaseReference.push();
                     String firebaseKey = newAlertRef.getKey();
 
-                    //stores firebase key n alert
+                    // Store firebase key in the alert
                     alert.setFirebaseKey(firebaseKey);
 
                     newAlertRef.setValue(alert)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Alert synced to cloud successfully");
+                                Log.d(TAG, "Alert synced to Firebase successfully");
                                 if (callback != null) {
                                     callback.onComplete(firebaseKey);
                                 }
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to sync alert", e);
+                                Log.e(TAG, "Failed to sync alert to Firebase", e);
                                 if (callback != null) {
                                     callback.onComplete(null);
                                 }
@@ -96,24 +98,27 @@ public class AlertRepository {
         });
     }
 
-    public void delete(AlertEntity alert) {
-        executorService.execute(() -> alertDao.delete(alert));
-    }
-
-    //Get all alerts from Firebase (primary) or local database (fallback)
+    /**
+     * Get all alerts from Firebase (primary) or local database (fallback)
+     */
     public void getAllAlerts(RepositoryCallback<List<AlertEntity>> callback) {
         if (databaseReference != null) {
             getAlertsFromFirebase(callback);
         } else {
+            // Fallback to local database if no Firebase connection
             getAlertsFromLocal(callback);
         }
     }
 
-    //Get alerts from Firebase with real-time updates
+    /**
+     * Get alerts from Firebase (single fetch, not real-time)
+     */
     private void getAlertsFromFirebase(RepositoryCallback<List<AlertEntity>> callback) {
         Query query = databaseReference.orderByChild("timestamp");
 
-        query.addValueEventListener(new ValueEventListener() {
+        // Use addListenerForSingleValueEvent instead of addValueEventListener
+        // This fetches data once and doesn't keep listening
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 List<AlertEntity> alerts = new ArrayList<>();
@@ -155,7 +160,57 @@ public class AlertRepository {
         });
     }
 
-    //get alerts from local Room database
+    /**
+     * Get alerts from Firebase with real-time updates (use only when needed)
+     */
+    public void getAlertsWithRealtimeUpdates(RepositoryCallback<List<AlertEntity>> callback) {
+        if (databaseReference == null) {
+            getAlertsFromLocal(callback);
+            return;
+        }
+
+        Query query = databaseReference.orderByChild("timestamp");
+
+        query.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<AlertEntity> alerts = new ArrayList<>();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    try {
+                        AlertEntity alert = snapshot.getValue(AlertEntity.class);
+                        if (alert != null) {
+                            alert.setFirebaseKey(snapshot.getKey());
+                            alerts.add(alert);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing alert from Firebase", e);
+                    }
+                }
+
+                Collections.sort(alerts, (a1, a2) ->
+                        Long.compare(a2.getTimestamp(), a1.getTimestamp()));
+
+                Log.d(TAG, "Real-time update: " + alerts.size() + " alerts");
+
+                if (callback != null) {
+                    callback.onComplete(alerts);
+                }
+
+                syncToLocalDatabase(alerts);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "Firebase query cancelled", databaseError.toException());
+                getAlertsFromLocal(callback);
+            }
+        });
+    }
+
+    /**
+     * Get alerts from local Room database
+     */
     private void getAlertsFromLocal(RepositoryCallback<List<AlertEntity>> callback) {
         executorService.execute(() -> {
             try {
@@ -179,11 +234,13 @@ public class AlertRepository {
         });
     }
 
-    //sync Firebase alerts to local database for offline access
+    /**
+     * Sync Firebase alerts to local database for offline access
+     */
     private void syncToLocalDatabase(List<AlertEntity> alerts) {
         executorService.execute(() -> {
             try {
-                // clear existing local data
+                // Clear existing local data
                 alertDao.deleteAll();
 
                 // Insert all alerts from Firebase
@@ -198,50 +255,16 @@ public class AlertRepository {
         });
     }
 
-    //delete all alerts from both Firebase and local database
-    public void deleteAllAlerts(RepositoryCallback<Boolean> callback) {
-        executorService.execute(() -> {
-            try {
-                // delete from local database
-                alertDao.deleteAll();
-
-                // delete from Firebase if available
-                if (databaseReference != null) {
-                    databaseReference.removeValue()
-                            .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "All alerts deleted from Firebase");
-                                if (callback != null) {
-                                    callback.onComplete(true);
-                                }
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to delete all alerts from Firebase", e);
-                                if (callback != null) {
-                                    callback.onComplete(false);
-                                }
-                            });
-                } else {
-                    if (callback != null) {
-                        callback.onComplete(true);
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error deleting all alerts", e);
-                if (callback != null) {
-                    callback.onComplete(false);
-                }
-            }
-        });
-    }
-
-    //delete a single alert from both Firebase and local database
+    /**
+     * Delete a single alert from both Firebase and local database
+     */
     public void deleteAlert(AlertEntity alert, RepositoryCallback<Boolean> callback) {
         executorService.execute(() -> {
             try {
-                // delete from local database
+                // Delete from local database
                 alertDao.delete(alert);
 
-                // delete from Firebase if available
+                // Delete from Firebase if available
                 if (databaseReference != null && alert.getFirebaseKey() != null) {
                     databaseReference.child(alert.getFirebaseKey())
                             .removeValue()
@@ -271,7 +294,47 @@ public class AlertRepository {
         });
     }
 
-    //get alerts within a date range
+    /**
+     * Delete all alerts from both Firebase and local database
+     */
+    public void deleteAllAlerts(RepositoryCallback<Boolean> callback) {
+        executorService.execute(() -> {
+            try {
+                // Delete from local database
+                alertDao.deleteAll();
+
+                // Delete from Firebase if available
+                if (databaseReference != null) {
+                    databaseReference.removeValue()
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "All alerts deleted from Firebase");
+                                if (callback != null) {
+                                    callback.onComplete(true);
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Failed to delete all alerts from Firebase", e);
+                                if (callback != null) {
+                                    callback.onComplete(false);
+                                }
+                            });
+                } else {
+                    if (callback != null) {
+                        callback.onComplete(true);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error deleting all alerts", e);
+                if (callback != null) {
+                    callback.onComplete(false);
+                }
+            }
+        });
+    }
+
+    /**
+     * Get alerts within a date range
+     */
     public void getAlertsByDateRange(long startTime, long endTime,
                                      RepositoryCallback<List<AlertEntity>> callback) {
         if (databaseReference != null) {
@@ -316,7 +379,9 @@ public class AlertRepository {
         }
     }
 
-    //get count of alerts
+    /**
+     * Get count of alerts
+     */
     public void getAlertCount(RepositoryCallback<Integer> callback) {
         getAllAlerts(alerts -> {
             if (callback != null) {
@@ -325,7 +390,9 @@ public class AlertRepository {
         });
     }
 
-    //force sync from firebase to local database
+    /**
+     * Force sync from Firebase to local database
+     */
     public void forceSyncFromFirebase(RepositoryCallback<Boolean> callback) {
         if (databaseReference != null) {
             getAlertsFromFirebase(alerts -> {
@@ -341,12 +408,24 @@ public class AlertRepository {
         }
     }
 
-    //calllback interface for async operations
+    public void stopListeningToFirebase() {
+        if (databaseReference != null && activeListener != null) {
+            databaseReference.removeEventListener(activeListener);
+            activeListener = null;
+            Log.d(TAG, "Stopped listening to Firebase updates");
+        }
+    }
+
+    /**
+     * Callback interface for async operations
+     */
     public interface RepositoryCallback<T> {
         void onComplete(T result);
     }
 
-    //cleanup resources
+    /**
+     * Clean up resources
+     */
     public void cleanup() {
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
