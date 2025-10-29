@@ -84,18 +84,17 @@ public class MainActivity extends AppCompatActivity {
         //initialize firebase
         FirebaseApp.initializeApp(this);
 
-        //url
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-
-        String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
-        FirebaseDatabase.getInstance(databaseUrl).setPersistenceEnabled(true);
-
         //offline persistence
         try {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         } catch (Exception e) {
             //persistence already enabled
         }
+
+        //FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+        String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
+        FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
 
         contactManager = new EmergencyContactManager(this);
 

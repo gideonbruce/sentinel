@@ -54,6 +54,7 @@ public class AlertEntity {
         return alertType;
     }
 
+
     public void setAlertType(String alertType) {
         this.alertType = alertType;
     }
