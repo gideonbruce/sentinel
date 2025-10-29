@@ -23,6 +23,7 @@ public class AlertEntity {
     private boolean locationAvailable;
 
     //firebase key for syncing  not stored in room
+    @Ignore
     private String firebaseKey;
 
     public AlertEntity() {
@@ -107,12 +108,10 @@ public class AlertEntity {
         this.locationAvailable = locationAvailable;
     }
 
-    @Exclude
     public String getFirebaseKey() {
         return firebaseKey;
     }
 
-    @Exclude
     public void setFirebaseKey(String firebaseKey) {
         this.firebaseKey = firebaseKey;
     }
