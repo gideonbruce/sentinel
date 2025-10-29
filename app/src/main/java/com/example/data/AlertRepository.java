@@ -525,9 +525,11 @@ public class AlertRepository {
      * Clean up resources
      */
     public void cleanup() {
-        if (executorService != null && !executorService.isShutdown()) {
-            executorService.shutdown();
-        }
+        //if (executorService != null && !executorService.isShutdown()) {
+           // executorService.shutdown();
+        //}
+
+         Log.d(TAG, "Cleanup called (executor remains active for singleton)");
     }
 
     //reintializes firebase reference
