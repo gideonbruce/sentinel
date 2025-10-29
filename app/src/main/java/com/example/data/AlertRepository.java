@@ -68,7 +68,9 @@ public class AlertRepository {
         executorService.execute(() -> {
             try {
                 // Insert to local database first (on background thread)
-                alertDao.insert(alert);
+                long id = alertDao.insert(alert);
+                alert.setId((int) id);
+
 
                 // Sync to Firebase (callbacks will run on main thread automatically)
                 if (databaseReference != null) {
@@ -81,13 +83,13 @@ public class AlertRepository {
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Alert synced to Firebase successfully");
                                 // Update local database with Firebase key
-                                //executorService.execute(() -> {
-                                //    try {
-                                //        alertDao.update(alert);
-                                //    } catch (Exception e) {
-                                //        Log.e(TAG, "Failed to update alert with Firebase key", e);
-                                //    }
-                                //});
+                                executorService.execute(() -> {
+                                   try {
+                                       alertDao.update(alert);
+                                   } catch (Exception e) {
+                                       Log.e(TAG, "Failed to update alert with Firebase key", e);
+                                   }
+                                });
 
                                 if (callback != null) {
                                     mainHandler.post(() -> callback.onComplete(firebaseKey));
@@ -268,7 +270,6 @@ public class AlertRepository {
                     } catch (Exception e) {
                         Log.e(TAG, "Error inserting alert to local DB", e);
                     }
-                    //alertDao.insert(alert);
                 }
 
                 Log.d(TAG, "Synced " + alerts.size() + " alerts to local database");
