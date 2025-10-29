@@ -25,6 +25,14 @@ public abstract class AlertDatabase extends RoomDatabase {
         }
     };
 
+    static final Migration MIGRATION_1_2_WITH_COLUMN = new Migration(1, 2) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase database) {
+            // Example: If you want to add firebaseKey column to database
+            database.execSQL("ALTER TABLE alert_history ADD COLUMN firebaseKey TEXT");
+        }
+    };
+
     public static AlertDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {
             synchronized (AlertDatabase.class) {
@@ -39,5 +47,13 @@ public abstract class AlertDatabase extends RoomDatabase {
             }
         }
         return INSTANCE;
+    }
+
+    //testing
+    public static void closeDatabase() {
+        if (INSTANCE != null) {
+            INSTANCE.close();
+            INSTANCE = null;
+        }
     }
 }
