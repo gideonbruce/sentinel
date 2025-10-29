@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Objects;
 
 public class AlertRepository {
 
@@ -30,8 +31,10 @@ public class AlertRepository {
     private Handler mainHandler;
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
+    private static AlertRepository instance;
+    private String currentUserId;
 
-    public AlertRepository(Application application) {
+    private AlertRepository(Application application) {
         AlertDatabase db = AlertDatabase.getDatabase(application);
         alertDao = db.alertDao();
         executorService = Executors.newSingleThreadExecutor();
@@ -41,12 +44,30 @@ public class AlertRepository {
         initializeFirebaseReference();
     }
 
+    //singleton getter
+    public static synchronized AlertRepository getInstance(Application application) {
+        if (instance == null) {
+            instance = new AlertRepository(application);
+        } else {
+            // Check if user changed
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            String newUserId = currentUser != null ? currentUser.getUid() : null;
+
+            if (!Objects.equals(instance.currentUserId, newUserId)) {
+                Log.d(TAG, "User changed from " + instance.currentUserId + " to " + newUserId);
+                instance.initializeFirebaseReference();
+            }
+        }
+        return instance;
+    }
+
     private void initializeFirebaseReference() {
         Log.d(TAG, "=== INITIALIZING FIREBASE ===");
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         if (currentUser != null) {
-            Log.d(TAG, "Current user ID: " + currentUser.getUid());
+            currentUserId = currentUser.getUid();
+            Log.d(TAG, "Current user ID: " + currentUserId);
             Log.d(TAG, "User email: " + currentUser.getEmail());
 
             // Verify the ID token
@@ -65,16 +86,18 @@ public class AlertRepository {
             try {
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
                 databaseReference = database.getReference("users")
-                        .child(currentUser.getUid())
+                        .child(currentUserId)
                         .child("alerts");
 
-                Log.d(TAG, "✓ Firebase path: users/" + currentUser.getUid() + "/alerts");
+                Log.d(TAG, "✓ Firebase path: users/" + currentUserId + "/alerts");
                 Log.d(TAG, "✓ Firebase initialized successfully");
             } catch (Exception e) {
                 Log.e(TAG, "✗ Error initializing Firebase Database: " + e.getMessage(), e);
                 e.printStackTrace();
             }
         } else {
+            currentUserId = null;
+            databaseReference = null;
             Log.w(TAG, "⚠ No user logged in, Firebase sync disabled");
         }
     }
@@ -125,7 +148,7 @@ public class AlertRepository {
                                 Log.e(TAG, "Firebase path: " + newAlertRef.toString());
                                 Log.e(TAG, "User ID: " + (firebaseAuth.getCurrentUser() != null ? firebaseAuth.getCurrentUser().getUid() : "NULL"));
                                 Log.e(TAG, "User authenticated: " + (firebaseAuth.getCurrentUser() != null));
-                                
+
                                 if (callback != null) {
                                     mainHandler.post(() -> callback.onComplete(null));
                                 }
@@ -505,5 +528,11 @@ public class AlertRepository {
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
         }
+    }
+
+    //reintializes firebase reference
+    public void reinitializeFirebase() {
+        Log.d(TAG, "=== REINITIALIZING FIREBASE FOR NEW USER ===");
+        initializeFirebaseReference();
     }
 }

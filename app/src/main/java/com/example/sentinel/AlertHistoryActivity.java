@@ -65,13 +65,18 @@ public class AlertHistoryActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         tvSyncStatus = findViewById(R.id.tv_sync_status);
 
-        alertRepository = new AlertRepository(getApplication());
+        //new repository instance to get current user
+        Log.d(TAG, "Creating new AlertRepository instance");
+        alertRepository = AlertRepository.getInstance(getApplication());
 
         fabClearHistory.setOnClickListener(v -> showClearHistoryDialog());
 
         // Setup swipe to refresh
         swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Reinitialize Firebase for current user
+            alertRepository.reinitializeFirebase();
             loadAlertHistory();
+
             // Force sync from Firebase
             alertRepository.forceSyncFromFirebase(success -> runOnUiThread(() -> {
                 swipeRefreshLayout.setRefreshing(false);
@@ -292,5 +297,14 @@ public class AlertHistoryActivity extends AppCompatActivity {
         super.onResume();
         // Don't reload automatically on resume to prevent constant loading
         // User can manually refresh using swipe-to-refresh
+
+        Log.d(TAG, "onResume called");
+
+        //reinitialize firebase incase user changed
+        if (alertRepository != null) {
+            alertRepository.reinitializeFirebase();
+        }
+        //reload alerts for current user
+        loadAlertHistory();
     }
 }
