@@ -9,26 +9,27 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {AlertEntity.class}, version = 2, exportSchema = false)
+@Database(entities = {AlertEntity.class}, version = 3, exportSchema = false)
 public abstract class AlertDatabase extends RoomDatabase {
 
     public abstract AlertDao alertDao();
 
     private static volatile AlertDatabase INSTANCE;
 
-    //migration from version 1 to 2 adding firebase key field
+    // Migration from version 1 to 2 - adding firebaseKey field
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            //firebaseKey is not stored in Room, so no migration needed
-            // pump version number anyway
+            // Add firebaseKey column to the table
+            database.execSQL("ALTER TABLE alert_history ADD COLUMN firebaseKey TEXT");
         }
     };
 
-    static final Migration MIGRATION_1_2_WITH_COLUMN = new Migration(1, 2) {
+    // Migration from version 2 to 3 (if you already have some v2 databases)
+    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Example: If you want to add firebaseKey column to database
+            // Check if column exists, if not add it
             database.execSQL("ALTER TABLE alert_history ADD COLUMN firebaseKey TEXT");
         }
     };
@@ -38,9 +39,9 @@ public abstract class AlertDatabase extends RoomDatabase {
             synchronized (AlertDatabase.class) {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                            AlertDatabase.class, "alert_database")
-                            .addMigrations(MIGRATION_1_2)
-                            //Using fallbackToDestructiveMigration()
+                                    AlertDatabase.class, "alert_database")
+                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                            // Keep fallback for development, remove in production
                             .fallbackToDestructiveMigration()
                             .build();
                 }
@@ -49,7 +50,7 @@ public abstract class AlertDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-    //testing
+    // For testing
     public static void closeDatabase() {
         if (INSTANCE != null) {
             INSTANCE.close();

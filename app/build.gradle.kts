@@ -33,6 +33,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isDebuggable = true
+            enableAndroidTestCoverage = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -64,10 +68,10 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.firebase:firebase-vertexai:16.0.1")
+    implementation("com.google.firebase:firebase-vertexai:16.5.0")
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.10.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
