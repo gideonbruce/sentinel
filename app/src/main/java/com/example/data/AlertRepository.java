@@ -42,8 +42,13 @@ public class AlertRepository {
     }
 
     private void initializeFirebaseReference() {
+        Log.d(TAG, "=== INITIALIZING FIREBASE ===");
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+
         if (currentUser != null) {
+            Log.d(TAG, "Current user ID: " + currentUser.getUid());
+            Log.d(TAG, "User email: " + currentUser.getEmail());
+
             String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
 
             try {
@@ -52,12 +57,14 @@ public class AlertRepository {
                         .child(currentUser.getUid())
                         .child("alerts");
 
-                Log.d(TAG, "Firebase initialized with region: asia-southeast1");
+                Log.d(TAG, "✓ Firebase path: users/" + currentUser.getUid() + "/alerts");
+                Log.d(TAG, "✓ Firebase initialized successfully");
             } catch (Exception e) {
-                Log.e(TAG, "Error initializing Firebase Database", e);
+                Log.e(TAG, "✗ Error initializing Firebase Database: " + e.getMessage(), e);
+                e.printStackTrace();
             }
         } else {
-            Log.w(TAG, "No user logged in, Firebase sync disabled");
+            Log.w(TAG, "⚠ No user logged in, Firebase sync disabled");
         }
     }
 
@@ -65,21 +72,30 @@ public class AlertRepository {
      * Insert alert to both local Room database and Firebase
      */
     public void insert(AlertEntity alert, RepositoryCallback<String> callback) {
+        Log.d(TAG, "=== INSERT ALERT START ===");
+        Log.d(TAG, "Alert type: " + alert.getAlertType());
+        Log.d(TAG, "Timestamp: " + alert.getTimestamp());
+        Log.d(TAG, "Contact: " + alert.getContactName() + " - " + alert.getContactPhone());
+
         executorService.execute(() -> {
             try {
+                Log.d(TAG, "Inserting to Room database...");
                 // Insert to local database first (on background thread)
                 alertDao.insert(alert);
+                Log.d(TAG, "✓ Room insert successful");
 
                 // Sync to Firebase (callbacks will run on main thread automatically)
                 if (databaseReference != null) {
+                    Log.d(TAG, "Firebase reference exists, pushing to Firebase...");
                     DatabaseReference newAlertRef = databaseReference.push();
                     String firebaseKey = newAlertRef.getKey();
+                    Log.d(TAG, "Generated Firebase key: " + firebaseKey);
 
                     alert.setFirebaseKey(firebaseKey);
 
                     newAlertRef.setValue(alert)
                             .addOnSuccessListener(aVoid -> {
-                                Log.d(TAG, "Alert synced to Firebase successfully");
+                                Log.d(TAG, "Alert synced to Firebase successfully" + firebaseKey);
                                 // Update local database with Firebase key
                                 //executorService.execute(() -> {
                                 //    try {
@@ -106,7 +122,8 @@ public class AlertRepository {
                     }
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error inserting alert", e);
+                Log.e(TAG, " x Error inserting alert:" + e.getMessage(), e);
+                e.printStackTrace();
                 if (callback != null) {
                     mainHandler.post(() -> callback.onComplete(null));
                 }
@@ -129,25 +146,37 @@ public class AlertRepository {
      * Get alerts from Firebase (single fetch, not real-time)
      */
     private void getAlertsFromFirebase(RepositoryCallback<List<AlertEntity>> callback) {
+        Log.d(TAG, "=== FETCHING FROM FIREBASE ===");
+        Log.d(TAG, "Database reference: " + (databaseReference != null ? databaseReference.toString() : "NULL"));
+
         Query query = databaseReference.orderByChild("timestamp");
 
         // Firebase listeners run on main thread by default, which is fine for async operations
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                Log.d(TAG, "Firebase onDataChange triggered");
+                Log.d(TAG, "DataSnapshot exists: " + dataSnapshot.exists());
+                Log.d(TAG, "Children count: " + dataSnapshot.getChildrenCount());
+
                 // Parse data on background thread to avoid blocking main thread
                 executorService.execute(() -> {
                     List<AlertEntity> alerts = new ArrayList<>();
 
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         try {
+                            Log.d(TAG, "Processing snapshot key: " + snapshot.getKey());
                             AlertEntity alert = snapshot.getValue(AlertEntity.class);
                             if (alert != null) {
                                 alert.setFirebaseKey(snapshot.getKey());
                                 alerts.add(alert);
+                                Log.d(TAG, "✓ Parsed alert: " + alert.getAlertType() + " at " + alert.getTimestamp());
+                            } else {
+                                Log.w(TAG, "⚠ Alert is null for key: " + snapshot.getKey());
                             }
                         } catch (Exception e) {
-                            Log.e(TAG, "Error parsing alert from Firebase", e);
+                            Log.e(TAG, "Error parsing alert from Firebase" + e.getMessage(), e);
+                            Log.e(TAG, "Snapshot data: " + snapshot.toString());
                         }
                     }
 
@@ -169,7 +198,11 @@ public class AlertRepository {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e(TAG, "✗ Firebase query cancelled: " + databaseError.getMessage());
+                Log.e(TAG, "Error code: " + databaseError.getCode());
+                Log.e(TAG, "Error details: " + databaseError.getDetails());
                 Log.e(TAG, "Firebase query cancelled", databaseError.toException());
+                databaseError.toException().printStackTrace();
                 getAlertsFromLocal(callback);
             }
         });
@@ -230,20 +263,25 @@ public class AlertRepository {
      * Get alerts from local Room database
      */
     private void getAlertsFromLocal(RepositoryCallback<List<AlertEntity>> callback) {
+        Log.d(TAG, "=== FETCHING FROM LOCAL DATABASE ===");
         executorService.execute(() -> {
             try {
                 List<AlertEntity> alerts = alertDao.getAllAlerts();
+                Log.d(TAG, "✓ Retrieved " + alerts.size() + " alerts from Room");
+
+                for (AlertEntity alert : alerts) {
+                    Log.d(TAG, "Local alert: " + alert.getAlertType() + " | " + alert.getTimestamp());
+                }
 
                 Collections.sort(alerts, (a1, a2) ->
                         Long.compare(a2.getTimestamp(), a1.getTimestamp()));
-
-                Log.d(TAG, "Loaded " + alerts.size() + " alerts from local database");
 
                 if (callback != null) {
                     mainHandler.post(() -> callback.onComplete(alerts));
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Error loading alerts from local database", e);
+                Log.e(TAG, "✗ Error loading alerts from local database: " + e.getMessage(), e);
+                e.printStackTrace();
                 if (callback != null) {
                     mainHandler.post(() -> callback.onComplete(new ArrayList<>()));
                 }
@@ -255,25 +293,31 @@ public class AlertRepository {
      * Sync Firebase alerts to local database for offline access
      */
     private void syncToLocalDatabase(List<AlertEntity> alerts) {
+        Log.d(TAG, "=== SYNCING TO LOCAL DATABASE ===");
+        Log.d(TAG, "Alerts to sync: " + alerts.size());
+
         executorService.execute(() -> {
             try {
-                // Clear existing local data
+                Log.d(TAG, "Deleting all existing local alerts...");
                 alertDao.deleteAll();
+                Log.d(TAG, "✓ Local database cleared");
 
-                // Insert all alerts from Firebase
-                //firebase key will be ignored due to @Ignore annotation
+                int successCount = 0;
                 for (AlertEntity alert : alerts) {
                     try {
                         alertDao.insert(alert);
+                        successCount++;
+                        Log.d(TAG, "✓ Synced alert " + successCount + "/" + alerts.size() + ": " + alert.getAlertType());
                     } catch (Exception e) {
-                        Log.e(TAG, "Error inserting alert to local DB", e);
+                        Log.e(TAG, "✗ Error inserting alert to local DB: " + e.getMessage(), e);
+                        Log.e(TAG, "Failed alert data: Type=" + alert.getAlertType() + ", Time=" + alert.getTimestamp());
                     }
-                    //alertDao.insert(alert);
                 }
 
-                Log.d(TAG, "Synced " + alerts.size() + " alerts to local database");
+                Log.d(TAG, "✓ Synced " + successCount + "/" + alerts.size() + " alerts to local database");
             } catch (Exception e) {
-                Log.e(TAG, "Error syncing to local database", e);
+                Log.e(TAG, "✗ Error syncing to local database: " + e.getMessage(), e);
+                e.printStackTrace();
             }
         });
     }

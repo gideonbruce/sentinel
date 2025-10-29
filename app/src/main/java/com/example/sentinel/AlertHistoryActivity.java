@@ -118,16 +118,27 @@ public class AlertHistoryActivity extends AppCompatActivity {
     }
 
     private void loadAlertHistory() {
+        Log.d(TAG, "=== LOADING ALERT HISTORY ===");
         showLoading(true);
 
         alertRepository.getAllAlerts(alerts -> runOnUiThread(() -> {
             showLoading(false);
 
+            Log.d(TAG, "Received alerts callback");
+            Log.d(TAG, "Alerts received: " + (alerts != null ? alerts.size() : "NULL"));
+
             if (alerts == null || alerts.isEmpty()) {
+                Log.d(TAG, "No alerts to display - showing empty state");
                 tvEmptyState.setVisibility(View.VISIBLE);
                 recyclerView.setVisibility(View.GONE);
                 fabClearHistory.setVisibility(View.GONE);
             } else {
+                Log.d(TAG, "✓ Displaying " + alerts.size() + " alerts");
+                for (int i = 0; i < Math.min(3, alerts.size()); i++) {
+                    AlertEntity alert = alerts.get(i);
+                    Log.d(TAG, "Alert " + (i+1) + ": " + alert.getAlertType() + " | " + alert.getTimestamp());
+                }
+
                 tvEmptyState.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
                 fabClearHistory.setVisibility(View.VISIBLE);
