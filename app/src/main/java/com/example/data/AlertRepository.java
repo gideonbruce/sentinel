@@ -261,8 +261,14 @@ public class AlertRepository {
                 alertDao.deleteAll();
 
                 // Insert all alerts from Firebase
+                //firebase key will be ignored due to @Ignore annotation
                 for (AlertEntity alert : alerts) {
-                    alertDao.insert(alert);
+                    try {
+                        alertDao.insert(alert);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error inserting alert to local DB", e);
+                    }
+                    //alertDao.insert(alert);
                 }
 
                 Log.d(TAG, "Synced " + alerts.size() + " alerts to local database");
