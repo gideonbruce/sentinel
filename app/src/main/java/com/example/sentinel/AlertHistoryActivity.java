@@ -2,6 +2,7 @@ package com.example.sentinel;
 
 import static android.content.ContentValues.TAG;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -124,7 +125,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         alertRepository.getAllAlerts(alerts -> runOnUiThread(() -> {
             showLoading(false);
 
-            Log.d(TAG, "Received alerts callback");
+            Log.d(TAG, "Received alerts callback successfully");
             Log.d(TAG, "Alerts received: " + (alerts != null ? alerts.size() : "NULL"));
 
             if (alerts == null || alerts.isEmpty()) {
@@ -166,6 +167,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         builder.show();
     }
 
+    @SuppressLint("DefaultLocale")
     private String buildAlertDetails(AlertEntity alert) {
         StringBuilder details = new StringBuilder();
 
