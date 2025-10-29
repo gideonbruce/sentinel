@@ -66,7 +66,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="No Alert History"
+                        android:text="@string/no_alert_history"
                         android:textSize="20sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
@@ -75,7 +75,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Your emergency alerts will appear here"
+                        android:text="@string/your_emergency_alerts_will_appear_here"
                         android:textSize="14sp"
                         android:textColor="#757575"
                         android:gravity="center" />
@@ -100,7 +100,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_delete"
-        android:contentDescription="Clear history"
+        android:contentDescription="@string/clear_history_again"
         app:backgroundTint="#F44336"
         app:tint="#FFFFFF"
         android:visibility="gone" />

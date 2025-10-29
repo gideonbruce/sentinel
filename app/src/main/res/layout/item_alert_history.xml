@@ -47,7 +47,7 @@
                     android:id="@+id/tv_alert_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Emergency Alert"
+                    android:text="@string/emergency_alert"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textColor="#212121" />
@@ -57,7 +57,7 @@
                     android:id="@+id/tv_timestamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Oct 29, 2024 10:30 AM"
+                    android:text="@string/oct_29_2024_10_30_am"
                     android:textSize="12sp"
                     android:textColor="#757575"
                     android:layout_marginTop="2dp" />
@@ -70,8 +70,8 @@
                 android:layout_height="40dp"
                 android:src="@android:drawable/ic_menu_delete"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Delete alert"
-                android:tint="#F44336" />
+                android:contentDescription="@string/delete_alert"
+                app:tint="#F44336" />
         </LinearLayout>
 
         <!-- Divider -->
@@ -101,7 +101,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="John Doe • +1234567890"
+                android:text="@string/john_doe_1234567890"
                 android:textSize="14sp"
                 android:textColor="#424242"
                 android:ellipsize="end"
@@ -127,7 +127,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Location available"
+                android:text="@string/location_available"
                 android:textSize="14sp"
                 android:textColor="#1976D2" />
 
@@ -138,9 +138,9 @@
                 android:layout_height="36dp"
                 android:src="@android:drawable/ic_dialog_map"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="View on map"
-                android:tint="#1976D2"
-                android:visibility="visible" />
+                android:contentDescription="@string/view_on_map"
+                android:visibility="visible"
+                app:tint="#1976D2" />
         </LinearLayout>
 
     </LinearLayout>

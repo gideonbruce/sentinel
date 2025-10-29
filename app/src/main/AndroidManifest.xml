@@ -28,7 +28,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".SentinelApplication"
         android:theme="@style/Theme.Sentinel">
+
+        <meta-data
+            android:name="com.google.firebase.database.DatabaseUrl"
+            android:value="https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app" />
 
         <!-- Login activity -->
         <activity

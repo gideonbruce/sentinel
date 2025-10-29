@@ -1,8 +1,11 @@
 package com.example.sentinel;
 
+import static android.content.ContentValues.TAG;
+
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -20,6 +23,7 @@ import com.example.data.AlertRepository;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 
@@ -33,6 +37,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progressBar;
     private TextView tvSyncStatus;
+    private ValueEventListener activeListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -258,12 +263,13 @@ public class AlertHistoryActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         // Clean up repository resources if needed
         if (alertRepository != null) {
-            alertRepository.stopListeningToFirebase();
+            //alertRepository.stopListeningToFirebase();
             alertRepository.cleanup();
         }
     }

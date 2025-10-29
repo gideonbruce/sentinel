@@ -28,8 +28,6 @@ public class AlertRepository {
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
 
-    private ValueEventListener activeListener;
-
     public AlertRepository(Application application) {
         AlertDatabase db = AlertDatabase.getDatabase(application);
         alertDao = db.alertDao();
@@ -43,11 +41,22 @@ public class AlertRepository {
     private void initializeFirebaseReference() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
-            // Each user has their own alerts path
-            databaseReference = FirebaseDatabase.getInstance()
-                    .getReference("users")
-                    .child(currentUser.getUid())
-                    .child("alerts");
+            // Use the correct database URL for Asia Southeast 1 region
+            String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+            try {
+                // Get Firebase Database instance with correct URL
+                FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
+
+                // Each user has their own alerts path
+                databaseReference = database.getReference("users")
+                        .child(currentUser.getUid())
+                        .child("alerts");
+
+                Log.d(TAG, "Firebase initialized with region: asia-southeast1");
+            } catch (Exception e) {
+                Log.e(TAG, "Error initializing Firebase Database", e);
+            }
         } else {
             Log.w(TAG, "No user logged in, Firebase sync disabled");
         }
@@ -405,14 +414,6 @@ public class AlertRepository {
             if (callback != null) {
                 callback.onComplete(false);
             }
-        }
-    }
-
-    public void stopListeningToFirebase() {
-        if (databaseReference != null && activeListener != null) {
-            databaseReference.removeEventListener(activeListener);
-            activeListener = null;
-            Log.d(TAG, "Stopped listening to Firebase updates");
         }
     }
 

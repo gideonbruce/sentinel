@@ -34,4 +34,13 @@
     <string name="no_alerts_yet">No alerts yet</string>
     <string name="your_alert_history_will_appear_here">Your alert history will appear here</string>
     <string name="clear_history">Clear history</string>
+    <string name="emergency_alert">Emergency Alert</string>
+    <string name="oct_29_2024_10_30_am">Oct 29, 2024 10:30 AM</string>
+    <string name="delete_alert">Delete alert</string>
+    <string name="john_doe_1234567890">John Doe • +1234567890</string>
+    <string name="location_available">Location available</string>
+    <string name="view_on_map">View on map</string>
+    <string name="no_alert_history">No Alert History</string>
+    <string name="your_emergency_alerts_will_appear_here">Your emergency alerts will appear here</string>
+    <string name="clear_history_again">Clear history</string>
 </resources>

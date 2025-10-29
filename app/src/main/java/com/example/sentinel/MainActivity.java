@@ -42,11 +42,13 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.Objects;
 
@@ -78,6 +80,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        //initialize firebase
+        FirebaseApp.initializeApp(this);
+
+        //url
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+        String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
+        FirebaseDatabase.getInstance(databaseUrl).setPersistenceEnabled(true);
+
+        //offline persistence
+        try {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        } catch (Exception e) {
+            //persistence already enabled
+        }
 
         contactManager = new EmergencyContactManager(this);
 
