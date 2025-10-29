@@ -1,88 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Sync Status -->
-    <TextView
-        android:id="@+id/tv_sync_status"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/synced_with_cloud"
-        android:textSize="12sp"
-        android:textColor="#FFFFFF"
-        android:background="#1976D2"
-        android:padding="12dp"
-        android:gravity="center"
-        android:textStyle="bold" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <!-- Swipe to Refresh Layout -->
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        <!-- Sync Status Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:padding="8dp"
+            android:gravity="center"
+            android:elevation="2dp">
 
-        <FrameLayout
+            <TextView
+                android:id="@+id/tv_sync_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Synced with cloud ☁️"
+                android:textSize="12sp"
+                android:textColor="#4CAF50" />
+        </LinearLayout>
+
+        <!-- Swipe to Refresh Layout -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- Empty State -->
-            <LinearLayout
-                android:id="@+id/tv_empty_state"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:visibility="gone">
+                android:layout_height="match_parent">
 
-                <TextView
+                <!-- RecyclerView for Alerts -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rv_alert_history"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:padding="8dp" />
+
+                <!-- Empty State -->
+                <LinearLayout
+                    android:id="@+id/tv_empty_state"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="32dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="📋"
+                        android:textSize="64sp"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No Alert History"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Your emergency alerts will appear here"
+                        android:textSize="14sp"
+                        android:textColor="#757575"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <!-- Loading Indicator -->
+                <ProgressBar
+                    android:id="@+id/progress_bar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🚨"
-                    android:textSize="64sp"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/no_alerts_yet"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/your_alert_history_will_appear_here"
-                    android:textSize="14sp"
-                    android:textColor="#757575" />
-            </LinearLayout>
-
-            <!-- RecyclerView -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_alert_history"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="16dp"
-                android:clipToPadding="false" />
-
-            <!-- Progress Bar -->
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="gone" />
-        </FrameLayout>
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-    <!-- FAB Clear History -->
+    <!-- Floating Action Button for Clear History -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_clear_history"
         android:layout_width="wrap_content"
@@ -90,8 +100,9 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_delete"
-        android:contentDescription="@string/clear_history"
-        app:backgroundTint="#D32F2F"
+        android:contentDescription="Clear history"
+        app:backgroundTint="#F44336"
+        app:tint="#FFFFFF"
         android:visibility="gone" />
 
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

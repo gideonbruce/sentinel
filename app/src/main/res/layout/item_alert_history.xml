@@ -4,8 +4,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,10 +16,25 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Header Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <!-- Alert Type Icon -->
+            <TextView
+                android:id="@+id/tv_alert_icon"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="🚨"
+                android:textSize="28sp"
+                android:gravity="center"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#FFEBEE"
+                android:layout_marginEnd="12dp" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -24,65 +42,107 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
+                <!-- Alert Type -->
                 <TextView
                     android:id="@+id/tv_alert_type"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Emergency Alert"
-                    android:textSize="18sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/holo_red_dark" />
+                    android:textColor="#212121" />
 
+                <!-- Timestamp -->
                 <TextView
                     android:id="@+id/tv_timestamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Oct 28, 2024 10:30 AM"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/darker_gray" />
-
-                <TextView
-                    android:id="@+id/tv_contact"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Contact Name • +1234567890"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/tv_location"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Location available"
+                    android:text="Oct 29, 2024 10:30 AM"
                     android:textSize="12sp"
-                    android:textColor="@android:color/holo_green_dark" />
+                    android:textColor="#757575"
+                    android:layout_marginTop="2dp" />
             </LinearLayout>
 
-            <LinearLayout
+            <!-- Delete Button -->
+            <ImageButton
+                android:id="@+id/btn_delete"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Delete alert"
+                android:tint="#F44336" />
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="8dp" />
+
+        <!-- Contact Information -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center">
+                android:text="👤"
+                android:textSize="16sp"
+                android:layout_marginEnd="8dp" />
 
-                <ImageButton
-                    android:id="@+id/btn_location"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_dialog_map"
-                    android:contentDescription="View location" />
-
-                <ImageButton
-                    android:id="@+id/btn_delete"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_delete"
-                    android:contentDescription="Delete alert" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/tv_contact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="John Doe • +1234567890"
+                android:textSize="14sp"
+                android:textColor="#424242"
+                android:ellipsize="end"
+                android:maxLines="1" />
         </LinearLayout>
+
+        <!-- Location Information -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📍"
+                android:textSize="16sp"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tv_location"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Location available"
+                android:textSize="14sp"
+                android:textColor="#1976D2" />
+
+            <!-- View Location Button -->
+            <ImageButton
+                android:id="@+id/btn_location"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_dialog_map"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="View on map"
+                android:tint="#1976D2"
+                android:visibility="visible" />
+        </LinearLayout>
+
     </LinearLayout>
+
 </androidx.cardview.widget.CardView>
