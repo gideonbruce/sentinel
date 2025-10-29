@@ -81,13 +81,13 @@ public class AlertRepository {
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Alert synced to Firebase successfully");
                                 // Update local database with Firebase key
-                                executorService.execute(() -> {
-                                    try {
-                                        alertDao.update(alert);
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "Failed to update alert with Firebase key", e);
-                                    }
-                                });
+                                //executorService.execute(() -> {
+                                //    try {
+                                //        alertDao.update(alert);
+                                //    } catch (Exception e) {
+                                //        Log.e(TAG, "Failed to update alert with Firebase key", e);
+                                //    }
+                                //});
 
                                 if (callback != null) {
                                     mainHandler.post(() -> callback.onComplete(firebaseKey));

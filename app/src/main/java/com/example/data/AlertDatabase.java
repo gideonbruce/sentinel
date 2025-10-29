@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {AlertEntity.class}, version = 4, exportSchema = false)
+@Database(entities = {AlertEntity.class}, version = 5, exportSchema = false)
 public abstract class AlertDatabase extends RoomDatabase {
 
     public abstract AlertDao alertDao();
