@@ -49,6 +49,17 @@ public class AlertRepository {
             Log.d(TAG, "Current user ID: " + currentUser.getUid());
             Log.d(TAG, "User email: " + currentUser.getEmail());
 
+            // Verify the ID token
+            currentUser.getIdToken(true).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    String idToken = task.getResult().getToken();
+                    Log.d(TAG, "✓ ID Token refreshed successfully");
+                    Log.d(TAG, "Token preview: " + (idToken != null ? idToken.substring(0, Math.min(50, idToken.length())) + "..." : "null"));
+                } else {
+                    Log.e(TAG, "✗ Failed to get ID token", task.getException());
+                }
+            });
+
             String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
 
             try {
@@ -110,7 +121,11 @@ public class AlertRepository {
                                 }
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to sync alert to Firebase", e);
+                                Log.e(TAG, "x Failed to sync alert to Firebase: " + e.getMessage(), e);
+                                Log.e(TAG, "Firebase path: " + newAlertRef.toString());
+                                Log.e(TAG, "User ID: " + (firebaseAuth.getCurrentUser() != null ? firebaseAuth.getCurrentUser().getUid() : "NULL"));
+                                Log.e(TAG, "User authenticated: " + (firebaseAuth.getCurrentUser() != null));
+                                
                                 if (callback != null) {
                                     mainHandler.post(() -> callback.onComplete(null));
                                 }
