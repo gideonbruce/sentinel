@@ -135,7 +135,7 @@ public class EmergencyShakeService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(volumeButtonReceiver, filter);
+            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         }
     }
 
@@ -414,7 +414,7 @@ public class EmergencyShakeService extends Service {
                     contactPhone,
                     locationAvailable
             );
-            alertRepository.insert(alert);
+            alertRepository.insert(alert, success -> {});
 
         } catch (Exception e) {
             e.printStackTrace();

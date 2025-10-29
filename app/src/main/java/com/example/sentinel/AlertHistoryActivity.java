@@ -28,7 +28,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private AlertHistoryAdapter adapter;
     private AlertRepository alertRepository;
-    private TextView tvEmptyState;
+    private View tvEmptyState;
     private FloatingActionButton fabClearHistory;
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progressBar;

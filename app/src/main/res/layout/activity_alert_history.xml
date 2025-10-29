@@ -11,7 +11,7 @@
         android:id="@+id/tv_sync_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Synced with cloud ☁️"
+        android:text="@string/synced_with_cloud"
         android:textSize="12sp"
         android:textColor="#FFFFFF"
         android:background="#1976D2"
@@ -49,7 +49,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="No alerts yet"
+                    android:text="@string/no_alerts_yet"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -58,7 +58,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Your alert history will appear here"
+                    android:text="@string/your_alert_history_will_appear_here"
                     android:textSize="14sp"
                     android:textColor="#757575" />
             </LinearLayout>
@@ -90,7 +90,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_menu_delete"
-        android:contentDescription="Clear history"
+        android:contentDescription="@string/clear_history"
         app:backgroundTint="#D32F2F"
         android:visibility="gone" />
 

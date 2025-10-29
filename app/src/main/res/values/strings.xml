@@ -30,4 +30,8 @@
     <string name="pick_contact">Pick Contact</string>
     <string name="phone_number">Phone Number *</string>
     <string name="shake_your_phone_3_times_or_use_volume_buttons_for_different_alerts_5x_vol_down_silent_3x_vol_up_police_hold_vol_down_5s_medical">Shake your phone 3 times OR use volume buttons for different alerts: 5x Vol Down (silent), 3x Vol Up (police), Hold Vol Down 5s (medical)</string>
+    <string name="synced_with_cloud">Synced with cloud ☁️</string>
+    <string name="no_alerts_yet">No alerts yet</string>
+    <string name="your_alert_history_will_appear_here">Your alert history will appear here</string>
+    <string name="clear_history">Clear history</string>
 </resources>
