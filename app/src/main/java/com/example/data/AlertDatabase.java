@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.migration.Migration;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-@Database(entities = {AlertEntity.class}, version = 3, exportSchema = false)
+@Database(entities = {AlertEntity.class}, version = 4, exportSchema = false)
 public abstract class AlertDatabase extends RoomDatabase {
 
     public abstract AlertDao alertDao();
@@ -20,16 +20,6 @@ public abstract class AlertDatabase extends RoomDatabase {
     static final Migration MIGRATION_1_2 = new Migration(1, 2) {
         @Override
         public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Add firebaseKey column to the table
-            database.execSQL("ALTER TABLE alert_history ADD COLUMN firebaseKey TEXT");
-        }
-    };
-
-    // Migration from version 2 to 3 (if you already have some v2 databases)
-    static final Migration MIGRATION_2_3 = new Migration(2, 3) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase database) {
-            // Check if column exists, if not add it
             database.execSQL("ALTER TABLE alert_history ADD COLUMN firebaseKey TEXT");
         }
     };
@@ -40,8 +30,8 @@ public abstract class AlertDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AlertDatabase.class, "alert_database")
-                            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-                            // Keep fallback for development, remove in production
+                            // fallbackToDestructiveMigration will handle all migration failures
+                            // by recreating the database from scratch
                             .fallbackToDestructiveMigration()
                             .build();
                 }

@@ -1,6 +1,8 @@
 package com.example.data;
 
 import android.app.Application;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -25,6 +27,7 @@ public class AlertRepository {
     private static final String TAG = "AlertRepository";
     private AlertDao alertDao;
     private ExecutorService executorService;
+    private Handler mainHandler;
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
 
@@ -32,23 +35,19 @@ public class AlertRepository {
         AlertDatabase db = AlertDatabase.getDatabase(application);
         alertDao = db.alertDao();
         executorService = Executors.newSingleThreadExecutor();
+        mainHandler = new Handler(Looper.getMainLooper());
         firebaseAuth = FirebaseAuth.getInstance();
 
-        // Initialize Firebase reference with user-specific path
         initializeFirebaseReference();
     }
 
     private void initializeFirebaseReference() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
-            // Use the correct database URL for Asia Southeast 1 region
             String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
 
             try {
-                // Get Firebase Database instance with correct URL
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
-
-                // Each user has their own alerts path
                 databaseReference = database.getReference("users")
                         .child(currentUser.getUid())
                         .child("alerts");
@@ -68,40 +67,48 @@ public class AlertRepository {
     public void insert(AlertEntity alert, RepositoryCallback<String> callback) {
         executorService.execute(() -> {
             try {
-                // Insert to local database first
+                // Insert to local database first (on background thread)
                 alertDao.insert(alert);
 
-                // Sync to Firebase if user is logged in
+                // Sync to Firebase (callbacks will run on main thread automatically)
                 if (databaseReference != null) {
                     DatabaseReference newAlertRef = databaseReference.push();
                     String firebaseKey = newAlertRef.getKey();
 
-                    // Store firebase key in the alert
                     alert.setFirebaseKey(firebaseKey);
 
                     newAlertRef.setValue(alert)
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Alert synced to Firebase successfully");
+                                // Update local database with Firebase key
+                                executorService.execute(() -> {
+                                    try {
+                                        alertDao.update(alert);
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Failed to update alert with Firebase key", e);
+                                    }
+                                });
+
                                 if (callback != null) {
-                                    callback.onComplete(firebaseKey);
+                                    mainHandler.post(() -> callback.onComplete(firebaseKey));
                                 }
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to sync alert to Firebase", e);
                                 if (callback != null) {
-                                    callback.onComplete(null);
+                                    mainHandler.post(() -> callback.onComplete(null));
                                 }
                             });
                 } else {
                     Log.w(TAG, "Firebase reference not initialized, alert saved locally only");
                     if (callback != null) {
-                        callback.onComplete(null);
+                        mainHandler.post(() -> callback.onComplete(null));
                     }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error inserting alert", e);
                 if (callback != null) {
-                    callback.onComplete(null);
+                    mainHandler.post(() -> callback.onComplete(null));
                 }
             }
         });
@@ -114,7 +121,6 @@ public class AlertRepository {
         if (databaseReference != null) {
             getAlertsFromFirebase(callback);
         } else {
-            // Fallback to local database if no Firebase connection
             getAlertsFromLocal(callback);
         }
     }
@@ -125,45 +131,45 @@ public class AlertRepository {
     private void getAlertsFromFirebase(RepositoryCallback<List<AlertEntity>> callback) {
         Query query = databaseReference.orderByChild("timestamp");
 
-        // Use addListenerForSingleValueEvent instead of addValueEventListener
-        // This fetches data once and doesn't keep listening
+        // Firebase listeners run on main thread by default, which is fine for async operations
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<AlertEntity> alerts = new ArrayList<>();
+                // Parse data on background thread to avoid blocking main thread
+                executorService.execute(() -> {
+                    List<AlertEntity> alerts = new ArrayList<>();
 
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    try {
-                        AlertEntity alert = snapshot.getValue(AlertEntity.class);
-                        if (alert != null) {
-                            // Store Firebase key for later operations
-                            alert.setFirebaseKey(snapshot.getKey());
-                            alerts.add(alert);
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        try {
+                            AlertEntity alert = snapshot.getValue(AlertEntity.class);
+                            if (alert != null) {
+                                alert.setFirebaseKey(snapshot.getKey());
+                                alerts.add(alert);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing alert from Firebase", e);
                         }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error parsing alert from Firebase", e);
                     }
-                }
 
-                // Sort by timestamp descending (newest first)
-                Collections.sort(alerts, (a1, a2) ->
-                        Long.compare(a2.getTimestamp(), a1.getTimestamp()));
+                    // Sort by timestamp descending (newest first)
+                    Collections.sort(alerts, (a1, a2) ->
+                            Long.compare(a2.getTimestamp(), a1.getTimestamp()));
 
-                Log.d(TAG, "Loaded " + alerts.size() + " alerts from Firebase");
+                    Log.d(TAG, "Loaded " + alerts.size() + " alerts from Firebase");
 
-                if (callback != null) {
-                    callback.onComplete(alerts);
-                }
+                    // Return results on main thread
+                    if (callback != null) {
+                        mainHandler.post(() -> callback.onComplete(alerts));
+                    }
 
-                // Optionally sync to local database for offline access
-                syncToLocalDatabase(alerts);
+                    // Sync to local database in background
+                    syncToLocalDatabase(alerts);
+                });
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e(TAG, "Firebase query cancelled", databaseError.toException());
-
-                // Fallback to local database on error
                 getAlertsFromLocal(callback);
             }
         });
@@ -183,30 +189,33 @@ public class AlertRepository {
         query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<AlertEntity> alerts = new ArrayList<>();
+                // Process data on background thread
+                executorService.execute(() -> {
+                    List<AlertEntity> alerts = new ArrayList<>();
 
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    try {
-                        AlertEntity alert = snapshot.getValue(AlertEntity.class);
-                        if (alert != null) {
-                            alert.setFirebaseKey(snapshot.getKey());
-                            alerts.add(alert);
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        try {
+                            AlertEntity alert = snapshot.getValue(AlertEntity.class);
+                            if (alert != null) {
+                                alert.setFirebaseKey(snapshot.getKey());
+                                alerts.add(alert);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing alert from Firebase", e);
                         }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error parsing alert from Firebase", e);
                     }
-                }
 
-                Collections.sort(alerts, (a1, a2) ->
-                        Long.compare(a2.getTimestamp(), a1.getTimestamp()));
+                    Collections.sort(alerts, (a1, a2) ->
+                            Long.compare(a2.getTimestamp(), a1.getTimestamp()));
 
-                Log.d(TAG, "Real-time update: " + alerts.size() + " alerts");
+                    Log.d(TAG, "Real-time update: " + alerts.size() + " alerts");
 
-                if (callback != null) {
-                    callback.onComplete(alerts);
-                }
+                    if (callback != null) {
+                        mainHandler.post(() -> callback.onComplete(alerts));
+                    }
 
-                syncToLocalDatabase(alerts);
+                    syncToLocalDatabase(alerts);
+                });
             }
 
             @Override
@@ -225,19 +234,18 @@ public class AlertRepository {
             try {
                 List<AlertEntity> alerts = alertDao.getAllAlerts();
 
-                // Sort by timestamp descending
                 Collections.sort(alerts, (a1, a2) ->
                         Long.compare(a2.getTimestamp(), a1.getTimestamp()));
 
                 Log.d(TAG, "Loaded " + alerts.size() + " alerts from local database");
 
                 if (callback != null) {
-                    callback.onComplete(alerts);
+                    mainHandler.post(() -> callback.onComplete(alerts));
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error loading alerts from local database", e);
                 if (callback != null) {
-                    callback.onComplete(new ArrayList<>());
+                    mainHandler.post(() -> callback.onComplete(new ArrayList<>()));
                 }
             }
         });
@@ -280,24 +288,24 @@ public class AlertRepository {
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "Alert deleted from Firebase");
                                 if (callback != null) {
-                                    callback.onComplete(true);
+                                    mainHandler.post(() -> callback.onComplete(true));
                                 }
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to delete alert from Firebase", e);
                                 if (callback != null) {
-                                    callback.onComplete(false);
+                                    mainHandler.post(() -> callback.onComplete(false));
                                 }
                             });
                 } else {
                     if (callback != null) {
-                        callback.onComplete(true);
+                        mainHandler.post(() -> callback.onComplete(true));
                     }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error deleting alert", e);
                 if (callback != null) {
-                    callback.onComplete(false);
+                    mainHandler.post(() -> callback.onComplete(false));
                 }
             }
         });
@@ -318,24 +326,24 @@ public class AlertRepository {
                             .addOnSuccessListener(aVoid -> {
                                 Log.d(TAG, "All alerts deleted from Firebase");
                                 if (callback != null) {
-                                    callback.onComplete(true);
+                                    mainHandler.post(() -> callback.onComplete(true));
                                 }
                             })
                             .addOnFailureListener(e -> {
                                 Log.e(TAG, "Failed to delete all alerts from Firebase", e);
                                 if (callback != null) {
-                                    callback.onComplete(false);
+                                    mainHandler.post(() -> callback.onComplete(false));
                                 }
                             });
                 } else {
                     if (callback != null) {
-                        callback.onComplete(true);
+                        mainHandler.post(() -> callback.onComplete(true));
                     }
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error deleting all alerts", e);
                 if (callback != null) {
-                    callback.onComplete(false);
+                    mainHandler.post(() -> callback.onComplete(false));
                 }
             }
         });
@@ -355,35 +363,37 @@ public class AlertRepository {
             query.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    List<AlertEntity> alerts = new ArrayList<>();
+                    executorService.execute(() -> {
+                        List<AlertEntity> alerts = new ArrayList<>();
 
-                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        AlertEntity alert = snapshot.getValue(AlertEntity.class);
-                        if (alert != null) {
-                            alert.setFirebaseKey(snapshot.getKey());
-                            alerts.add(alert);
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            AlertEntity alert = snapshot.getValue(AlertEntity.class);
+                            if (alert != null) {
+                                alert.setFirebaseKey(snapshot.getKey());
+                                alerts.add(alert);
+                            }
                         }
-                    }
 
-                    Collections.sort(alerts, (a1, a2) ->
-                            Long.compare(a2.getTimestamp(), a1.getTimestamp()));
+                        Collections.sort(alerts, (a1, a2) ->
+                                Long.compare(a2.getTimestamp(), a1.getTimestamp()));
 
-                    if (callback != null) {
-                        callback.onComplete(alerts);
-                    }
+                        if (callback != null) {
+                            mainHandler.post(() -> callback.onComplete(alerts));
+                        }
+                    });
                 }
 
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     Log.e(TAG, "Query cancelled", databaseError.toException());
                     if (callback != null) {
-                        callback.onComplete(new ArrayList<>());
+                        mainHandler.post(() -> callback.onComplete(new ArrayList<>()));
                     }
                 }
             });
         } else {
             if (callback != null) {
-                callback.onComplete(new ArrayList<>());
+                mainHandler.post(() -> callback.onComplete(new ArrayList<>()));
             }
         }
     }
@@ -405,7 +415,6 @@ public class AlertRepository {
     public void forceSyncFromFirebase(RepositoryCallback<Boolean> callback) {
         if (databaseReference != null) {
             getAlertsFromFirebase(alerts -> {
-                syncToLocalDatabase(alerts);
                 if (callback != null) {
                     callback.onComplete(true);
                 }
