@@ -2,8 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1E88E5"
-    android:padding="32dp">
+    android:background="@drawable/gradient_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,43 +13,22 @@
 
         <ImageView
             android:id="@+id/iv_logo"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@drawable/ic_launcher_foreground"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:src="@drawable/sentinel_splash_logo"
             android:contentDescription="Sentinel Logo"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="32dp" />
 
         <TextView
             android:id="@+id/tv_app_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="SENTINEL"
-            android:textSize="36sp"
+            android:textSize="48sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:id="@+id/tv_tagline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Emergency Alert System"
-            android:textSize="16sp"
-            android:textColor="#B3E5FC"
-            android:alpha="0.9" />
+            android:letterSpacing="0.15" />
 
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:text="Shake to Alert"
-        android:textSize="14sp"
-        android:textColor="#FFFFFF"
-        android:alpha="0.7"
-        android:layout_marginBottom="32dp" />
 
 </RelativeLayout>
