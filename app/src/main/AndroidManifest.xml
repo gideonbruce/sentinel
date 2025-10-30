@@ -35,14 +35,24 @@
             android:name="com.google.firebase.database.DatabaseUrl"
             android:value="https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app" />
 
+        <!-- Launch Splash Activity-->
+        <activity android:name=".LaunchActivity"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.category.Launcher" />
+            </intent-filter>
+        </activity>
+
         <!-- Login activity -->
         <activity
             android:name=".LoginActivity"
-            android:exported="true">
-            <intent-filter>
+            android:exported="false">
+            <!--<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            </intent-filter>-->
         </activity>
 
         <!-- SignUp Activity-->
