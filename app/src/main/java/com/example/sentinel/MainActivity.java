@@ -1,6 +1,7 @@
 package com.example.sentinel;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -33,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -170,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @SuppressLint("SetTextI18n")
     private void loadUserProfile() {
         com.google.firebase.auth.FirebaseUser currentUser = mAuth.getCurrentUser();
 
@@ -193,9 +196,16 @@ public class MainActivity extends AppCompatActivity {
             // Load profile picture if available
             Uri photoUrl = currentUser.getPhotoUrl();
             if (photoUrl != null) {
-                // If you have Glide or Picasso library, use it to load image
-                // Example with Glide: Glide.with(this).load(photoUrl).into(ivUserProfile);
-                // For now, using default placeholder
+                // loading google profile picture using Glide
+                Glide.with(this)
+                        .load(photoUrl)
+                        .placeholder(R.drawable.ic_user_placeholder)
+                        .error(R.drawable.ic_user_placeholder)
+                        .circleCrop()
+                        .into(ivUserProfile);
+            } else {
+                //default
+                ivUserProfile.setImageResource(R.drawable.ic_user_placeholder);
             }
         } else {
             // No user logged in, redirect to login

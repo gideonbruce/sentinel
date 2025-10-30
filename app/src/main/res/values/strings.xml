@@ -45,4 +45,6 @@
     <string name="clear_history_again">Clear history</string>
     <string name="sentinelll">Sentinel</string>
     <string name="shield_icon">Shield Icon</string>
+    <string name="user_profile">User profile</string>
+    <string name="user_profile_">User profile</string>
 </resources>

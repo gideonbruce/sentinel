@@ -51,6 +51,8 @@ android {
 }
 
 dependencies {
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation(libs.androidx.swiperefreshlayout)
     kapt ("androidx.room:room-compiler:2.8.3")
