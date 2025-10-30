@@ -69,7 +69,7 @@ public class EmergencyShakeService extends Service {
         super.onCreate();
 
         contactManager = new EmergencyContactManager(this);
-        alertRepository = new AlertRepository(getApplication());
+        alertRepository = AlertRepository.getInstance(getApplication());
 
         // Initialize shake detection
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);

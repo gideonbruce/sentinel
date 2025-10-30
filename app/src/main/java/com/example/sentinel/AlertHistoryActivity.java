@@ -2,6 +2,7 @@ package com.example.sentinel;
 
 import static android.content.ContentValues.TAG;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -64,13 +65,18 @@ public class AlertHistoryActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
         tvSyncStatus = findViewById(R.id.tv_sync_status);
 
-        alertRepository = new AlertRepository(getApplication());
+        //new repository instance to get current user
+        Log.d(TAG, "Creating new AlertRepository instance");
+        alertRepository = AlertRepository.getInstance(getApplication());
 
         fabClearHistory.setOnClickListener(v -> showClearHistoryDialog());
 
         // Setup swipe to refresh
         swipeRefreshLayout.setOnRefreshListener(() -> {
+            // Reinitialize Firebase for current user
+            alertRepository.reinitializeFirebase();
             loadAlertHistory();
+
             // Force sync from Firebase
             alertRepository.forceSyncFromFirebase(success -> runOnUiThread(() -> {
                 swipeRefreshLayout.setRefreshing(false);
@@ -106,6 +112,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    @SuppressLint("SetTextI18n")
     private void checkFirebaseAuth() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -124,7 +131,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         alertRepository.getAllAlerts(alerts -> runOnUiThread(() -> {
             showLoading(false);
 
-            Log.d(TAG, "Received alerts callback");
+            Log.d(TAG, "Received alerts callback successfully");
             Log.d(TAG, "Alerts received: " + (alerts != null ? alerts.size() : "NULL"));
 
             if (alerts == null || alerts.isEmpty()) {
@@ -166,6 +173,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         builder.show();
     }
 
+    @SuppressLint("DefaultLocale")
     private String buildAlertDetails(AlertEntity alert) {
         StringBuilder details = new StringBuilder();
 
@@ -192,6 +200,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         return details.toString();
     }
 
+    @SuppressLint("QueryPermissionsNeeded")
     private void openMap(AlertEntity alert) {
         if (!alert.isLocationAvailable()) {
             Toast.makeText(this, "Location not available for this alert",
@@ -290,5 +299,14 @@ public class AlertHistoryActivity extends AppCompatActivity {
         super.onResume();
         // Don't reload automatically on resume to prevent constant loading
         // User can manually refresh using swipe-to-refresh
+
+        Log.d(TAG, "onResume called");
+
+        //reinitialize firebase incase user changed
+        if (alertRepository != null) {
+            alertRepository.reinitializeFirebase();
+        }
+        //reload alerts for current user
+        loadAlertHistory();
     }
 }

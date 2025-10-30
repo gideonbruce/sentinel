@@ -1,5 +1,6 @@
 package com.example.data;
 
+
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
@@ -21,17 +22,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Objects;
 
 public class AlertRepository {
 
     private static final String TAG = "AlertRepository";
-    private AlertDao alertDao;
-    private ExecutorService executorService;
-    private Handler mainHandler;
+    private final AlertDao alertDao;
+    private final ExecutorService executorService;
+    private final Handler mainHandler;
     private DatabaseReference databaseReference;
-    private FirebaseAuth firebaseAuth;
+    private final FirebaseAuth firebaseAuth;
+    private static AlertRepository instance;
+    private String currentUserId;
 
-    public AlertRepository(Application application) {
+    private AlertRepository(Application application) {
         AlertDatabase db = AlertDatabase.getDatabase(application);
         alertDao = db.alertDao();
         executorService = Executors.newSingleThreadExecutor();
@@ -41,29 +45,60 @@ public class AlertRepository {
         initializeFirebaseReference();
     }
 
+    //singleton getter
+    public static synchronized AlertRepository getInstance(Application application) {
+        if (instance == null) {
+            instance = new AlertRepository(application);
+        } else {
+            // Check if user changed
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            String newUserId = currentUser != null ? currentUser.getUid() : null;
+
+            if (!Objects.equals(instance.currentUserId, newUserId)) {
+                Log.d(TAG, "User changed from " + instance.currentUserId + " to " + newUserId);
+                instance.initializeFirebaseReference();
+            }
+        }
+        return instance;
+    }
+
     private void initializeFirebaseReference() {
         Log.d(TAG, "=== INITIALIZING FIREBASE ===");
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
 
         if (currentUser != null) {
-            Log.d(TAG, "Current user ID: " + currentUser.getUid());
+            currentUserId = currentUser.getUid();
+            Log.d(TAG, "Current user ID: " + currentUserId);
             Log.d(TAG, "User email: " + currentUser.getEmail());
+
+            //verifying the ID token
+            currentUser.getIdToken(true).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    String idToken = task.getResult().getToken();
+                    Log.d(TAG, "✓ ID Token refreshed successfully");
+                    Log.d(TAG, "Token preview: " + (idToken != null ? idToken.substring(0, Math.min(50, idToken.length())) + "..." : "null"));
+                } else {
+                    Log.e(TAG, "✗ Failed to get ID token", task.getException());
+                }
+            });
 
             String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
 
             try {
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
                 databaseReference = database.getReference("users")
-                        .child(currentUser.getUid())
+                        .child(currentUserId)
                         .child("alerts");
 
-                Log.d(TAG, "✓ Firebase path: users/" + currentUser.getUid() + "/alerts");
+                Log.d(TAG, "✓ Firebase path: users/" + currentUserId + "/alerts");
                 Log.d(TAG, "✓ Firebase initialized successfully");
             } catch (Exception e) {
                 Log.e(TAG, "✗ Error initializing Firebase Database: " + e.getMessage(), e);
                 e.printStackTrace();
             }
         } else {
+            currentUserId = null;
+            databaseReference = null;
             Log.w(TAG, "⚠ No user logged in, Firebase sync disabled");
         }
     }
@@ -110,7 +145,11 @@ public class AlertRepository {
                                 }
                             })
                             .addOnFailureListener(e -> {
-                                Log.e(TAG, "Failed to sync alert to Firebase", e);
+                                Log.e(TAG, "x Failed to sync alert to Firebase: " + e.getMessage(), e);
+                                Log.e(TAG, "Firebase path: " + newAlertRef.toString());
+                                Log.e(TAG, "User ID: " + (firebaseAuth.getCurrentUser() != null ? firebaseAuth.getCurrentUser().getUid() : "NULL"));
+                                Log.e(TAG, "User authenticated: " + (firebaseAuth.getCurrentUser() != null));
+
                                 if (callback != null) {
                                     mainHandler.post(() -> callback.onComplete(null));
                                 }
@@ -487,8 +526,16 @@ public class AlertRepository {
      * Clean up resources
      */
     public void cleanup() {
-        if (executorService != null && !executorService.isShutdown()) {
-            executorService.shutdown();
-        }
+        // if (executorService != null && !executorService.isShutdown()) {
+           // executorService.shutdown();
+        //}
+
+         Log.d(TAG, "Cleanup called (executor remains active for singleton)");
+    }
+
+    //initializes firebase reference
+    public void reinitializeFirebase() {
+        Log.d(TAG, "=== REINITIALIZING FIREBASE FOR NEW USER ===");
+        initializeFirebaseReference();
     }
 }

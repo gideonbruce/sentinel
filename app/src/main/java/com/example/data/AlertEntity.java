@@ -1,5 +1,7 @@
 package com.example.data;
 
+import android.annotation.SuppressLint;
+
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
@@ -117,6 +119,7 @@ public class AlertEntity {
     }
 
     // Helper method to get formatted location string
+    @SuppressLint("DefaultLocale")
     @Exclude
     public String getLocationString() {
         if (locationAvailable && latitude != null && longitude != null) {
