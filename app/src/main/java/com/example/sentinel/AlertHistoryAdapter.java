@@ -1,5 +1,6 @@
 package com.example.sentinel;
 
+import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +17,7 @@ import java.util.List;
 public class AlertHistoryAdapter extends RecyclerView.Adapter<AlertHistoryAdapter.AlertViewHolder> {
 
     private List<AlertEntity> alerts;
-    private AlertClickListener listener;
+    private final AlertClickListener listener;
 
     public interface AlertClickListener {
         void onAlertClick(AlertEntity alert);
@@ -54,12 +55,12 @@ public class AlertHistoryAdapter extends RecyclerView.Adapter<AlertHistoryAdapte
     }
 
     static class AlertViewHolder extends RecyclerView.ViewHolder {
-        private TextView tvAlertType;
-        private TextView tvTimestamp;
-        private TextView tvContact;
-        private TextView tvLocation;
-        private ImageButton btnLocation;
-        private ImageButton btnDelete;
+        private final TextView tvAlertType;
+        private final TextView tvTimestamp;
+        private final TextView tvContact;
+        private final TextView tvLocation;
+        private final ImageButton btnLocation;
+        private final ImageButton btnDelete;
 
         public AlertViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -71,6 +72,7 @@ public class AlertHistoryAdapter extends RecyclerView.Adapter<AlertHistoryAdapte
             btnDelete = itemView.findViewById(R.id.btn_delete);
         }
 
+        @SuppressLint("SetTextI18n")
         public void bind(AlertEntity alert, AlertClickListener listener) {
             tvAlertType.setText(alert.getAlertType());
             tvTimestamp.setText(android.text.format.DateFormat.format(

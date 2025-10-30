@@ -112,6 +112,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
     }
 
+    @SuppressLint("SetTextI18n")
     private void checkFirebaseAuth() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
@@ -199,6 +200,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
         return details.toString();
     }
 
+    @SuppressLint("QueryPermissionsNeeded")
     private void openMap(AlertEntity alert) {
         if (!alert.isLocationAvailable()) {
             Toast.makeText(this, "Location not available for this alert",

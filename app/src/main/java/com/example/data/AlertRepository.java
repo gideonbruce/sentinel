@@ -1,5 +1,6 @@
 package com.example.data;
 
+
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
@@ -26,11 +27,11 @@ import java.util.Objects;
 public class AlertRepository {
 
     private static final String TAG = "AlertRepository";
-    private AlertDao alertDao;
-    private ExecutorService executorService;
-    private Handler mainHandler;
+    private final AlertDao alertDao;
+    private final ExecutorService executorService;
+    private final Handler mainHandler;
     private DatabaseReference databaseReference;
-    private FirebaseAuth firebaseAuth;
+    private final FirebaseAuth firebaseAuth;
     private static AlertRepository instance;
     private String currentUserId;
 
@@ -70,7 +71,7 @@ public class AlertRepository {
             Log.d(TAG, "Current user ID: " + currentUserId);
             Log.d(TAG, "User email: " + currentUser.getEmail());
 
-            // Verify the ID token
+            //verifying the ID token
             currentUser.getIdToken(true).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     String idToken = task.getResult().getToken();
@@ -525,14 +526,14 @@ public class AlertRepository {
      * Clean up resources
      */
     public void cleanup() {
-        //if (executorService != null && !executorService.isShutdown()) {
+        // if (executorService != null && !executorService.isShutdown()) {
            // executorService.shutdown();
         //}
 
          Log.d(TAG, "Cleanup called (executor remains active for singleton)");
     }
 
-    //reintializes firebase reference
+    //initializes firebase reference
     public void reinitializeFirebase() {
         Log.d(TAG, "=== REINITIALIZING FIREBASE FOR NEW USER ===");
         initializeFirebaseReference();
