@@ -8,12 +8,15 @@
     android:padding="16dp"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🛡️"
-        android:textSize="48sp"
-        android:layout_marginBottom="8dp" />
+    <ImageView
+        android:id="@+id/iv_shield_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_marginBottom="12dp"
+        android:src="@drawable/sentinel_main_icon"
+        android:contentDescription="@string/shield_icon"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter" />
 
     <TextView
         android:layout_width="wrap_content"
