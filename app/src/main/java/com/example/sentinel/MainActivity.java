@@ -15,6 +15,7 @@ import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +67,11 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle toggle;
 
+    private TextView tvUserName;
+    private TextView tvUserEmail;
+    private ImageView ivUserProfile;
+    private FirebaseAuth mAuth;
+
     private EmergencyShakeService serviceInstance;
     private boolean isBound = false;
 
@@ -108,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         initViews();
+        loadUserProfile();
         checkPermissions();
         updateUI();
     }
@@ -136,6 +143,15 @@ public class MainActivity extends AppCompatActivity {
         //initializing drawer
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
+
+        mAuth = FirebaseAuth.getInstance();
+
+        // Get nav header views for user profile
+        View headerView = navigationView.getHeaderView(0);
+        tvUserName = headerView.findViewById(R.id.tv_user_name);
+        tvUserEmail = headerView.findViewById(R.id.tv_user_email);
+        ivUserProfile = headerView.findViewById(R.id.iv_user_profile);
+
         //setup action bar toggle
         toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, R.string.drawer_open, R.string.drawer_close
@@ -152,6 +168,42 @@ public class MainActivity extends AppCompatActivity {
             drawerLayout.closeDrawers();
             return true;
         });
+    }
+
+    private void loadUserProfile() {
+        com.google.firebase.auth.FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            // Get user name
+            String displayName = currentUser.getDisplayName();
+            if (displayName != null && !displayName.isEmpty()) {
+                tvUserName.setText(displayName);
+            } else {
+                tvUserName.setText("User");
+            }
+
+            // Get user email
+            String email = currentUser.getEmail();
+            if (email != null && !email.isEmpty()) {
+                tvUserEmail.setText(email);
+            } else {
+                tvUserEmail.setText("No email");
+            }
+
+            // Load profile picture if available
+            Uri photoUrl = currentUser.getPhotoUrl();
+            if (photoUrl != null) {
+                // If you have Glide or Picasso library, use it to load image
+                // Example with Glide: Glide.with(this).load(photoUrl).into(ivUserProfile);
+                // For now, using default placeholder
+            }
+        } else {
+            // No user logged in, redirect to login
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
     }
 
     private  ServiceConnection serviceConnection = new ServiceConnection() {
