@@ -43,4 +43,6 @@
     <string name="no_alert_history">No Alert History</string>
     <string name="your_emergency_alerts_will_appear_here">Your emergency alerts will appear here</string>
     <string name="clear_history_again">Clear history</string>
+    <string name="sentinel_logo">Sentinel Logo</string>
+    <string name="sentinel1">SENTINEL</string>
 </resources>
