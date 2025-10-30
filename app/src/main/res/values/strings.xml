@@ -47,4 +47,8 @@
     <string name="shield_icon">Shield Icon</string>
     <string name="user_profile">User profile</string>
     <string name="user_profile_">User profile</string>
+    <string name="emergency_protection">Emergency Protection</string>
+    <string name="sentinel_">Sentinel</string>
+    <string name="user_name">User Name</string>
+    <string name="user_example_com">user@example.com</string>
 </resources>
