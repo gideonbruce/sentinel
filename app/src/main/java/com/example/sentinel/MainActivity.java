@@ -108,17 +108,17 @@ public class MainActivity extends AppCompatActivity {
         contactManager = new EmergencyContactManager(this);
 
         // Load contact from firebase when app starts
-        contactManager.loadFromFirebase((name, phone) -> {
-            updateUI();
-            if (name != null && phone != null) {
-                Log.d("MainActivity", "Contact loaded: " + name);
-            }
-        });
+        //contactManager.loadFromFirebase((name, phone) -> {
+        //    updateUI();
+        //    if (name != null && phone != null) {
+        //        Log.d("MainActivity", "Contact loaded: " + name);
+        //    }
+        //});
 
         //loading emergency message
-        contactManager.loadEmergencyMessageFromFirebase(message -> {
-            Log.d("Main Activity", "Emergency message loaded: " + message);
-        });
+        //contactManager.loadEmergencyMessageFromFirebase(message -> {
+        //    Log.d("Main Activity", "Emergency message loaded: " + message);
+        //});
 
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         loadUserProfile();
         checkPermissions();
-        updateUI();
+        //updateUI();
     }
 
     private void initViews() {
@@ -222,7 +222,16 @@ public class MainActivity extends AppCompatActivity {
             }
             // Reinitialize Firebase reference for emergency contact when user changes
             contactManager.reinitializeFirebase();
-            contactManager.loadFromFirebase((name, phone) -> updateUI());
+
+            contactManager.loadFromFirebase((name, phone) -> {
+                updateUI();
+                if (name != null && phone != null) {
+                    Log.d("MainActivity", "Contact loaded: " + name);
+                }
+            });
+            contactManager.loadEmergencyMessageFromFirebase(message -> {
+                Log.d("MainActivity", "Emergency message loaded: " + message);
+            });
 
         } else {
             // No user logged in, redirect to login
@@ -631,7 +640,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void signOut() {
         // Clear local emergency contact data
-        contactManager.clearEmergencyContact();
+        contactManager.clearEmergencyContactLocal();
 
         //FIREBASE signout
         FirebaseAuth.getInstance().signOut();
