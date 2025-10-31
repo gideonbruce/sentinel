@@ -19,6 +19,8 @@ public class EmergencyContactManager {
     private static final String PREFS_NAME = "EmergencyContactPrefs";
     private static final String KEY_CONTACT_NAME = "emergency_contact_name";
     private static final String KEY_CONTACT_PHONE = "emergency_contact_phone";
+    private static final String KEY_EMERGENCY_MESSAGE = "emergency_message";
+    private static final String DEFAULT_MESSAGE = "🚨 EMERGENCY! I need help! Please check on me immediately.";
 
     private final SharedPreferences prefs;
     private final FirebaseAuth firebaseAuth;
@@ -143,17 +145,21 @@ public class EmergencyContactManager {
         prefs.edit()
                 .remove(KEY_CONTACT_NAME)
                 .remove(KEY_CONTACT_PHONE)
+                .remove(KEY_EMERGENCY_MESSAGE)
                 .apply();
 
         Log.d(TAG, "Contact cleared locally");
 
         // Clear from Firebase
         if (databaseReference != null) {
-            databaseReference.removeValue()
-                    .addOnSuccessListener(aVoid ->
-                            Log.d(TAG, "✓ Contact cleared from Firebase"))
-                    .addOnFailureListener(e ->
-                            Log.e(TAG, "✗ Failed to clear contact from Firebase: " + e.getMessage(), e));
+            DatabaseReference userRef = databaseReference.getParent();
+            if (userRef != null) {
+                userRef.removeValue()
+                        .addOnSuccessListener(aVoid ->
+                                Log.d(TAG, "✓ All user data cleared from Firebase"))
+                        .addOnFailureListener(e ->
+                                Log.e(TAG, "✗ Failed to clear data from Firebase: " + e.getMessage(), e));
+            }
         }
     }
 
@@ -182,5 +188,97 @@ public class EmergencyContactManager {
     // Callback interface for async loading
     public interface ContactLoadCallback {
         void onLoaded(String name, String phoneNumber);
+    }
+
+    public void saveEmergencyMessage(String message) {
+        // Save to SharedPreferences first
+        prefs.edit()
+                .putString(KEY_EMERGENCY_MESSAGE, message)
+                .apply();
+
+        Log.d(TAG, "Emergency message saved locally");
+
+        // Sync to Firebase
+        if (databaseReference != null) {
+            // Get the parent reference (users/userId/)
+            DatabaseReference userRef = databaseReference.getParent();
+            if (userRef != null) {
+                userRef.child("emergency_message").setValue(message)
+                        .addOnSuccessListener(aVoid ->
+                                Log.d(TAG, "✓ Emergency message synced to Firebase"))
+                        .addOnFailureListener(e ->
+                                Log.e(TAG, "✗ Failed to sync message to Firebase: " + e.getMessage(), e));
+            }
+        } else {
+            Log.w(TAG, "Firebase not initialized, message saved locally only");
+        }
+    }
+
+    public String getEmergencyMessage() {
+        return prefs.getString(KEY_EMERGENCY_MESSAGE, DEFAULT_MESSAGE);
+    }
+
+    public void loadEmergencyMessageFromFirebase(MessageLoadCallback callback) {
+        if (databaseReference == null) {
+            Log.w(TAG, "Firebase not initialized, loading message from local only");
+            if (callback != null) {
+                callback.onLoaded(getEmergencyMessage());
+            }
+            return;
+        }
+
+        Log.d(TAG, "Loading emergency message from Firebase...");
+
+        DatabaseReference userRef = databaseReference.getParent();
+        if (userRef != null) {
+            userRef.child("emergency_message").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    if (snapshot.exists()) {
+                        String message = snapshot.getValue(String.class);
+
+                        if (message != null && !message.isEmpty()) {
+                            // Update local storage with Firebase data
+                            prefs.edit()
+                                    .putString(KEY_EMERGENCY_MESSAGE, message)
+                                    .apply();
+
+                            Log.d(TAG, "✓ Emergency message loaded from Firebase");
+
+                            if (callback != null) {
+                                callback.onLoaded(message);
+                            }
+                        } else {
+                            if (callback != null) {
+                                callback.onLoaded(getEmergencyMessage());
+                            }
+                        }
+                    } else {
+                        Log.d(TAG, "No message found in Firebase, using local/default");
+                        if (callback != null) {
+                            callback.onLoaded(getEmergencyMessage());
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Log.e(TAG, "✗ Failed to load message from Firebase: " + error.getMessage());
+                    // Fallback to local data
+                    if (callback != null) {
+                        callback.onLoaded(getEmergencyMessage());
+                    }
+                }
+            });
+        }
+    }
+
+    public void resetEmergencyMessage() {
+        saveEmergencyMessage(DEFAULT_MESSAGE);
+    }
+
+    // Add callback interface
+    public interface MessageLoadCallback {
+        void onLoaded(String message);
     }
 }

@@ -43,6 +43,10 @@ public class SettingsActivity extends AppCompatActivity {
     private TextInputEditText etContactName;
     private TextInputEditText etContactPhone;
 
+    private TextInputEditText etEmergencyMessage;
+    private TextView tvCharCount;
+    private Button btnResetMessage;
+
     private Switch switchShakeDetection;
     private Switch switchVolumeButtons;
     private Switch switchVibration;
@@ -91,6 +95,16 @@ public class SettingsActivity extends AppCompatActivity {
         etContactName = findViewById(R.id.et_contact_name);
         etContactPhone = findViewById(R.id.et_contact_phone);
 
+        //emergency message section
+        etEmergencyMessage = findViewById(R.id.et_emergency_message);
+        tvCharCount = findViewById(R.id.tv_char_count);
+        btnResetMessage = findViewById(R.id.btn_reset_message);
+
+        btnResetMessage.setOnClickListener(v -> resetEmergencyMessage());
+
+        setupListeners();
+        setupMessageListener();
+
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
         ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
@@ -117,6 +131,31 @@ public class SettingsActivity extends AppCompatActivity {
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
 
         setupListeners();
+    }
+
+    private void setupMessageListener() {
+        etEmergencyMessage.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                int length = s.length();
+                tvCharCount.setText(length + "/160");
+
+                // Change color based on SMS length
+                if (length > 160) {
+                    tvCharCount.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                } else if (length > 140) {
+                    tvCharCount.setTextColor(getResources().getColor(android.R.color.holo_orange_dark));
+                } else {
+                    tvCharCount.setTextColor(getResources().getColor(android.R.color.darker_gray));
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
     }
 
     private void setupListeners() {
@@ -210,6 +249,12 @@ public class SettingsActivity extends AppCompatActivity {
         int countdown = prefs.getInt("countdown_seconds", 5);
         seekCountdown.setProgress(countdown - 3);
         tvCountdownValue.setText(countdown + " seconds");
+
+        //load emergency message from firebase
+        contactManager.loadEmergencyMessageFromFirebase(message -> {
+            etEmergencyMessage.setText(message);
+            tvCharCount.setText(message.length() + "/160");
+        });
     }
 
     private void pickContact() {
@@ -222,6 +267,19 @@ public class SettingsActivity extends AppCompatActivity {
         Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         contactPickerLauncher.launch(contactPickerIntent);
+    }
+
+    private void resetEmergencyMessage() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Reset Message")
+                .setMessage("Reset to default emergency message?")
+                .setPositiveButton("Reset", (dialog, which) -> {
+                    contactManager.resetEmergencyMessage();
+                    etEmergencyMessage.setText(contactManager.getEmergencyMessage());
+                    Toast.makeText(this, "Message reset to default", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void handleContactSelection(Intent data) {
@@ -286,5 +344,15 @@ public class SettingsActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        //saves emergency message when leaving the screen
+        String message = Objects.requireNonNull(etEmergencyMessage.getText()).toString().trim();
+        if (!message.isEmpty()) {
+            contactManager.saveEmergencyMessage(message);
+        }
     }
 }

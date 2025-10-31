@@ -115,6 +115,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //loading emergency message
+        contactManager.loadEmergencyMessageFromFirebase(message -> {
+            Log.d("Main Activity", "Emergency message loaded: " + message);
+        });
+
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {

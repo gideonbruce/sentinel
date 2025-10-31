@@ -423,20 +423,35 @@ public class EmergencyShakeService extends Service {
     }
 
     @NonNull
-    private static String getMessage(Location location, String emergencyType) {
-        String message = emergencyType != null ?
-                emergencyType + "! This is an automated alert. Please check on me immediately." :
-                "EMERGENCY! This is an automated alert. Please check on me immediately.";
+    private String getMessage(Location location, String emergencyType) {
+        //String message = emergencyType != null ?
+        //        emergencyType + "! This is an automated alert. Please check on me immediately." :
+        //        "EMERGENCY! This is an automated alert. Please check on me immediately.";
+
+        //gets custom message from contact manager
+        String customMessage = contactManager.getEmergencyMessage();
+
+        //builds complete message
+        StringBuilder message = new StringBuilder();
+
+        if (emergencyType != null) {
+            message.append("🚨 ").append(emergencyType).append("!\n\n");
+        }
+
+        message.append(customMessage);
 
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
-            String locationUrl = "https://maps.google.com/?q="+ latitude + "," + longitude;
-            message += "\n\nMy location:\nLat: " + latitude + "\nLong: " + longitude + "\nMap: " + locationUrl;
+            message.append("\n\n📍 https://maps.google.com/?q=")
+                    .append(latitude)
+                    .append(",")
+                    .append(longitude);
+            //message += "\n\nMy location:\nLat: " + latitude + "\nLong: " + longitude + "\nMap: " + locationUrl;
         } else {
-            message += "\n\n(Location unavalable)";
+            message.append("\n\n(Location unavalable)");
         }
-        return message;
+        return message.toString();
     }
 
     private void showSMSFailedNotification() {
