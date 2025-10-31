@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -106,7 +107,14 @@ public class MainActivity extends AppCompatActivity {
 
         contactManager = new EmergencyContactManager(this);
 
-        // Register contact picker launcher
+        // Load contact from firebase when app starts
+        contactManager.loadFromFirebase((name, phone) -> {
+            updateUI();
+            if (name != null && phone != null) {
+                Log.d("MainActivity", "Contact loaded: " + name);
+            }
+        });
+
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -207,6 +215,10 @@ public class MainActivity extends AppCompatActivity {
                 //default
                 ivUserProfile.setImageResource(R.drawable.ic_user_placeholder);
             }
+            // Reinitialize Firebase reference for emergency contact when user changes
+            contactManager.reinitializeFirebase();
+            contactManager.loadFromFirebase((name, phone) -> updateUI());
+
         } else {
             // No user logged in, redirect to login
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -613,6 +625,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void signOut() {
+        // Clear local emergency contact data
+        contactManager.clearEmergencyContact();
+
         //FIREBASE signout
         FirebaseAuth.getInstance().signOut();
 
