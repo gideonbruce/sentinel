@@ -175,8 +175,31 @@ public class AlertRepository {
      */
     public void getAllAlerts(RepositoryCallback<List<AlertEntity>> callback) {
         if (databaseReference != null) {
-            getAlertsFromFirebase(callback);
+            Log.d(TAG, "Attempting to fetch from Firebase...");
+            //timeout fallback
+            final boolean[] callbackInvoked = {false};
+
+            mainHandler.postDelayed(() -> {
+                if (!callbackInvoked[0]) {
+                    Log.w(TAG, "Firebase timeout, falling back to local database");
+                    callbackInvoked[0] = true;
+                    getAlertsFromLocal(callback);
+                }
+            }, 5000);
+
+            getAlertsFromFirebase(new RepositoryCallback<List<AlertEntity>>() {
+                @Override
+                public void onComplete(List<AlertEntity> result) {
+                    if (!callbackInvoked[0]) {
+                        callbackInvoked[0] = true;
+                        if (callback != null) {
+                            callback.onComplete(result);
+                        }
+                    }
+                }
+            });
         } else {
+            Log.d(TAG, "Firebase reference is null, using local database");
             getAlertsFromLocal(callback);
         }
     }
@@ -187,6 +210,12 @@ public class AlertRepository {
     private void getAlertsFromFirebase(RepositoryCallback<List<AlertEntity>> callback) {
         Log.d(TAG, "=== FETCHING FROM FIREBASE ===");
         Log.d(TAG, "Database reference: " + (databaseReference != null ? databaseReference.toString() : "NULL"));
+
+        if (databaseReference == null) {
+            Log.w(TAG, "Database reference is null, falling back to local");
+            getAlertsFromLocal(callback);
+            return;
+        }
 
         Query query = databaseReference.orderByChild("timestamp");
 
@@ -242,6 +271,8 @@ public class AlertRepository {
                 Log.e(TAG, "Error details: " + databaseError.getDetails());
                 Log.e(TAG, "Firebase query cancelled", databaseError.toException());
                 databaseError.toException().printStackTrace();
+
+                Log.w(TAG, "Falling back to local database due to Firebase error");
                 getAlertsFromLocal(callback);
             }
         });
