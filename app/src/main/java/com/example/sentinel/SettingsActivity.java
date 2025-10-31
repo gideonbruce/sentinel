@@ -102,7 +102,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         btnResetMessage.setOnClickListener(v -> resetEmergencyMessage());
 
-        setupListeners();
+        //setupListeners();
         setupMessageListener();
 
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
