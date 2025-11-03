@@ -251,6 +251,10 @@ public class EmergencyShakeService extends Service {
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         dialogIntent.putExtra("SHOW_EMERGENCY_DIALOG", true);
         dialogIntent.putExtra("EMERGENCY_TYPE", emergencyType);
+
+        if (lastKnownLocation != null) {
+            dialogIntent.putExtra("LOCATION", lastKnownLocation);
+        }
         startActivity(dialogIntent);
     }
 
