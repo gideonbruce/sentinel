@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -145,7 +146,9 @@ public class EmergencyShakeService extends Service {
                     //location from broadcast
                     Location location = intent.getParcelableExtra("LOCATION");
 
-                    sendEmergencySMS(location, emergencyType);
+                    // Just save to database, SMS already sent by dialog
+                    //sendEmergencySMS(location, emergencyType);
+                    saveAlertToDatabase(emergencyType, location);
                 }
             }
         };
@@ -163,6 +166,32 @@ public class EmergencyShakeService extends Service {
         } else {
             registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         }
+    }
+
+    private void saveAlertToDatabase(String emergencyType, Location location) {
+        String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
+        long timestamp = System.currentTimeMillis();
+        Double latitude = (location != null) ? location.getLatitude() : null;
+        Double longitude = (location != null) ? location.getLongitude() : null;
+        String contactName = contactManager.getContactName();
+        String contactPhone = contactManager.getContactPhone();
+        boolean locationAvailable = (location != null);
+
+        AlertEntity alert = new AlertEntity(
+                alertType,
+                timestamp,
+                latitude,
+                longitude,
+                contactName,
+                contactPhone,
+                locationAvailable
+        );
+
+        alertRepository.insert(alert, firebaseKey -> {
+            if (firebaseKey != null) {
+                Log.d("EmergencyShakeService", "Alert saved with key: " + firebaseKey);
+            }
+        });
     }
 
     private void setupOverlayForVolumeDetection() {

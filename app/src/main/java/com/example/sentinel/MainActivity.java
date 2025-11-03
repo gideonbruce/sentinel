@@ -672,11 +672,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
+        Log.d("MainActivity", "Alert confirmed by user, SMS already sent by dialog");
+        // SMS is already sent by EmergencyAlertDialog.sendEmergencyAlert()
+
         // Send broadcast to service to actually send the SMS
-        Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
-        intent.putExtra("EMERGENCY_TYPE", emergencyType);
-        intent.putExtra("LOCATION", location);
-        sendBroadcast(intent);
+        //Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
+        //intent.putExtra("EMERGENCY_TYPE", emergencyType);
+        //intent.putExtra("LOCATION", location);
+        //sendBroadcast(intent);
     }
 
     //private android.location.Location getLastKnownLocationFromService() {
