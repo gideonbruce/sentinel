@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private boolean isServiceRunning = false;
 
+    private android.location.Location currentEmergencyLocation;
+
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
 
@@ -651,13 +653,13 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
 
-            android.location.Location location = intent.getParcelableExtra("LOCATION");
+            currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
 
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
                 public void onAlertSent() {
                     // User confirmed - send the SMS
-                    sendEmergencyAlertToService(emergencyType);
+                    sendEmergencyAlertToService(emergencyType, currentEmergencyLocation);
                 }
 
                 @Override
@@ -665,14 +667,15 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Emergency alert cancelled",
                             Toast.LENGTH_SHORT).show();
                 }
-            }, location);
+            }, currentEmergencyLocation);
         }
     }
 
-    private void sendEmergencyAlertToService(String emergencyType) {
+    private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
         // Send broadcast to service to actually send the SMS
         Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
         intent.putExtra("EMERGENCY_TYPE", emergencyType);
+        intent.putExtra("LOCATION", location);
         sendBroadcast(intent);
     }
 
