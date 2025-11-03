@@ -651,7 +651,7 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
 
-            android.location.Location location = getLastKnownLocationFromService();
+            android.location.Location location = intent.getParcelableExtra("LOCATION");
 
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
@@ -676,9 +676,9 @@ public class MainActivity extends AppCompatActivity {
         sendBroadcast(intent);
     }
 
-    private android.location.Location getLastKnownLocationFromService() {
-        return null;
-    }
+    //private android.location.Location getLastKnownLocationFromService() {
+    //    return null;
+    //}
 
     private void signOut() {
         // Clear local emergency contact data
