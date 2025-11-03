@@ -40,6 +40,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.example.ui.EmergencyAlertDialog;
 
 import java.util.ArrayList;
 
@@ -60,6 +61,7 @@ public class EmergencyShakeService extends Service {
     private View overlayView;
 
     private BroadcastReceiver volumeButtonReceiver;
+    private BroadcastReceiver smsConfirmReceiver;
 
     private VolumeButtonGestureDetector volumeGestureDetector;
     private AlertRepository alertRepository;
@@ -79,7 +81,8 @@ public class EmergencyShakeService extends Service {
         shakeDetector.setOnShakeListener(count -> {
             if (count >= 3) {
                 //sendEmergencySMS();
-                getLocationAndSendSMS();
+                //getLocationAndSendSMS();
+                showEmergencyAlertDialog(null);
             }
         });
 
@@ -100,19 +103,20 @@ public class EmergencyShakeService extends Service {
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {
-                getLocationAndSendSMS("SILENT EMERGENCY");
+                showEmergencyAlertDialog("SILENT EMERGENCY");
             }
             @Override
             public void onPoliceNeeded() {
-                getLocationAndSendSMS("POLICE NEEDED");
+
+                showEmergencyAlertDialog("POLICE NEEDED");
             }
             @Override
             public void onMedicalEmergency() {
-                getLocationAndSendSMS("MEDICAL EMERGENCY");
+                showEmergencyAlertDialog("MEDICAL EMERGENCY");
             }
             @Override
             public void onPanicAlert() {
-                getLocationAndSendSMS("PANIC ALERT");
+                showEmergencyAlertDialog("PANIC ALERT");
             }
         });
 
@@ -130,6 +134,23 @@ public class EmergencyShakeService extends Service {
                 }
             }
         };
+
+        smsConfirmReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.sentinel.SEND_EMERGENCY_SMS".equals(intent.getAction())) {
+                    String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
+                    getLocationAndSendSMS(emergencyType);
+                }
+            }
+        };
+
+        IntentFilter smsFilter = new IntentFilter("com.example.sentinel.SEND_EMERGENCY_SMS");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsConfirmReceiver, smsFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsConfirmReceiver, smsFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
 
         IntentFilter filter = new IntentFilter("com.example.sentinel.VOLUME_BUTTON_EVENT");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -222,6 +243,15 @@ public class EmergencyShakeService extends Service {
         }
 
         return START_STICKY;
+    }
+
+    private void showEmergencyAlertDialog(String emergencyType) {
+        // Create an Intent to bring MainActivity to foreground or start it
+        Intent dialogIntent = new Intent(this, MainActivity.class);
+        dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        dialogIntent.putExtra("SHOW_EMERGENCY_DIALOG", true);
+        dialogIntent.putExtra("EMERGENCY_TYPE", emergencyType);
+        startActivity(dialogIntent);
     }
 
     private void startLocationUpdates() {
@@ -335,6 +365,10 @@ public class EmergencyShakeService extends Service {
         //unregister broadcast reciever
         if (volumeButtonReceiver != null) {
             unregisterReceiver(volumeButtonReceiver);
+        }
+
+        if (smsConfirmReceiver != null) {
+            unregisterReceiver(smsConfirmReceiver);
         }
 
         //removes overlay

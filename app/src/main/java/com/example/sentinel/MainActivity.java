@@ -38,6 +38,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
+import com.example.ui.EmergencyAlertDialog;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -132,6 +133,8 @@ public class MainActivity extends AppCompatActivity {
         loadUserProfile();
         checkPermissions();
         //updateUI();
+
+        handleEmergencyDialogIntent(getIntent());
     }
 
     private void initViews() {
@@ -636,6 +639,39 @@ public class MainActivity extends AppCompatActivity {
                         .show();
             }
         }
+    }
+
+    @Override
+    protected  void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleEmergencyDialogIntent(intent);
+    }
+
+    private void handleEmergencyDialogIntent(Intent intent) {
+        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
+            String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
+
+            EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
+                @Override
+                public void onAlertSent() {
+                    // User confirmed - send the SMS
+                    sendEmergencyAlertToService(emergencyType);
+                }
+
+                @Override
+                public void onAlertCancelled() {
+                    Toast.makeText(MainActivity.this, "Emergency alert cancelled",
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    private void sendEmergencyAlertToService(String emergencyType) {
+        // Send broadcast to service to actually send the SMS
+        Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
+        intent.putExtra("EMERGENCY_TYPE", emergencyType);
+        sendBroadcast(intent);
     }
 
     private void signOut() {

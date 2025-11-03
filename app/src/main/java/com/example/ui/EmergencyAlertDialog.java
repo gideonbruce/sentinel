@@ -11,7 +11,6 @@ import android.telephony.SubscriptionManager;
 import android.widget.Toast;
 
 import com.example.data.EmergencyContactManager;
-
 import java.util.List;
 
 public class EmergencyAlertDialog {
@@ -117,10 +116,11 @@ public class EmergencyAlertDialog {
                 }
             } catch (SecurityException e) {
                 // Permission denied - fallback to SMS app
-                openSMSAppAsFallback(context, phoneNumber, message);
-                return;
+                //openSMSAppAsFallback(context, phoneNumber, message);
+                throw e;
             } catch (Exception e) {
                 e.printStackTrace();
+                throw e;
             }
         }
 
