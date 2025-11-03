@@ -20,7 +20,7 @@ public class EmergencyAlertDialog {
         void onAlertCancelled();
     }
 
-    public static void show(Context context, OnAlertActionListener listener) {
+    public static void show(Context context, OnAlertActionListener listener, android.location.Location location) {
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
 
         if (!contactManager.hasEmergencyContact()) {
@@ -37,7 +37,7 @@ public class EmergencyAlertDialog {
                 (contactName != null ? contactName : contactPhone) + "?");
 
         builder.setPositiveButton("Send Alert", (dialog, which) -> {
-            sendEmergencyAlert(context, contactPhone);
+            sendEmergencyAlert(context, contactPhone, location);
             if (listener != null) {
                 listener.onAlertSent();
             }
@@ -62,66 +62,76 @@ public class EmergencyAlertDialog {
         builder.show();
     }
 
-    private static void sendEmergencyAlert(Context context, String phoneNumber) {
-        String message = "EMERGENCY ALERT: I need help! This is an automated message from my emergency app.";
+    private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
+        //String message = "EMERGENCY ALERT: I need help! This is an automated message from my emergency app.";
+        EmergencyContactManager contactManager = new EmergencyContactManager(context);
+        String customMessage = contactManager.getEmergencyMessage();
+
+        //Building complete message
+        StringBuilder message = new StringBuilder();
+        message.append(customMessage);
+
+        if (location != null) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            message.append("\n\n📍 https://maps.google.com/?q=")
+                    .append(latitude)
+                    .append(",")
+                    .append(longitude);
+        } else {
+            message.append("\n\n(Location unavailable)");
+        }
+
+        String finalMessage = message.toString();
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                // For Android 5.1 and above - handle dual SIM
-                sendSMSWithDualSIMSupport(context, phoneNumber, message);
-            } else {
-                // For older Android versions
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(phoneNumber, null, message, null, null);
-                Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
-            }
+            // For Android 5.1 and above - handle dual SIM
+            sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
         } catch (SecurityException e) {
             Toast.makeText(context, "SMS permission denied", Toast.LENGTH_LONG).show();
-            openSMSAppAsFallback(context, phoneNumber, message);
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
         } catch (Exception e) {
             Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
-            openSMSAppAsFallback(context, phoneNumber, message);
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
         }
     }
 
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            try {
-                SubscriptionManager subscriptionManager =
-                        (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        try {
+            SubscriptionManager subscriptionManager =
+                    (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
 
-                if (subscriptionManager != null) {
-                    List<SubscriptionInfo> subscriptionInfoList =
-                            subscriptionManager.getActiveSubscriptionInfoList();
+            if (subscriptionManager != null) {
+                List<SubscriptionInfo> subscriptionInfoList =
+                        subscriptionManager.getActiveSubscriptionInfoList();
 
-                    if (subscriptionInfoList != null && subscriptionInfoList.size() > 0) {
-                        // Get the default SMS subscription ID
-                        int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+                if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
+                    // Get the default SMS subscription ID
+                    int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
 
-                        SmsManager smsManager;
-                        if (defaultSmsSubscriptionId != -1) {
-                            // Use default SIM
-                            smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
-                        } else {
-                            // Use first available SIM
-                            int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
-                            smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
-                        }
-
-                        smsManager.sendTextMessage(phoneNumber, null, message, null, null);
-                        Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
-                        return;
+                    SmsManager smsManager;
+                    if (defaultSmsSubscriptionId != -1) {
+                        // Use default SIM
+                        smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                    } else {
+                        // Use first available SIM
+                        int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
+                        smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
                     }
+
+                    smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+                    Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
+                    return;
                 }
-            } catch (SecurityException e) {
-                // Permission denied - fallback to SMS app
-                //openSMSAppAsFallback(context, phoneNumber, message);
-                throw e;
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw e;
             }
+        } catch (SecurityException e) {
+            // Permission denied - fallback to SMS app
+            //openSMSAppAsFallback(context, phoneNumber, message);
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
 
         // Fallback to default SmsManager

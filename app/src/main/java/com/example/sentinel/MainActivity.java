@@ -651,6 +651,8 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
 
+            android.location.Location location = getLastKnownLocationFromService();
+
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
                 public void onAlertSent() {
@@ -663,7 +665,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Emergency alert cancelled",
                             Toast.LENGTH_SHORT).show();
                 }
-            });
+            }, location);
         }
     }
 
@@ -672,6 +674,10 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
         intent.putExtra("EMERGENCY_TYPE", emergencyType);
         sendBroadcast(intent);
+    }
+
+    private android.location.Location getLastKnownLocationFromService() {
+        return null;
     }
 
     private void signOut() {
