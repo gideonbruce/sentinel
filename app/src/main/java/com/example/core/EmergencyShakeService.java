@@ -140,7 +140,12 @@ public class EmergencyShakeService extends Service {
             public void onReceive(Context context, Intent intent) {
                 if ("com.example.sentinel.SEND_EMERGENCY_SMS".equals(intent.getAction())) {
                     String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
-                    getLocationAndSendSMS(emergencyType);
+                    //getLocationAndSendSMS(emergencyType);
+
+                    //location from broadcast
+                    Location location = intent.getParcelableExtra("LOCATION");
+
+                    sendEmergencySMS(location, emergencyType);
                 }
             }
         };
