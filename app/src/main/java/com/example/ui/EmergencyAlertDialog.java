@@ -37,7 +37,7 @@ public class EmergencyAlertDialog {
                 (contactName != null ? contactName : contactPhone) + "?");
 
         builder.setPositiveButton("Send Alert", (dialog, which) -> {
-            sendEmergencyAlert(context, contactPhone, location);
+            //sendEmergencyAlert(context, contactPhone, location);    // only notify listener
             if (listener != null) {
                 listener.onAlertSent();
             }
