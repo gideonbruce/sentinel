@@ -12,6 +12,8 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.data.EmergencyContactManager;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class EmergencyAlertDialog {
@@ -122,6 +124,7 @@ public class EmergencyAlertDialog {
         }
     }
 
+
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
 
@@ -137,7 +140,6 @@ public class EmergencyAlertDialog {
                 if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
                     Log.d(TAG, "Active subscriptions found: " + subscriptionInfoList.size());
 
-                    // Get the default SMS subscription ID
                     int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
                     Log.d(TAG, "Default SMS subscription ID: " + defaultSmsSubscriptionId);
 
@@ -153,7 +155,13 @@ public class EmergencyAlertDialog {
                     }
 
                     Log.i(TAG, "Sending SMS via SmsManager");
-                    smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+                    // FIXED: Handle long messages properly
+                    if (message.length() > 160) {
+                        ArrayList<String> parts = smsManager.divideMessage(message);
+                        smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
+                    } else {
+                        smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+                    }
                     Log.i(TAG, "SMS sent successfully");
                     Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
                     return;
@@ -177,7 +185,13 @@ public class EmergencyAlertDialog {
         try {
             SmsManager smsManager = SmsManager.getDefault();
             Log.i(TAG, "Sending SMS via default SmsManager");
-            smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+            // FIXED: Handle long messages in fallback too
+            if (message.length() > 160) {
+                ArrayList<String> parts = smsManager.divideMessage(message);
+                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
+            } else {
+                smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+            }
             Log.i(TAG, "SMS sent successfully via default SmsManager");
             Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
