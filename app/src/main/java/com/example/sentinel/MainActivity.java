@@ -2,7 +2,10 @@ package com.example.sentinel;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -59,7 +62,10 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
+    //private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
+    private BroadcastReceiver smsSentReceiver;
+    private BroadcastReceiver smsDeliveredReceiver;
     private TextInputEditText etContactName;
     private TextInputEditText etContactPhone;
     private TextView tvStatus;
@@ -122,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
         //contactManager.loadEmergencyMessageFromFirebase(message -> {
         //    Log.d("Main Activity", "Emergency message loaded: " + message);
         //});
+
+        registerSmsReceivers();
 
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -671,6 +679,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void registerSmsReceivers() {
+        // Create receivers
+        smsSentReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
+        smsDeliveredReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
+
+        // Register SMS sent receiver
+        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        // Register SMS delivered receiver
+        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        Log.d("MainActivity", "SMS broadcast receivers registered");
+    }
+
+
     private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
         Log.d("MainActivity", "Alert confirmed by user, SMS already sent by dialog");
         // SMS is already sent by EmergencyAlertDialog.sendEmergencyAlert()
@@ -680,11 +713,63 @@ public class MainActivity extends AppCompatActivity {
         //intent.putExtra("EMERGENCY_TYPE", emergencyType);
         //intent.putExtra("LOCATION", location);
         //sendBroadcast(intent);
+        saveAlertToDatabase(emergencyType, location);
     }
 
-    //private android.location.Location getLastKnownLocationFromService() {
-    //    return null;
-    //}
+    private void saveAlertToDatabase(String emergencyType, android.location.Location location) {
+        // Get AlertRepository instance
+        com.example.data.AlertRepository alertRepository =
+                com.example.data.AlertRepository.getInstance(getApplication());
+
+        String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
+        long timestamp = System.currentTimeMillis();
+        Double latitude = (location != null) ? location.getLatitude() : null;
+        Double longitude = (location != null) ? location.getLongitude() : null;
+        String contactName = contactManager.getContactName();
+        String contactPhone = contactManager.getContactPhone();
+        boolean locationAvailable = (location != null);
+
+        com.example.data.AlertEntity alert = new com.example.data.AlertEntity(
+                alertType,
+                timestamp,
+                latitude,
+                longitude,
+                contactName,
+                contactPhone,
+                locationAvailable
+        );
+
+        alertRepository.insert(alert, firebaseKey -> {
+            if (firebaseKey != null) {
+                Log.d("MainActivity", "Alert saved to database with key: " + firebaseKey);
+                Toast.makeText(MainActivity.this, "Alert logged", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.e("MainActivity", "Failed to save alert to database");
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Unregister SMS receivers
+        if (smsSentReceiver != null) {
+            try {
+                unregisterReceiver(smsSentReceiver);
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error unregistering smsSentReceiver", e);
+            }
+        }
+
+        if (smsDeliveredReceiver != null) {
+            try {
+                unregisterReceiver(smsDeliveredReceiver);
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error unregistering smsDeliveredReceiver", e);
+            }
+        }
+    }
 
     private void signOut() {
         // Clear local emergency contact data

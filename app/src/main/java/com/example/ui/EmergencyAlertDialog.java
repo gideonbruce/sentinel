@@ -1,6 +1,8 @@
 package com.example.ui;
 
 import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -128,56 +130,81 @@ public class EmergencyAlertDialog {
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
 
-        try {
-            SubscriptionManager subscriptionManager =
-                    (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        //pending intents to track SMS status
+        Intent sentIntent = new Intent("SMS_SENT");
+        Intent deliveredIntent = new Intent("SMS_DELIVERED");
 
-            if (subscriptionManager != null) {
-                Log.d(TAG, "SubscriptionManager obtained");
-                List<SubscriptionInfo> subscriptionInfoList =
-                        subscriptionManager.getActiveSubscriptionInfoList();
+        PendingIntent sentPI = PendingIntent.getBroadcast(
+                context, 0, sentIntent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+        PendingIntent deliveredPI = PendingIntent.getBroadcast(
+                context, 0, deliveredIntent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
-                if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
-                    Log.d(TAG, "Active subscriptions found: " + subscriptionInfoList.size());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
 
-                    int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
-                    Log.d(TAG, "Default SMS subscription ID: " + defaultSmsSubscriptionId);
+            try {
+                SubscriptionManager subscriptionManager =
+                        (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
 
-                    SmsManager smsManager;
-                    if (defaultSmsSubscriptionId != -1) {
-                        Log.d(TAG, "Using default SIM");
-                        smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                if (subscriptionManager != null) {
+                    Log.d(TAG, "SubscriptionManager obtained");
+                    List<SubscriptionInfo> subscriptionInfoList =
+                            subscriptionManager.getActiveSubscriptionInfoList();
+
+                    if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
+                        Log.d(TAG, "Active subscriptions found: " + subscriptionInfoList.size());
+
+                        int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+                        Log.d(TAG, "Default SMS subscription ID: " + defaultSmsSubscriptionId);
+
+                        SmsManager smsManager;
+                        if (defaultSmsSubscriptionId != -1) {
+                            Log.d(TAG, "Using default SIM");
+                            smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                        } else {
+                            Log.d(TAG, "No default SIM, using first available SIM");
+                            int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
+                            Log.d(TAG, "First SIM subscription ID: " + subscriptionId);
+                            smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
+                        }
+
+                        Log.i(TAG, "Sending SMS via SmsManager");
+                        // FIXED: Handle long messages properly
+                        if (message.length() > 160) {
+                            ArrayList<String> parts = smsManager.divideMessage(message);
+                            ArrayList<PendingIntent> sentIntents = new ArrayList<>();
+                            ArrayList<PendingIntent> deliceryIntents = new ArrayList<>();
+
+                            for (int i = 0; i < parts.size(); i++) {
+                                sentIntents.add(sentPI);
+                                deliceryIntents.add(deliveredPI);
+                            }
+
+                            smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentIntents, deliceryIntents);
+                        } else {
+                            smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
+                        }
+                        Log.i(TAG, "SMS sent successfully");
+                        Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
+
+                        return;
                     } else {
-                        Log.d(TAG, "No default SIM, using first available SIM");
-                        int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
-                        Log.d(TAG, "First SIM subscription ID: " + subscriptionId);
-                        smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
+                        Log.w(TAG, "No active subscriptions found");
                     }
-
-                    Log.i(TAG, "Sending SMS via SmsManager");
-                    // FIXED: Handle long messages properly
-                    if (message.length() > 160) {
-                        ArrayList<String> parts = smsManager.divideMessage(message);
-                        smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
-                    } else {
-                        smsManager.sendTextMessage(phoneNumber, null, message, null, null);
-                    }
-                    Log.i(TAG, "SMS sent successfully");
-                    Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
-                    return;
                 } else {
-                    Log.w(TAG, "No active subscriptions found");
+                    Log.w(TAG, "SubscriptionManager is null");
                 }
-            } else {
-                Log.w(TAG, "SubscriptionManager is null");
+            } catch (SecurityException e) {
+                Log.e(TAG, "SecurityException in sendSMSWithDualSIMSupport", e);
+                throw e;
+            } catch (Exception e) {
+                Log.e(TAG, "Exception in sendSMSWithDualSIMSupport: " + e.getMessage(), e);
+                e.printStackTrace();
+                throw e;
             }
-        } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException in sendSMSWithDualSIMSupport", e);
-            throw e;
-        } catch (Exception e) {
-            Log.e(TAG, "Exception in sendSMSWithDualSIMSupport: " + e.getMessage(), e);
-            e.printStackTrace();
-            throw e;
         }
 
         // Fallback to default SmsManager
@@ -188,15 +215,66 @@ public class EmergencyAlertDialog {
             // FIXED: Handle long messages in fallback too
             if (message.length() > 160) {
                 ArrayList<String> parts = smsManager.divideMessage(message);
-                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null);
+                ArrayList<PendingIntent> sentIntents = new ArrayList<>();
+                ArrayList<PendingIntent> deliveryIntents = new ArrayList<>();
+
+                for (int i = 0; i < parts.size(); i++) {
+                    sentIntents.add(sentPI);
+                    deliveryIntents.add(deliveredPI);
+                }
+
+                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentIntents, deliveryIntents);
             } else {
-                smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+                smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
             }
             Log.i(TAG, "SMS sent successfully via default SmsManager");
             Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             Log.e(TAG, "Failed to send via default SmsManager: " + e.getMessage(), e);
             openSMSAppAsFallback(context, phoneNumber, message);
+        }
+    }
+
+    public static class SmsBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if ("SMS_SENT".equals(action)) {
+                switch (getResultCode()) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.i(TAG, "SMS sent successfully");
+                        Toast.makeText(context, "Message sent!", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        Log.e(TAG, "SMS generic failure");
+                        Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        Log.e(TAG, "SMS no service");
+                        Toast.makeText(context, "No service - message not sent", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                        Log.e(TAG, "SMS null PDU");
+                        Toast.makeText(context, "Null PDU error", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        Log.e(TAG, "SMS radio off");
+                        Toast.makeText(context, "Radio off - message not sent", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            } else if ("SMS_DELIVERED".equals(action)) {
+                switch (getResultCode()) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.i(TAG, "SMS delivered successfully");
+                        Toast.makeText(context, "Message delivered!", Toast.LENGTH_SHORT).show();
+                        break;
+                    case android.app.Activity.RESULT_CANCELED:
+                        Log.e(TAG, "SMS not delivered");
+                        Toast.makeText(context, "Message not delivered", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            }
         }
     }
 
