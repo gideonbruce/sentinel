@@ -321,11 +321,15 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, AlertHistoryActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_help) {
-            Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
             //TODO: open help activity
+            Intent intent = new Intent(this, HelpActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_about) {
-            Toast.makeText(this, "About", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "About", Toast.LENGTH_SHORT).show();
             //TODO: open  about dialog
+            Intent intent = new Intent(this, AboutActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_sign_out) {
             signOut();
         }
