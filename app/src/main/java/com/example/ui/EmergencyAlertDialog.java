@@ -126,12 +126,14 @@ public class EmergencyAlertDialog {
         }
     }
 
-
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
+        Log.d(TAG, "Message length: " + message.length() + " characters");
 
-        //pending intents to track SMS status
+        // Pending intents to track SMS status
         Intent sentIntent = new Intent("SMS_SENT");
+        sentIntent.putExtra("phone_number", phoneNumber); // Add for debugging
+
         Intent deliveredIntent = new Intent("SMS_DELIVERED");
 
         PendingIntent sentPI = PendingIntent.getBroadcast(
@@ -144,7 +146,6 @@ public class EmergencyAlertDialog {
         );
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-
             try {
                 SubscriptionManager subscriptionManager =
                         (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
@@ -172,24 +173,41 @@ public class EmergencyAlertDialog {
                         }
 
                         Log.i(TAG, "Sending SMS via SmsManager");
-                        // FIXED: Handle long messages properly
-                        if (message.length() > 160) {
-                            ArrayList<String> parts = smsManager.divideMessage(message);
+
+                        // FIXED: Always use multipart for reliability
+                        ArrayList<String> parts = smsManager.divideMessage(message);
+                        Log.d(TAG, "Message divided into " + parts.size() + " parts");
+
+                        if (parts.size() > 1) {
                             ArrayList<PendingIntent> sentIntents = new ArrayList<>();
-                            ArrayList<PendingIntent> deliceryIntents = new ArrayList<>();
+                            ArrayList<PendingIntent> deliveryIntents = new ArrayList<>(); // Fixed typo
 
                             for (int i = 0; i < parts.size(); i++) {
                                 sentIntents.add(sentPI);
-                                deliceryIntents.add(deliveredPI);
+                                deliveryIntents.add(deliveredPI);
                             }
 
-                            smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentIntents, deliceryIntents);
+                            smsManager.sendMultipartTextMessage(
+                                    phoneNumber,
+                                    null,
+                                    parts,
+                                    sentIntents,
+                                    deliveryIntents
+                            );
+                            Log.d(TAG, "Multipart SMS sent (" + parts.size() + " parts)");
                         } else {
-                            smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
+                            smsManager.sendTextMessage(
+                                    phoneNumber,
+                                    null,
+                                    message,
+                                    sentPI,
+                                    deliveredPI
+                            );
+                            Log.d(TAG, "Single SMS sent");
                         }
-                        Log.i(TAG, "SMS sent successfully");
-                        Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
 
+                        // DON'T show success toast here - wait for broadcast receiver
+                        Log.i(TAG, "SMS queued for sending");
                         return;
                     } else {
                         Log.w(TAG, "No active subscriptions found");
@@ -212,25 +230,44 @@ public class EmergencyAlertDialog {
         try {
             SmsManager smsManager = SmsManager.getDefault();
             Log.i(TAG, "Sending SMS via default SmsManager");
-            // FIXED: Handle long messages in fallback too
-            if (message.length() > 160) {
-                ArrayList<String> parts = smsManager.divideMessage(message);
+
+            ArrayList<String> parts = smsManager.divideMessage(message);
+            Log.d(TAG, "Message divided into " + parts.size() + " parts");
+
+            if (parts.size() > 1) {
                 ArrayList<PendingIntent> sentIntents = new ArrayList<>();
-                ArrayList<PendingIntent> deliveryIntents = new ArrayList<>();
+                ArrayList<PendingIntent> deliveryIntents = new ArrayList<>(); // Fixed typo
 
                 for (int i = 0; i < parts.size(); i++) {
                     sentIntents.add(sentPI);
                     deliveryIntents.add(deliveredPI);
                 }
 
-                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentIntents, deliveryIntents);
+                smsManager.sendMultipartTextMessage(
+                        phoneNumber,
+                        null,
+                        parts,
+                        sentIntents,
+                        deliveryIntents
+                );
+                Log.d(TAG, "Multipart SMS sent via default manager");
             } else {
-                smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
+                smsManager.sendTextMessage(
+                        phoneNumber,
+                        null,
+                        message,
+                        sentPI,
+                        deliveredPI
+                );
+                Log.d(TAG, "Single SMS sent via default manager");
             }
-            Log.i(TAG, "SMS sent successfully via default SmsManager");
-            Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_LONG).show();
+
+            // DON'T show success toast here either
+            Log.i(TAG, "SMS queued for sending via default manager");
         } catch (Exception e) {
             Log.e(TAG, "Failed to send via default SmsManager: " + e.getMessage(), e);
+            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
             openSMSAppAsFallback(context, phoneNumber, message);
         }
     }
