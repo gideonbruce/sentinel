@@ -86,7 +86,7 @@ public class EmergencyShakeService extends Service {
         alertRepository = AlertRepository.getInstance(getApplication());
 
 
-        registerSMSReceivers();
+        //registerSMSReceivers();
 
         // Initialize shake detection
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -182,7 +182,7 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    private void registerSMSReceivers() {
+    /*private void registerSMSReceivers() {
         // SMS Sent receiver
         smsSentReceiver = new BroadcastReceiver() {
             @Override
@@ -247,7 +247,7 @@ public class EmergencyShakeService extends Service {
         }
 
         Log.d("EmergencyService", "SMS status receivers registered");
-    }
+    }*/
 
     private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
         Log.d("EmergencyService", "=== Opening SMS app as fallback ===");
