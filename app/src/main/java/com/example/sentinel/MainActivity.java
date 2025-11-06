@@ -687,16 +687,27 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context context, Intent intent) {
                 int resultCode = getResultCode();
                 Log.d("MainActivity", "SMS Sent result code: " + resultCode);
+                Log.d("MainActivity", "Result code: " + resultCode);
 
                 switch (resultCode) {
                     case android.app.Activity.RESULT_OK:
                         Log.d("MainActivity", "SMS sent successfully!");
+                        Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
                         Log.e("MainActivity", "SMS generic failure");
+                        Toast.makeText(context, "Failed to send SMS - Generic error",
+                                Toast.LENGTH_LONG).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
                         Log.e("MainActivity", "SMS failed - No service");
+                        Toast.makeText(context, "Failed - No cellular service",
+                                Toast.LENGTH_LONG).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        Log.e("MainActivity", "SMS failed - Radio off");
+                        Toast.makeText(context, "Failed - Airplane mode?",
+                                Toast.LENGTH_LONG).show();
                         break;
                 }
             }
