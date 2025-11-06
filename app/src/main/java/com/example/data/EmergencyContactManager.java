@@ -30,6 +30,7 @@ public class EmergencyContactManager {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         firebaseAuth = FirebaseAuth.getInstance();
         initializeFirebaseReference();
+        Log.d(TAG, "EmergencyContactManager initialized");
     }
 
     private void initializeFirebaseReference() {
@@ -57,13 +58,21 @@ public class EmergencyContactManager {
     }
 
     public void saveEmergencyContact(String name, String phoneNumber) {
+        Log.d(TAG, "saveEmergencyContact() called");
+
+        // Validate inputs
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            Log.e(TAG, "Cannot save - phone number is null or empty");
+            return;
+        }
+
         // Save to SharedPreferences first
         prefs.edit()
-                .putString(KEY_CONTACT_NAME, name)
+                .putString(KEY_CONTACT_NAME, name != null ? name : "")
                 .putString(KEY_CONTACT_PHONE, phoneNumber)
                 .apply();
 
-        Log.d(TAG, "Contact saved locally: " + name + " - " + phoneNumber);
+        Log.d(TAG, "Contact saved locally: " + name + " - [REDACTED]");
 
         // Sync to Firebase
         syncContactToFirebase(name, phoneNumber);
@@ -90,10 +99,14 @@ public class EmergencyContactManager {
      * This ensures data is never lost.
      */
     public void loadFromFirebase(ContactLoadCallback callback) {
+        Log.d(TAG, "loadFromFirebase() called");
+
         // First, get local data
         String localName = getContactName();
         String localPhone = getContactPhone();
         boolean hasLocalData = localPhone != null && !localPhone.isEmpty();
+
+        Log.d(TAG, "Local data - Name: " + localName + ", HasPhone: " + (localPhone != null && !localPhone.isEmpty()));
 
         if (databaseReference == null) {
             Log.w(TAG, "Firebase not initialized, using local data only");
@@ -114,7 +127,7 @@ public class EmergencyContactManager {
                     if (contact != null && contact.phoneNumber != null && !contact.phoneNumber.isEmpty()) {
                         // Firebase has data - update local storage
                         prefs.edit()
-                                .putString(KEY_CONTACT_NAME, contact.name)
+                                .putString(KEY_CONTACT_NAME, contact.name != null ? contact.name : "")
                                 .putString(KEY_CONTACT_PHONE, contact.phoneNumber)
                                 .apply();
 
@@ -125,7 +138,7 @@ public class EmergencyContactManager {
                         }
                     } else {
                         // Firebase data is invalid - use local data
-                        Log.d(TAG, "Firebase data invalid, using local data");
+                        Log.w(TAG, "Firebase data invalid, using local data");
                         handleLocalData(localName, localPhone, hasLocalData, callback);
                     }
                 } else {
@@ -158,17 +171,29 @@ public class EmergencyContactManager {
         }
     }
 
+    /**
+     * FIXED: Returns empty string instead of null to prevent Parcel errors
+     */
     public String getContactName() {
-        return prefs.getString(KEY_CONTACT_NAME, null);
+        String name = prefs.getString(KEY_CONTACT_NAME, "");
+        Log.d(TAG, "getContactName() returned: " + (name.isEmpty() ? "empty" : name));
+        return name.isEmpty() ? null : name;
     }
 
+    /**
+     * FIXED: Returns empty string instead of null to prevent Parcel errors
+     */
     public String getContactPhone() {
-        return prefs.getString(KEY_CONTACT_PHONE, null);
+        String phone = prefs.getString(KEY_CONTACT_PHONE, "");
+        Log.d(TAG, "getContactPhone() returned: " + (phone.isEmpty() ? "empty" : "[REDACTED]"));
+        return phone.isEmpty() ? null : phone;
     }
 
     public boolean hasEmergencyContact() {
         String phone = getContactPhone();
-        return phone != null && !phone.isEmpty();
+        boolean hasContact = phone != null && !phone.isEmpty();
+        Log.d(TAG, "hasEmergencyContact(): " + hasContact);
+        return hasContact;
     }
 
     /**
@@ -176,6 +201,7 @@ public class EmergencyContactManager {
      * Use this when user wants to delete their contact permanently.
      */
     public void clearEmergencyContact() {
+        Log.d(TAG, "clearEmergencyContact() - clearing both local and Firebase");
         clearEmergencyContactLocal();
         clearEmergencyContactFromFirebase();
     }
@@ -242,12 +268,19 @@ public class EmergencyContactManager {
     }
 
     public void saveEmergencyMessage(String message) {
+        Log.d(TAG, "saveEmergencyMessage() called");
+
+        if (message == null || message.trim().isEmpty()) {
+            Log.w(TAG, "Empty message provided, using default");
+            message = DEFAULT_MESSAGE;
+        }
+
         // Save to SharedPreferences first
         prefs.edit()
                 .putString(KEY_EMERGENCY_MESSAGE, message)
                 .apply();
 
-        Log.d(TAG, "Emergency message saved locally");
+        Log.d(TAG, "Emergency message saved locally (length: " + message.length() + ")");
 
         // Sync to Firebase
         syncMessageToFirebase(message);
@@ -268,11 +301,18 @@ public class EmergencyContactManager {
         }
     }
 
+    /**
+     * FIXED: Always returns a non-null message (defaults to DEFAULT_MESSAGE)
+     */
     public String getEmergencyMessage() {
-        return prefs.getString(KEY_EMERGENCY_MESSAGE, DEFAULT_MESSAGE);
+        String message = prefs.getString(KEY_EMERGENCY_MESSAGE, DEFAULT_MESSAGE);
+        Log.d(TAG, "getEmergencyMessage() returned message of length: " + message.length());
+        return message;
     }
 
     public void loadEmergencyMessageFromFirebase(MessageLoadCallback callback) {
+        Log.d(TAG, "loadEmergencyMessageFromFirebase() called");
+
         // First, get local data
         String localMessage = getEmergencyMessage();
 
@@ -307,6 +347,7 @@ public class EmergencyContactManager {
                             }
                         } else {
                             // Firebase data is invalid - use local
+                            Log.w(TAG, "Firebase message invalid, using local message");
                             handleLocalMessage(localMessage, callback);
                         }
                     } else {
@@ -325,6 +366,11 @@ public class EmergencyContactManager {
                     }
                 }
             });
+        } else {
+            Log.w(TAG, "User reference is null");
+            if (callback != null) {
+                callback.onLoaded(localMessage);
+            }
         }
     }
 
@@ -341,6 +387,7 @@ public class EmergencyContactManager {
     }
 
     public void resetEmergencyMessage() {
+        Log.d(TAG, "resetEmergencyMessage() - resetting to default");
         saveEmergencyMessage(DEFAULT_MESSAGE);
     }
 

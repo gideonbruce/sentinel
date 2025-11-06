@@ -2,7 +2,10 @@ package com.example.sentinel;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -25,6 +28,7 @@ import android.view.MenuItem;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.view.KeyEvent;
+import android.telephony.SmsManager;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -38,6 +42,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
+import com.example.ui.EmergencyAlertDialog;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -58,7 +63,10 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
+    //private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
+    private BroadcastReceiver smsSentReceiver;
+    private BroadcastReceiver smsDeliveredReceiver;
     private TextInputEditText etContactName;
     private TextInputEditText etContactPhone;
     private TextView tvStatus;
@@ -81,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private boolean isServiceRunning = false;
+
+    private android.location.Location currentEmergencyLocation;
 
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
@@ -120,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
         //    Log.d("Main Activity", "Emergency message loaded: " + message);
         //});
 
+        registerSmsReceivers();
+
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -132,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
         loadUserProfile();
         checkPermissions();
         //updateUI();
+
+        handleEmergencyDialogIntent(getIntent());
     }
 
     private void initViews() {
@@ -634,6 +648,187 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.LENGTH_LONG).show();
                         })
                         .show();
+            }
+        }
+    }
+
+    @Override
+    protected  void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleEmergencyDialogIntent(intent);
+    }
+
+    private void handleEmergencyDialogIntent(Intent intent) {
+        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
+            String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
+
+            currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
+
+            EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
+                @Override
+                public void onAlertSent() {
+                    // User confirmed - send the SMS
+                    sendEmergencyAlertToService(emergencyType, currentEmergencyLocation);
+                }
+
+                @Override
+                public void onAlertCancelled() {
+                    Toast.makeText(MainActivity.this, "Emergency alert cancelled",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }, currentEmergencyLocation);
+        }
+    }
+
+    private void registerSmsReceivers() {
+        // SMS Sent receiver
+        smsSentReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("MainActivity", "SMS Sent result code: " + resultCode);
+                Log.d("MainActivity", "Result code: " + resultCode);
+
+                switch (resultCode) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.d("MainActivity", "SMS sent successfully!");
+                        Toast.makeText(context, "Emergency alert sent!", Toast.LENGTH_SHORT).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        Log.e("MainActivity", "SMS generic failure");
+                        Toast.makeText(context, "Failed to send SMS - Generic error",
+                                Toast.LENGTH_LONG).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        Log.e("MainActivity", "SMS failed - No service");
+                        Toast.makeText(context, "Failed - No cellular service",
+                                Toast.LENGTH_LONG).show();
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        Log.e("MainActivity", "SMS failed - Radio off");
+                        Toast.makeText(context, "Failed - Airplane mode?",
+                                Toast.LENGTH_LONG).show();
+                        break;
+                }
+            }
+        };
+
+        // SMS Delivered receiver
+        smsDeliveredReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("MainActivity", "SMS Delivery result code: " + resultCode);
+
+                if (resultCode == android.app.Activity.RESULT_OK) {
+                    Log.d("MainActivity", "SMS delivered successfully!");
+                }
+            }
+        };
+
+        // Register receivers
+        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
+        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        Log.d("MainActivity", "SMS broadcast receivers registered");
+    }
+
+    /*private void registerSmsReceivers() {
+        // Create receivers
+        smsSentReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
+        smsDeliveredReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
+
+        // Register SMS sent receiver
+        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        // Register SMS delivered receiver
+        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        Log.d("MainActivity", "SMS broadcast receivers registered");
+    }*/
+
+
+    private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
+        Log.d("MainActivity", "Alert confirmed by user, SMS already sent by dialog");
+        // SMS is already sent by EmergencyAlertDialog.sendEmergencyAlert()
+
+        // Send broadcast to service to actually send the SMS
+        //Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
+        //intent.putExtra("EMERGENCY_TYPE", emergencyType);
+        //intent.putExtra("LOCATION", location);
+        //sendBroadcast(intent);
+        saveAlertToDatabase(emergencyType, location);
+    }
+
+    private void saveAlertToDatabase(String emergencyType, android.location.Location location) {
+        // Get AlertRepository instance
+        com.example.data.AlertRepository alertRepository =
+                com.example.data.AlertRepository.getInstance(getApplication());
+
+        String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
+        long timestamp = System.currentTimeMillis();
+        Double latitude = (location != null) ? location.getLatitude() : null;
+        Double longitude = (location != null) ? location.getLongitude() : null;
+        String contactName = contactManager.getContactName();
+        String contactPhone = contactManager.getContactPhone();
+        boolean locationAvailable = (location != null);
+
+        com.example.data.AlertEntity alert = new com.example.data.AlertEntity(
+                alertType,
+                timestamp,
+                latitude,
+                longitude,
+                contactName,
+                contactPhone,
+                locationAvailable
+        );
+
+        alertRepository.insert(alert, firebaseKey -> {
+            if (firebaseKey != null) {
+                Log.d("MainActivity", "Alert saved to database with key: " + firebaseKey);
+                Toast.makeText(MainActivity.this, "Alert logged", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.e("MainActivity", "Failed to save alert to database");
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Unregister SMS receivers
+        if (smsSentReceiver != null) {
+            try {
+                unregisterReceiver(smsSentReceiver);
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error unregistering smsSentReceiver", e);
+            }
+        }
+
+        if (smsDeliveredReceiver != null) {
+            try {
+                unregisterReceiver(smsDeliveredReceiver);
+            } catch (Exception e) {
+                Log.e("MainActivity", "Error unregistering smsDeliveredReceiver", e);
             }
         }
     }

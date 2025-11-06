@@ -11,6 +11,8 @@ public class EmergencyAlertActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        android.location.Location location = getIntent().getParcelableExtra("LOCATION");
+
         EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
             @Override
             public void onAlertSent() {
@@ -21,6 +23,6 @@ public class EmergencyAlertActivity extends Activity {
             public void onAlertCancelled() {
                 finish();
             }
-        });
+        }, location);
     }
 }
