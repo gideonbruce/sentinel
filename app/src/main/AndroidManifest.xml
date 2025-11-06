@@ -63,17 +63,36 @@
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
             android:exported="false" />
 
+        <!-- Alert History Activity-->
         <activity
             android:name=".AlertHistoryActivity"
             android:exported="false"
             android:label="Alert History"
             android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
 
+        <!-- Settings Activity-->
         <activity
             android:name=".SettingsActivity"
+            android:exported="false"
             android:label="Settings"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
 
+        <!-- Help Activity-->
+        <activity
+            android:name=".HelpActivity"
+            android:exported="false"
+            android:label="Help &amp; FAQ"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
+
+        <!-- About Activity-->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:label="About"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.AppCompat.Light.DarkActionBar" />
         <!--  EMERGENCY ALERT ACTIVITY -->
         <activity
             android:name="com.example.core.EmergencyAlertActivity"
