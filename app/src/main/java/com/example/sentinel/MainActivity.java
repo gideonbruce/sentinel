@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.view.KeyEvent;
+import android.telephony.SmsManager;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -680,6 +681,56 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void registerSmsReceivers() {
+        // SMS Sent receiver
+        smsSentReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("MainActivity", "SMS Sent result code: " + resultCode);
+
+                switch (resultCode) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.d("MainActivity", "SMS sent successfully!");
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        Log.e("MainActivity", "SMS generic failure");
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        Log.e("MainActivity", "SMS failed - No service");
+                        break;
+                }
+            }
+        };
+
+        // SMS Delivered receiver
+        smsDeliveredReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("MainActivity", "SMS Delivery result code: " + resultCode);
+
+                if (resultCode == android.app.Activity.RESULT_OK) {
+                    Log.d("MainActivity", "SMS delivered successfully!");
+                }
+            }
+        };
+
+        // Register receivers
+        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
+        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        Log.d("MainActivity", "SMS broadcast receivers registered");
+    }
+
+    /*private void registerSmsReceivers() {
         // Create receivers
         smsSentReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
         smsDeliveredReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
@@ -701,7 +752,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         Log.d("MainActivity", "SMS broadcast receivers registered");
-    }
+    }*/
 
 
     private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
