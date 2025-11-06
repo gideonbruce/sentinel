@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -64,15 +65,28 @@ public class EmergencyShakeService extends Service {
     private BroadcastReceiver volumeButtonReceiver;
     private BroadcastReceiver smsConfirmReceiver;
 
+    private BroadcastReceiver smsSentReceiver;
+    private BroadcastReceiver smsDeliveredReceiver;
+
     private VolumeButtonGestureDetector volumeGestureDetector;
     private AlertRepository alertRepository;
+
+    private String lastPhoneNumber;
+    private String lastMessage;
+    private String lastEmergencyType;
+    private Location lastLocation;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        Log.d("EmergencyService", "=== Service onCreate ===");
+
         contactManager = new EmergencyContactManager(this);
         alertRepository = AlertRepository.getInstance(getApplication());
+
+
+        registerSMSReceivers();
 
         // Initialize shake detection
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -165,6 +179,118 @@ public class EmergencyShakeService extends Service {
             registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        }
+    }
+
+    private void registerSMSReceivers() {
+        // SMS Sent receiver
+        smsSentReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("EmergencyService", "SMS Sent result code: " + resultCode);
+
+                switch (resultCode) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.d("EmergencyService", "SMS sent successfully!");
+                        showSMSSentNotification(true);
+                        break;
+                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                        Log.e("EmergencyService", "SMS generic failure - opening SMS app as fallback");
+                        // Get the last message details and open SMS app
+                        handleSMSFailure();
+                        break;
+                    case SmsManager.RESULT_ERROR_NO_SERVICE:
+                        Log.e("EmergencyService", "SMS failed - No service");
+                        handleSMSFailure();
+                        break;
+                    case SmsManager.RESULT_ERROR_NULL_PDU:
+                        Log.e("EmergencyService", "SMS failed - Null PDU");
+                        handleSMSFailure();
+                        break;
+                    case SmsManager.RESULT_ERROR_RADIO_OFF:
+                        Log.e("EmergencyService", "SMS failed - Radio off");
+                        handleSMSFailure();
+                        break;
+                }
+            }
+        };
+
+        // SMS Delivered receiver
+        smsDeliveredReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int resultCode = getResultCode();
+                Log.d("EmergencyService", "SMS Delivery result code: " + resultCode);
+
+                switch (resultCode) {
+                    case android.app.Activity.RESULT_OK:
+                        Log.d("EmergencyService", "SMS delivered successfully!");
+                        break;
+                    case android.app.Activity.RESULT_CANCELED:
+                        Log.w("EmergencyService", "SMS not delivered");
+                        break;
+                }
+            }
+        };
+
+        // Register receivers
+        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
+        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+        }
+
+        Log.d("EmergencyService", "SMS status receivers registered");
+    }
+
+    private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
+        Log.d("EmergencyService", "=== Opening SMS app as fallback ===");
+        try {
+            Uri uri = Uri.parse("smsto:" + phoneNumber);
+            Intent smsIntent = new Intent(Intent.ACTION_SENDTO, uri);
+            smsIntent.putExtra("sms_body", message);
+            smsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            if (smsIntent.resolveActivity(getPackageManager()) != null) {
+                Log.d("EmergencyService", "SMS app found, opening...");
+                startActivity(smsIntent);
+                showManualSendNotification();
+                Log.d("EmergencyService", "SMS app opened successfully");
+            } else {
+                Log.e("EmergencyService", "No SMS app found on device!");
+                showSMSFailedNotification();
+            }
+        } catch (Exception ex) {
+            Log.e("EmergencyService", "Exception opening SMS app: " + ex.getMessage());
+            ex.printStackTrace();
+            showSMSFailedNotification();
+        }
+    }
+
+    private void showManualSendNotification() {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Please Send Manually")
+                .setContentText("Automatic SMS failed. Messaging app opened.")
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager != null) {
+            manager.notify(4, builder.build());
+        }
+    }
+
+    private void handleSMSFailure() {
+        Log.d("EmergencyService", "Handling SMS failure - opening SMS app");
+        if (lastPhoneNumber != null && lastMessage != null) {
+            openSMSAppAsFallback(lastPhoneNumber, lastMessage, lastEmergencyType, lastLocation);
         }
     }
 
@@ -381,6 +507,27 @@ public class EmergencyShakeService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
+        Log.d("EmergencyService", "=== Service onDestroy ===");
+
+        // Unregister SMS receivers
+        if (smsSentReceiver != null) {
+            try {
+                unregisterReceiver(smsSentReceiver);
+                Log.d("EmergencyService", "SMS sent receiver unregistered");
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Error unregistering SMS sent receiver: " + e.getMessage());
+            }
+        }
+
+        if (smsDeliveredReceiver != null) {
+            try {
+                unregisterReceiver(smsDeliveredReceiver);
+                Log.d("EmergencyService", "SMS delivered receiver unregistered");
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Error unregistering SMS delivered receiver: " + e.getMessage());
+            }
+        }
+
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
         }
@@ -440,31 +587,76 @@ public class EmergencyShakeService extends Service {
     }
 
     private void sendEmergencySMS(Location location, String emergencyType) {
+        Log.d("EmergencyService", "=== sendEmergencySMS called ===");
+
         if (!contactManager.hasEmergencyContact()) {
+            Log.e("EmergencyService", "No emergency contact set!");
             return;
         }
 
         String phoneNumber = contactManager.getContactPhone();
         String message = getMessage(location, emergencyType);
+
+        lastPhoneNumber = phoneNumber;
+        lastMessage = message;
+        lastEmergencyType = emergencyType;
+        lastLocation = location;
+
+        Log.d("EmergencyService", "Phone number: " + phoneNumber);
+        Log.d("EmergencyService", "Message length: " + message.length());
+        Log.d("EmergencyService", "Message: " + message);
+        Log.d("EmergencyService", "Emergency type: " + emergencyType);
+        Log.d("EmergencyService", "Location available: " + (location != null));
+
         try {
+            Log.d("EmergencyService", "Attempting to send SMS...");
+
+            //PendingIntents for sent and delivery tracking
+            Intent sentIntent = new Intent("SMS_SENT");
+            Intent deliveredIntent = new Intent("SMS_DELIVERED");
+
+            PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, sentIntent,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, deliveredIntent,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
             SmsManager smsManager;
             // Handle dual SIM devices
             int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+            Log.d("EmergencyService", "Default SMS subscription ID: " + defaultSmsSubscriptionId);
+
             if (defaultSmsSubscriptionId != -1) {
                 smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                Log.d("EmergencyService", "Using SMS manager for subscription ID: " + defaultSmsSubscriptionId);
             } else {
                 smsManager = SmsManager.getDefault();
+                Log.d("EmergencyService", "Using default SMS manager");
             }
 
             //split message if its too long
             if (message.length() > 160) {
+                Log.d("EmergencyService", "Message is long, splitting into parts...");
                 ArrayList<String> parts = smsManager.divideMessage(message);
-                smsManager.sendMultipartTextMessage(phoneNumber, null, smsManager.divideMessage(message), null, null);
+                Log.d("EmergencyService", "Message split into " + parts.size() + " parts");
+
+                //ArrayLists of PendingIntents for multipart messages
+                ArrayList<PendingIntent> sentPIs = new ArrayList<>();
+                ArrayList<PendingIntent> deliveredPIs = new ArrayList<>();
+                for (int i = 0; i < parts.size(); i++) {
+                    sentPIs.add(sentPI);
+                    deliveredPIs.add(deliveredPI);
+                }
+
+                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentPIs, deliveredPIs);
+                Log.d("EmergencyService", "Multipart SMS sent!");
             } else {
-                smsManager.sendTextMessage(phoneNumber, null, message, null, null);
+                Log.d("EmergencyService", "Sending single SMS...");
+                smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
+                Log.d("EmergencyService", "Single SMS sent!");
             }
             //smsManager.sendTextMessage(phoneNumber, null, message, null, null);
-
+            saveAlertToDatabase(emergencyType, location);
+            Log.d("EmergencyService", "Alert saved to database");
             // Show notification that SMS was sent
             showSMSSentNotification(location != null);
 
