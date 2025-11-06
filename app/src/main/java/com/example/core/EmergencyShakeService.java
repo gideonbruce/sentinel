@@ -510,23 +510,23 @@ public class EmergencyShakeService extends Service {
         Log.d("EmergencyService", "=== Service onDestroy ===");
 
         // Unregister SMS receivers
-        if (smsSentReceiver != null) {
+        /*if (smsSentReceiver != null) {
             try {
                 unregisterReceiver(smsSentReceiver);
                 Log.d("EmergencyService", "SMS sent receiver unregistered");
             } catch (Exception e) {
                 Log.e("EmergencyService", "Error unregistering SMS sent receiver: " + e.getMessage());
             }
-        }
+        }*/
 
-        if (smsDeliveredReceiver != null) {
+        /*if (smsDeliveredReceiver != null) {
             try {
                 unregisterReceiver(smsDeliveredReceiver);
                 Log.d("EmergencyService", "SMS delivered receiver unregistered");
             } catch (Exception e) {
                 Log.e("EmergencyService", "Error unregistering SMS delivered receiver: " + e.getMessage());
             }
-        }
+        }*/
 
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
@@ -586,6 +586,12 @@ public class EmergencyShakeService extends Service {
         }
     }
 
+    private void sendEmergencySMS(Location location, String emergencyType) {
+        Log.d("EmergencyService", "sendEmergencySMS called - but SMS sending now handled by dialog");
+        saveAlertToDatabase(emergencyType, location);
+    }
+
+    /*
     private void sendEmergencySMS(Location location, String emergencyType) {
         Log.d("EmergencyService", "=== sendEmergencySMS called ===");
 
@@ -685,6 +691,7 @@ public class EmergencyShakeService extends Service {
             showSMSFailedNotification();
         }
     }
+    */
 
     @NonNull
     private String getMessage(Location location, String emergencyType) {
