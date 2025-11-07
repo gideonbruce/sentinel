@@ -170,8 +170,11 @@ public class AboutActivity extends AppCompatActivity {
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {
             messageView.setMovementMethod(LinkMovementMethod.getInstance());
-            messageView.setLinksClickable(true);
-            messageView.setAutoLinkMask(Linkify.WEB_URLS);
+            //messageView.setLinksClickable(true);
+
+            //explicit linkify call
+            Linkify.addLinks(messageView, Linkify.WEB_URLS);
+            //messageView.setAutoLinkMask(Linkify.WEB_URLS);
         }
     }
 
