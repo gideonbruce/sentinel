@@ -289,6 +289,7 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
+
     @Override
     public  boolean onKeyUp(int keyCode, KeyEvent event) {
         if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||

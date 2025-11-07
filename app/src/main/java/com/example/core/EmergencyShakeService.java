@@ -98,8 +98,11 @@ public class EmergencyShakeService extends Service {
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         shakeDetector = new ShakeDetector();
 
+        //set sensitivity threshold
+        shakeDetector.setSensitivity(getShakeSensitivityThreshold());
+
         shakeDetector.setOnShakeListener(count -> {
-            if (isShakeDetectionEnabled() && count >= 3) {
+            if (isShakeDetectionEnabled() && count >= getShakeCountRequired()) {
                 //sendEmergencySMS();
                 //getLocationAndSendSMS();
                 showEmergencyAlertDialog(null);
@@ -331,6 +334,37 @@ public class EmergencyShakeService extends Service {
                 Log.d("EmergencyShakeService", "Alert saved with key: " + firebaseKey);
             }
         });
+    }
+
+    private float getShakeSensitivityThreshold() {
+        int sensitivity = prefs.getInt("shake_sensitivity", 2); // 0-4 scale
+
+        // Convert to acceleration threshold
+        // Lower sensitivity = higher threshold (harder to trigger)
+        // Higher sensitivity = lower threshold (easier to trigger)
+        switch (sensitivity) {
+            case 0: return 3.5f; // Very Low - hardest to trigger
+            case 1: return 3.0f; // Low
+            case 2: return 2.5f; // Medium (default)
+            case 3: return 2.0f; // High
+            case 4: return 1.5f; // Very High - easiest to trigger
+            default: return 2.5f;
+        }
+    }
+
+    private int getShakeCountRequired() {
+        int sensitivity = prefs.getInt("shake_sensitivity", 2); // 0-4 scale
+
+        // Convert to required shake count
+        // Higher sensitivity = fewer shakes needed
+        switch (sensitivity) {
+            case 0: return 4; // Very Low - needs 4 shakes
+            case 1: return 4; // Low - needs 4 shakes
+            case 2: return 3; // Medium (default) - needs 3 shakes
+            case 3: return 2; // High - needs 2 shakes
+            case 4: return 2; // Very High - needs 2 shakes
+            default: return 3;
+        }
     }
 
     private void setupOverlayForVolumeDetection() {

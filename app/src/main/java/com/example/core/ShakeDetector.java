@@ -10,6 +10,9 @@ public class ShakeDetector implements SensorEventListener {
     private static final int SHAKE_TIME_WINDOW = 3000; // 3 seconds
     private static final int REQUIRED_SHAKES = 3;
 
+    private static final int SHAKE_SLOP_TIME_MS = 500;
+    private static final int SHAKE_COUNT_RESET_TIME_MS = 3000;
+
     private OnShakeListener listener;
     private long lastShakeTime = 0;
     private int shakeCount = 0;
@@ -21,6 +24,11 @@ public class ShakeDetector implements SensorEventListener {
 
     public void setOnShakeListener(OnShakeListener listener) {
         this.listener = listener;
+    }
+
+    //set sensivity
+    public void setSensitivity(float threshold) {
+        this.AccelerationThreshold = threshold;
     }
 
     @Override
