@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
         Button btnStartService = findViewById(R.id.btn_start_service);
-        Button btnStopService = findViewById(R.id.btn_stop_service);
+        //Button btnStopService = findViewById(R.id.btn_stop_service);
         tvStatus = findViewById(R.id.tv_status);
         statusIndicator = findViewById(R.id.status_indicator);
         contactDisplay = findViewById(R.id.contact_display);
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnStartService.setOnClickListener(v -> startShakeService());
-        btnStopService.setOnClickListener(v -> stopShakeService());
+        //btnStopService.setOnClickListener(v -> stopShakeService());
         btnEditContact.setOnClickListener(v -> editContact());
 
         //initializing drawer
