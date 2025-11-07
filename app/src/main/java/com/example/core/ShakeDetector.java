@@ -18,6 +18,8 @@ public class ShakeDetector implements SensorEventListener {
     private int shakeCount = 0;
     private long firstShakeTime = 0;
 
+    private float shakeThreshold = SHAKE_THRESHOLD;
+
     public interface OnShakeListener {
         void onShake(int count);
     }
@@ -28,7 +30,7 @@ public class ShakeDetector implements SensorEventListener {
 
     //set sensivity
     public void setSensitivity(float threshold) {
-        this.AccelerationThreshold = threshold;
+        this.shakeThreshold = threshold;
     }
 
     @Override
@@ -40,7 +42,7 @@ public class ShakeDetector implements SensorEventListener {
 
             double acceleration = Math.sqrt(x * x + y * y + z * z) - SensorManager.GRAVITY_EARTH;
 
-            if (acceleration > SHAKE_THRESHOLD) {
+            if (acceleration > shakeThreshold) {
                 long currentTime = System.currentTimeMillis();
 
                 // Reset if too much time has passed
