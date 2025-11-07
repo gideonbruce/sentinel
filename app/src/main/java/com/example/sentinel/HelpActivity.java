@@ -119,7 +119,7 @@ public class HelpActivity extends AppCompatActivity {
 
     private void sendSupportEmail() {
         Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
-        emailIntent.setData(Uri.parse("mailto:support@sentinelapp.com"));
+        emailIntent.setData(Uri.parse("mailto:gideonotieno99@gmail.com"));
         emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Sentinel App - Help Request");
         emailIntent.putExtra(Intent.EXTRA_TEXT, "Hi Sentinel Team,\n\nI need help with:\n\n");
 
