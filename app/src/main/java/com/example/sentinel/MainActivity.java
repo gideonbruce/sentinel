@@ -533,6 +533,16 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        // checking if atleast one method is enabled
+        if (!isShakeDetectionEnabled() && !isVolumeButtonsEnabled()) {
+            Toast.makeText(this, "Please enable atleast one gesture method in settings",
+                    Toast.LENGTH_LONG).show();
+            //open settings
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return;
+        }
+
         //checking location permission first
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -543,12 +553,27 @@ public class MainActivity extends AppCompatActivity {
         }
 
         checkLocationSettings();
-        requestOverlayPermission(); //for overlay buttons
+
+        //overlay only for volume gestures
+        if (isVolumeButtonsEnabled()) {
+            requestOverlayPermission();
+        }
+        //requestOverlayPermission(); //for overlay buttons
 
         Intent serviceIntent = new Intent(this, EmergencyShakeService.class);
         startForegroundService(serviceIntent);
         isServiceRunning = true;
-        Toast.makeText(this, "Shake detection started", Toast.LENGTH_SHORT).show();
+
+        // showing active gestures
+        String methods = "";
+        if (isShakeDetectionEnabled() && isVolumeButtonsEnabled()) {
+            methods = "Shake & Volume gestures started";
+        } else if (isShakeDetectionEnabled()) {
+            methods = "Shake detection started";
+        } else {
+            methods = "Volume gesture started";
+        }
+        Toast.makeText(this, methods, Toast.LENGTH_SHORT).show();
         updateUI();
     }
 
