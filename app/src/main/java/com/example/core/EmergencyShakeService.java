@@ -257,6 +257,29 @@ public class EmergencyShakeService extends Service {
         Log.d("EmergencyService", "SMS status receivers registered");
     }*/
 
+    private BroadcastReceiver settingsChangedReceiver;
+
+    // In onCreate(), register receiver for settings changes:
+    settingsChangedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
+                // Update shake sensitivity
+                if (shakeDetector != null) {
+                    shakeDetector.setSensitivity(getShakeSensitivityThreshold());
+                }
+                Log.d("EmergencyService", "Settings updated - new sensitivity: " + getShakeSensitivityThreshold());
+            }
+        }
+    };
+
+    IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+        registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
+    }
+
     private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
         Log.d("EmergencyService", "=== Opening SMS app as fallback ===");
         try {
@@ -556,6 +579,14 @@ public class EmergencyShakeService extends Service {
 
         Log.d("EmergencyService", "=== Service onDestroy ===");
 
+        // unregisters settings receiver
+        if (settingsChangedReceiver != null) {
+            try {
+                unregisterReceiver(settingsChangedReceiver);
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Error unregistering settings receiver", e);
+            }
+        }
         // Unregister SMS receivers
         /*if (smsSentReceiver != null) {
             try {
