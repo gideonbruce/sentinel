@@ -294,7 +294,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Developed with ❤️ for personal safety and peace of mind."
+                        android:text="Developed for personal safety and peace of mind."
                         android:textSize="14sp"
                         android:textColor="#424242"
                         android:layout_marginBottom="8dp" />
@@ -386,7 +386,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Contact us at support@sentinelapp.com"
+                        android:text="Contact me at gideon@sentinel-7b6b4.firebaseapp.com"
                         android:textSize="12sp"
                         android:textColor="#1976D2"
                         android:layout_marginBottom="12dp" />
