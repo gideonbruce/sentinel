@@ -26,8 +26,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
-
 public class AlertHistoryActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -91,20 +89,20 @@ public class AlertHistoryActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView() {
-        adapter = new AlertHistoryAdapter(new ArrayList<>(), new AlertHistoryAdapter.AlertClickListener() {
+        adapter = new AlertHistoryAdapter(this, new AlertHistoryAdapter.OnAlertActionListener() {
             @Override
-            public void onAlertClick(AlertEntity alert) {
-                showAlertDetails(alert);
-            }
-
-            @Override
-            public void onLocationClick(AlertEntity alert) {
-                openMap(alert);
-            }
-
-            @Override
-            public void onDeleteClick(AlertEntity alert) {
+            public void onDeleteAlert(AlertEntity alert) {
                 deleteAlert(alert);
+            }
+
+            @Override
+            public void onViewLocation(double latitude, double longitude) {
+                openMapWithCoordinates(latitude, longitude);
+            }
+
+            @Override
+            public void onCallContact(String phoneNumber) {
+                callContact(phoneNumber);
             }
         });
 
@@ -149,7 +147,7 @@ public class AlertHistoryActivity extends AppCompatActivity {
                 tvEmptyState.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
                 fabClearHistory.setVisibility(View.VISIBLE);
-                adapter.updateAlerts(alerts);
+                adapter.setAlerts(alerts);
             }
         }));
     }
@@ -308,5 +306,33 @@ public class AlertHistoryActivity extends AppCompatActivity {
         }
         //reload alerts for current user
         loadAlertHistory();
+    }
+
+    private void openMapWithCoordinates(double latitude, double longitude) {
+        try {
+            String uri = "https://maps.google.com/?q=" + latitude + "," + longitude;
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+            intent.setPackage("com.google.android.apps.maps");
+
+            // Try to open Google Maps, fallback to browser if not installed
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            } else {
+                intent.setPackage(null);
+                startActivity(intent);
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to open map", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void callContact(String phoneNumber) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:" + phoneNumber));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, "Unable to open dialer", Toast.LENGTH_SHORT).show();
+        }
     }
 }
