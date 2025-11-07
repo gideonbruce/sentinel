@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -193,6 +194,16 @@ public class MainActivity extends AppCompatActivity {
             drawerLayout.closeDrawers();
             return true;
         });
+    }
+
+    private boolean isShakeDetectionEnabled() {
+        SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+        return prefs.getBoolean("shake_detection_enabled", true);
+    }
+
+    private boolean isVolumeButtonsEnabled() {
+        SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+        return prefs.getBoolean("volume_buttons_enabled", true);
     }
 
     @SuppressLint("SetTextI18n")
