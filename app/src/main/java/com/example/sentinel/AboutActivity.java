@@ -3,6 +3,8 @@ package com.example.sentinel;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -11,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -119,12 +122,12 @@ public class AboutActivity extends AppCompatActivity {
 
         btnPrivacyPolicy.setOnClickListener(v -> {
             // Open privacy policy URL
-            openUrl("https://sentinelapp.com/privacy");
+            openUrl("#");
         });
 
         btnTerms.setOnClickListener(v -> {
             // Open terms URL
-            openUrl("https://sentinelapp.com/terms");
+            openUrl("#");
         });
 
         btnLicenses.setOnClickListener(v -> {
@@ -148,22 +151,51 @@ public class AboutActivity extends AppCompatActivity {
     }
 
     private void showLicensesDialog() {
+        AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Open Source Licenses")
+                .setMessage("This app uses the following open source libraries:\n\n" +
+                        "• Firebase SDK (Apache 2.0)\n" +
+                        "• Google Play Services (Apache 2.0)\n" +
+                        "• Material Components (Apache 2.0)\n" +
+                        "• Google Maps API\n" +
+                        "• Glide (BSD, part MIT)\n" +
+                        "• Android Telephony APIs\n" +
+                        "• Java\n\n" +
+                        "Full license texts available at:\n" +
+                        "https://github.com/gideonbruce/sentinel/blob/sentinel/LICENSE")
+                .setPositiveButton("OK", null)
+                .show();
+
+        // Make the link clickable
+        TextView messageView = dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            messageView.setMovementMethod(LinkMovementMethod.getInstance());
+            messageView.setLinksClickable(true);
+            messageView.setAutoLinkMask(Linkify.WEB_URLS);
+        }
+    }
+
+
+    /*private void showLicensesDialog() {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("Open Source Licenses")
                 .setMessage("This app uses the following open source libraries:\n\n" +
                         "• Firebase SDK (Apache 2.0)\n" +
                         "• Google Play Services (Apache 2.0)\n" +
                         "• Material Components (Apache 2.0)\n" +
+                        ". Google Maps Api" +
                         "• Glide (BSD, part MIT)\n\n" +
+                        ". Android Telephony APIs" +
+                        ". Java" +
                         "Full license texts available at:\n" +
-                        "https://sentinelapp.com/licenses")
+                        "https://github.com/gideonbruce/sentinel/blob/sentinel/LICENSE")
                 .setPositiveButton("OK", null)
                 .show();
-    }
+    }*/
 
     private void sendSupportEmail() {
         Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
-        emailIntent.setData(Uri.parse("mailto:support@sentinelapp.com"));
+        emailIntent.setData(Uri.parse("mailto:gideonotieno99@gmail.com"));
         emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Sentinel App Feedback");
         emailIntent.putExtra(Intent.EXTRA_TEXT, "Hi Sentinel Team,\n\n");
 
