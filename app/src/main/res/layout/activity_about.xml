@@ -133,7 +133,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Shake Detection"
+                                android:text="@string/shake_detection"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -173,7 +173,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Volume Button Gestures"
+                                android:text="@string/volume_button_gestures"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -181,7 +181,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Discreet patterns using volume buttons for different emergency types"
+                                android:text="@string/discreet_patterns_using_volume_buttons_for_different_emergency_types"
                                 android:textSize="12sp"
                                 android:textColor="#757575" />
                         </LinearLayout>
@@ -213,7 +213,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Location Sharing"
+                                android:text="@string/location_sharing"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -252,7 +252,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Cloud Sync"
+                                android:text="@string/cloud_sync"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -260,7 +260,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Contacts and settings synced securely with Firebase"
+                                android:text="@string/contacts_and_settings_synced_securely_with_firebase"
                                 android:textSize="12sp"
                                 android:textColor="#757575" />
                         </LinearLayout>
@@ -285,7 +285,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Development Team"
+                        android:text="@string/development_team"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
@@ -294,7 +294,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Developed for personal safety and peace of mind."
+                        android:text="@string/developed_for_personal_safety_and_peace_of_mind"
                         android:textSize="14sp"
                         android:textColor="#424242"
                         android:layout_marginBottom="8dp" />
@@ -335,7 +335,7 @@
                         android:id="@+id/btn_privacy_policy"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="Privacy Policy"
+                        android:text="@string/privacy_policy"
                         android:textAllCaps="false"
                         android:layout_marginBottom="8dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
@@ -344,7 +344,7 @@
                         android:id="@+id/btn_terms"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="Terms of Service"
+                        android:text="@string/terms_of_service"
                         android:textAllCaps="false"
                         android:layout_marginBottom="8dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
@@ -353,7 +353,7 @@
                         android:id="@+id/btn_licenses"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="Open Source Licenses"
+                        android:text="@string/open_source_licenses"
                         android:textAllCaps="false"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
                 </LinearLayout>
@@ -377,7 +377,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Need Support?"
+                        android:text="@string/need_support"
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1565C0"
@@ -395,7 +395,7 @@
                         android:id="@+id/btn_contact_support"
                         android:layout_width="wrap_content"
                         android:layout_height="48dp"
-                        android:text="Send Feedback"
+                        android:text="@string/send_feedback"
                         android:textAllCaps="false"
                         android:backgroundTint="#1976D2" />
                 </LinearLayout>

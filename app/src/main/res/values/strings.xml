@@ -51,4 +51,17 @@
     <string name="sentinel_">Sentinel</string>
     <string name="user_name">User Name</string>
     <string name="user_example_com">user@example.com</string>
+    <string name="need_support">Need Support?</string>
+    <string name="send_feedback">Send Feedback</string>
+    <string name="open_source_licenses">Open Source Licenses</string>
+    <string name="terms_of_service">Terms of Service</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="developed_for_personal_safety_and_peace_of_mind">Developed for personal safety and peace of mind.</string>
+    <string name="development_team">Development Team</string>
+    <string name="contacts_and_settings_synced_securely_with_firebase">Contacts and settings synced securely with Firebase</string>
+    <string name="cloud_sync">Cloud Sync</string>
+    <string name="location_sharing">Location Sharing</string>
+    <string name="discreet_patterns_using_volume_buttons_for_different_emergency_types">Discreet patterns using volume buttons for different emergency types</string>
+    <string name="volume_button_gestures">Volume Button Gestures</string>
+    <string name="shake_detection">Shake Detection</string>
 </resources>
