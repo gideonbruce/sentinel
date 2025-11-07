@@ -79,6 +79,8 @@ public class EmergencyShakeService extends Service {
 
     private SharedPreferences prefs;
 
+    private BroadcastReceiver settingsChangedReceiver;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -188,96 +190,26 @@ public class EmergencyShakeService extends Service {
         } else {
             registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         }
-    }
 
-    /*private void registerSMSReceivers() {
-        // SMS Sent receiver
-        smsSentReceiver = new BroadcastReceiver() {
+        settingsChangedReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                int resultCode = getResultCode();
-                Log.d("EmergencyService", "SMS Sent result code: " + resultCode);
-
-                switch (resultCode) {
-                    case android.app.Activity.RESULT_OK:
-                        Log.d("EmergencyService", "SMS sent successfully!");
-                        showSMSSentNotification(true);
-                        break;
-                    case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        Log.e("EmergencyService", "SMS generic failure - opening SMS app as fallback");
-                        // Get the last message details and open SMS app
-                        handleSMSFailure();
-                        break;
-                    case SmsManager.RESULT_ERROR_NO_SERVICE:
-                        Log.e("EmergencyService", "SMS failed - No service");
-                        handleSMSFailure();
-                        break;
-                    case SmsManager.RESULT_ERROR_NULL_PDU:
-                        Log.e("EmergencyService", "SMS failed - Null PDU");
-                        handleSMSFailure();
-                        break;
-                    case SmsManager.RESULT_ERROR_RADIO_OFF:
-                        Log.e("EmergencyService", "SMS failed - Radio off");
-                        handleSMSFailure();
-                        break;
+                if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
+                    // Update shake sensitivity
+                    if (shakeDetector != null) {
+                        shakeDetector.setSensitivity(getShakeSensitivityThreshold());
+                    }
+                    Log.d("EmergencyService", "Settings updated - new sensitivity: " + getShakeSensitivityThreshold());
                 }
             }
         };
 
-        // SMS Delivered receiver
-        smsDeliveredReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                int resultCode = getResultCode();
-                Log.d("EmergencyService", "SMS Delivery result code: " + resultCode);
-
-                switch (resultCode) {
-                    case android.app.Activity.RESULT_OK:
-                        Log.d("EmergencyService", "SMS delivered successfully!");
-                        break;
-                    case android.app.Activity.RESULT_CANCELED:
-                        Log.w("EmergencyService", "SMS not delivered");
-                        break;
-                }
-            }
-        };
-
-        // Register receivers
-        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
-        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
-
+        IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
-            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
-            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
-
-        Log.d("EmergencyService", "SMS status receivers registered");
-    }*/
-
-    private BroadcastReceiver settingsChangedReceiver;
-
-    // In onCreate(), register receiver for settings changes:
-    settingsChangedReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
-                // Update shake sensitivity
-                if (shakeDetector != null) {
-                    shakeDetector.setSensitivity(getShakeSensitivityThreshold());
-                }
-                Log.d("EmergencyService", "Settings updated - new sensitivity: " + getShakeSensitivityThreshold());
-            }
-        }
-    };
-
-    IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
-    } else {
-        registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
