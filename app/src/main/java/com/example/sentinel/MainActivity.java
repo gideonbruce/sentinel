@@ -77,14 +77,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvContactPhoneDisplay;
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle toggle;
-
     private TextView tvUserName;
     private TextView tvUserEmail;
     private ImageView ivUserProfile;
     private FirebaseAuth mAuth;
-
-    private EmergencyShakeService serviceInstance;
-    private boolean isBound = false;
 
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
@@ -100,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //initialize firebase
+        // firebase
         FirebaseApp.initializeApp(this);
 
         //offline persistence
@@ -126,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         //});
 
         //loading emergency message
-        //contactManager.loadEmergencyMessageFromFirebase(message -> {
+        // contactManager.loadEmergencyMessageFromFirebase(message -> {
         //    Log.d("Main Activity", "Emergency message loaded: " + message);
         //});
 
@@ -264,8 +260,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            serviceInstance = null;
-            isBound = false;
+            EmergencyShakeService serviceInstance = null;
+            boolean isBound = false;
         }
     };
 
@@ -700,7 +696,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
                         Log.e("MainActivity", "SMS generic failure");
-                        Toast.makeText(context, "Failed to send SMS - Generic error",
+                        Toast.makeText(context, "Generic error",
                                 Toast.LENGTH_LONG).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
