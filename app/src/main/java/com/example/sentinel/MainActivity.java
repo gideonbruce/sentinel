@@ -278,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (isServiceRunning && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+        if (isServiceRunning && isVolumeButtonsEnabled() && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
                                  keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
             // sending broadcast to service
             Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
@@ -291,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
     }
     @Override
     public  boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (isServiceRunning && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+        if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
                                  keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
             //send broadcast to service
             Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
