@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
@@ -76,9 +77,13 @@ public class EmergencyShakeService extends Service {
     private String lastEmergencyType;
     private Location lastLocation;
 
+    private SharedPreferences prefs;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+        prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
 
         Log.d("EmergencyService", "=== Service onCreate ===");
 
@@ -94,14 +99,14 @@ public class EmergencyShakeService extends Service {
         shakeDetector = new ShakeDetector();
 
         shakeDetector.setOnShakeListener(count -> {
-            if (count >= 3) {
+            if (isShakeDetectionEnabled() && count >= 3) {
                 //sendEmergencySMS();
                 //getLocationAndSendSMS();
                 showEmergencyAlertDialog(null);
             }
         });
 
-        if (Settings.canDrawOverlays(this)) {
+        if (isVolumeButtonsEnabled() && Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
         }
 
@@ -273,6 +278,14 @@ public class EmergencyShakeService extends Service {
         }
     }
 
+    private boolean isShakeDetectionEnabled() {
+        return prefs.getBoolean("shake_detection_enabled", true);
+    }
+
+    private boolean isVolumeButtonsEnabled() {
+        return prefs.getBoolean("volume_buttons_enabled", true);
+    }
+
     private void showManualSendNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Please Send Manually")
@@ -357,7 +370,7 @@ public class EmergencyShakeService extends Service {
     }
 
     public void handleVolumeButtonEvent(int keyCode, boolean isKeyDown) {
-        if (volumeGestureDetector == null) {
+        if (volumeGestureDetector == null || !isVolumeButtonsEnabled()) {
             return;
         }
 
@@ -397,7 +410,7 @@ public class EmergencyShakeService extends Service {
         startForeground(NOTIFICATION_ID, notification);
 
         // Register sensor listener
-        if (accelerometer != null) {
+        if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
                     SensorManager.SENSOR_DELAY_UI);
         }
