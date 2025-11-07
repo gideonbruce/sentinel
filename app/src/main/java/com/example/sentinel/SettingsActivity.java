@@ -192,6 +192,12 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 prefs.edit().putInt("shake_sensitivity", seekBar.getProgress()).apply();
+
+                //broadcasting settings change to service
+                Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+                sendBroadcast(intent);
+
+                Toast.makeText(SettingsActivity.this, "Sensitivity updated", Toast.LENGTH_SHORT).show();
             }
         });
 
