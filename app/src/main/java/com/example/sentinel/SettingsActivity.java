@@ -261,7 +261,7 @@ public class SettingsActivity extends AppCompatActivity {
         etEmergencyMessage.setText(localMessage);
         tvCharCount.setText(localMessage.length() + "/160");
 
-        //load emergency message from firebase
+        //load emergency message from firebase after local
         contactManager.loadEmergencyMessageFromFirebase(message -> {
             if (message != null && !message.equals(localMessage)) {
                 etEmergencyMessage.setText(message);
