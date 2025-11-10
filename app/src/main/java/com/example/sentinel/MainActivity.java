@@ -244,11 +244,17 @@ public class MainActivity extends AppCompatActivity {
             // Reinitialize Firebase reference for emergency contact when user changes
             contactManager.reinitializeFirebase();
 
+            // load local contact immediately
+            updateUI();
+
+            //then sync firebase in background
             contactManager.loadFromFirebase((name, phone) -> {
-                updateUI();
-                if (name != null && phone != null) {
-                    Log.d("MainActivity", "Contact loaded: " + name);
-                }
+                runOnUiThread(() -> {
+                    updateUI(); //update ui again if firebase has different data
+                    if (name != null && phone != null) {
+                        Log.d("MainActivity", "Contact loaded: " + name);
+                    }
+                });
             });
             contactManager.loadEmergencyMessageFromFirebase(message -> {
                 Log.d("MainActivity", "Emergency message loaded: " + message);
