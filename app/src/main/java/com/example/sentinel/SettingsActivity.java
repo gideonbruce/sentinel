@@ -263,9 +263,12 @@ public class SettingsActivity extends AppCompatActivity {
 
         //load emergency message from firebase after local
         contactManager.loadEmergencyMessageFromFirebase(message -> {
+            //only update ui if message is different from what is loaded
             if (message != null && !message.equals(localMessage)) {
-                etEmergencyMessage.setText(message);
-                tvCharCount.setText(message.length() + "/160");
+                runOnUiThread(() -> {
+                    etEmergencyMessage.setText(message);
+                    tvCharCount.setText(message.length() + "/160");
+                });
             }
         });
     }
