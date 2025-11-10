@@ -256,10 +256,17 @@ public class SettingsActivity extends AppCompatActivity {
         seekCountdown.setProgress(countdown - 3);
         tvCountdownValue.setText(countdown + " seconds");
 
+        //loading emergency message, local first
+        String localMessage = contactManager.getEmergencyMessage();
+        etEmergencyMessage.setText(localMessage);
+        tvCharCount.setText(localMessage.length() + "/160");
+
         //load emergency message from firebase
         contactManager.loadEmergencyMessageFromFirebase(message -> {
-            etEmergencyMessage.setText(message);
-            tvCharCount.setText(message.length() + "/160");
+            if (message != null && !message.equals(localMessage)) {
+                etEmergencyMessage.setText(message);
+                tvCharCount.setText(message.length() + "/160");
+            }
         });
     }
 

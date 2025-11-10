@@ -47,7 +47,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Your Personal Safety Companion"
+                    android:text="@string/your_personal_safety_companion"
                     android:textSize="14sp"
                     android:textColor="#E3F2FD"
                     android:layout_marginTop="4dp"

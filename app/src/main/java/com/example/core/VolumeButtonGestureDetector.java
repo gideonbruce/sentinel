@@ -5,9 +5,6 @@ import android.os.Looper;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Detects volume button gesture patterns for emergency alerts
- */
 public class VolumeButtonGestureDetector {
 
     private static final int VOLUME_DOWN_RAPID_COUNT = 5; // 5 quick presses

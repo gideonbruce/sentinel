@@ -64,4 +64,6 @@
     <string name="discreet_patterns_using_volume_buttons_for_different_emergency_types">Discreet patterns using volume buttons for different emergency types</string>
     <string name="volume_button_gestures">Volume Button Gestures</string>
     <string name="shake_detection">Shake Detection</string>
+    <string name="aeiou">No Email</string>
+    <string name="your_personal_safety_companion">Your Personal Safety Companion</string>
 </resources>

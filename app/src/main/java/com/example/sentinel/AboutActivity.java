@@ -97,7 +97,7 @@ public class AboutActivity extends AppCompatActivity {
             if (email != null && !email.isEmpty()) {
                 tvUserEmail.setText(email);
             } else {
-                tvUserEmail.setText("No email");
+                tvUserEmail.setText("No Email");
             }
 
             Uri photoUrl = currentUser.getPhotoUrl();
@@ -179,22 +179,6 @@ public class AboutActivity extends AppCompatActivity {
     }
 
 
-    /*private void showLicensesDialog() {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Open Source Licenses")
-                .setMessage("This app uses the following open source libraries:\n\n" +
-                        "• Firebase SDK (Apache 2.0)\n" +
-                        "• Google Play Services (Apache 2.0)\n" +
-                        "• Material Components (Apache 2.0)\n" +
-                        ". Google Maps Api" +
-                        "• Glide (BSD, part MIT)\n\n" +
-                        ". Android Telephony APIs" +
-                        ". Java" +
-                        "Full license texts available at:\n" +
-                        "https://github.com/gideonbruce/sentinel/blob/sentinel/LICENSE")
-                .setPositiveButton("OK", null)
-                .show();
-    }*/
 
     private void sendSupportEmail() {
         Intent emailIntent = new Intent(Intent.ACTION_SENDTO);

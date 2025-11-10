@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.Settings;
-import android.telephony.SmsManager;
 import android.os.Looper;
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -43,9 +42,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
-import com.example.ui.EmergencyAlertDialog;
-
-import java.util.ArrayList;
 
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
