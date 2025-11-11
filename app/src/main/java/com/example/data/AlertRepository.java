@@ -204,9 +204,6 @@ public class AlertRepository {
         }
     }
 
-    /**
-     * Get alerts from Firebase (single fetch, not real-time)
-     */
     private void getAlertsFromFirebase(RepositoryCallback<List<AlertEntity>> callback) {
         Log.d(TAG, "=== FETCHING FROM FIREBASE ===");
         Log.d(TAG, "Database reference: " + (databaseReference != null ? databaseReference.toString() : "NULL"));
@@ -278,9 +275,6 @@ public class AlertRepository {
         });
     }
 
-    /**
-     * Get alerts from Firebase with real-time updates (use only when needed)
-     */
     public void getAlertsWithRealtimeUpdates(RepositoryCallback<List<AlertEntity>> callback) {
         if (databaseReference == null) {
             getAlertsFromLocal(callback);
@@ -329,9 +323,6 @@ public class AlertRepository {
         });
     }
 
-    /**
-     * Get alerts from local Room database
-     */
     private void getAlertsFromLocal(RepositoryCallback<List<AlertEntity>> callback) {
         Log.d(TAG, "=== FETCHING FROM LOCAL DATABASE ===");
         executorService.execute(() -> {
@@ -392,9 +383,6 @@ public class AlertRepository {
         });
     }
 
-    /**
-     * Delete a single alert from both Firebase and local database
-     */
     public void deleteAlert(AlertEntity alert, RepositoryCallback<Boolean> callback) {
         executorService.execute(() -> {
             try {
@@ -431,9 +419,6 @@ public class AlertRepository {
         });
     }
 
-    /**
-     * Delete all alerts from both Firebase and local database
-     */
     public void deleteAllAlerts(RepositoryCallback<Boolean> callback) {
         executorService.execute(() -> {
             try {
@@ -518,9 +503,6 @@ public class AlertRepository {
         }
     }
 
-    /**
-     * Get count of alerts
-     */
     public void getAlertCount(RepositoryCallback<Integer> callback) {
         getAllAlerts(alerts -> {
             if (callback != null) {

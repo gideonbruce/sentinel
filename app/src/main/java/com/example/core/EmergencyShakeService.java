@@ -166,7 +166,6 @@ public class EmergencyShakeService extends Service {
                     //location from broadcast
                     Location location = intent.getParcelableExtra("LOCATION");
 
-                    // Just save to database, SMS already sent by dialog
                     //sendEmergencySMS(location, emergencyType);
                     saveAlertToDatabase(emergencyType, location);
                 }
@@ -375,7 +374,6 @@ public class EmergencyShakeService extends Service {
         getLocationAndSendSMS(null);
     }
 
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         createNotificationChannel();
@@ -515,24 +513,6 @@ public class EmergencyShakeService extends Service {
                 Log.e("EmergencyService", "Error unregistering settings receiver", e);
             }
         }
-        // Unregister SMS receivers
-        /*if (smsSentReceiver != null) {
-            try {
-                unregisterReceiver(smsSentReceiver);
-                Log.d("EmergencyService", "SMS sent receiver unregistered");
-            } catch (Exception e) {
-                Log.e("EmergencyService", "Error unregistering SMS sent receiver: " + e.getMessage());
-            }
-        }*/
-
-        /*if (smsDeliveredReceiver != null) {
-            try {
-                unregisterReceiver(smsDeliveredReceiver);
-                Log.d("EmergencyService", "SMS delivered receiver unregistered");
-            } catch (Exception e) {
-                Log.e("EmergencyService", "Error unregistering SMS delivered receiver: " + e.getMessage());
-            }
-        }*/
 
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
@@ -597,107 +577,6 @@ public class EmergencyShakeService extends Service {
         saveAlertToDatabase(emergencyType, location);
     }
 
-    /*
-    private void sendEmergencySMS(Location location, String emergencyType) {
-        Log.d("EmergencyService", "=== sendEmergencySMS called ===");
-
-        if (!contactManager.hasEmergencyContact()) {
-            Log.e("EmergencyService", "No emergency contact set!");
-            return;
-        }
-
-        String phoneNumber = contactManager.getContactPhone();
-        String message = getMessage(location, emergencyType);
-
-        lastPhoneNumber = phoneNumber;
-        lastMessage = message;
-        lastEmergencyType = emergencyType;
-        lastLocation = location;
-
-        Log.d("EmergencyService", "Phone number: " + phoneNumber);
-        Log.d("EmergencyService", "Message length: " + message.length());
-        Log.d("EmergencyService", "Message: " + message);
-        Log.d("EmergencyService", "Emergency type: " + emergencyType);
-        Log.d("EmergencyService", "Location available: " + (location != null));
-
-        try {
-            Log.d("EmergencyService", "Attempting to send SMS...");
-
-            //PendingIntents for sent and delivery tracking
-            Intent sentIntent = new Intent("SMS_SENT");
-            Intent deliveredIntent = new Intent("SMS_DELIVERED");
-
-            PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, sentIntent,
-                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-            PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, deliveredIntent,
-                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-
-            SmsManager smsManager;
-            // Handle dual SIM devices
-            int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
-            Log.d("EmergencyService", "Default SMS subscription ID: " + defaultSmsSubscriptionId);
-
-            if (defaultSmsSubscriptionId != -1) {
-                smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
-                Log.d("EmergencyService", "Using SMS manager for subscription ID: " + defaultSmsSubscriptionId);
-            } else {
-                smsManager = SmsManager.getDefault();
-                Log.d("EmergencyService", "Using default SMS manager");
-            }
-
-            //split message if its too long
-            if (message.length() > 160) {
-                Log.d("EmergencyService", "Message is long, splitting into parts...");
-                ArrayList<String> parts = smsManager.divideMessage(message);
-                Log.d("EmergencyService", "Message split into " + parts.size() + " parts");
-
-                //ArrayLists of PendingIntents for multipart messages
-                ArrayList<PendingIntent> sentPIs = new ArrayList<>();
-                ArrayList<PendingIntent> deliveredPIs = new ArrayList<>();
-                for (int i = 0; i < parts.size(); i++) {
-                    sentPIs.add(sentPI);
-                    deliveredPIs.add(deliveredPI);
-                }
-
-                smsManager.sendMultipartTextMessage(phoneNumber, null, parts, sentPIs, deliveredPIs);
-                Log.d("EmergencyService", "Multipart SMS sent!");
-            } else {
-                Log.d("EmergencyService", "Sending single SMS...");
-                smsManager.sendTextMessage(phoneNumber, null, message, sentPI, deliveredPI);
-                Log.d("EmergencyService", "Single SMS sent!");
-            }
-            //smsManager.sendTextMessage(phoneNumber, null, message, null, null);
-            saveAlertToDatabase(emergencyType, location);
-            Log.d("EmergencyService", "Alert saved to database");
-            // Show notification that SMS was sent
-            showSMSSentNotification(location != null);
-
-            // Save the alert to the database
-            String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
-            long timestamp = System.currentTimeMillis();
-            Double latitude = (location != null) ? location.getLatitude() : null;
-            Double longitude = (location != null) ? location.getLongitude() : null;
-            String contactName = contactManager.getContactName();
-            String contactPhone = contactManager.getContactPhone();
-            boolean locationAvailable = (location != null);
-
-            AlertEntity alert = new AlertEntity(
-                    alertType,
-                    timestamp,
-                    latitude,
-                    longitude,
-                    contactName,
-                    contactPhone,
-                    locationAvailable
-            );
-            alertRepository.insert(alert, success -> {});
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            showSMSFailedNotification();
-        }
-    }
-    */
 
     @NonNull
     private String getMessage(Location location, String emergencyType) {

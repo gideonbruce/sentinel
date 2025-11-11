@@ -784,31 +784,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MainActivity", "SMS broadcast receivers registered");
     }
 
-    /*private void registerSmsReceivers() {
-        // Create receivers
-        smsSentReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
-        smsDeliveredReceiver = new EmergencyAlertDialog.SmsBroadcastReceiver();
-
-        // Register SMS sent receiver
-        IntentFilter sentFilter = new IntentFilter("SMS_SENT");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
-        }
-
-        // Register SMS delivered receiver
-        IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
-        }
-
-        Log.d("MainActivity", "SMS broadcast receivers registered");
-    }*/
-
-
     private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
         Log.d("MainActivity", "Alert confirmed by user, SMS already sent by dialog");
         // SMS is already sent by EmergencyAlertDialog.sendEmergencyAlert()

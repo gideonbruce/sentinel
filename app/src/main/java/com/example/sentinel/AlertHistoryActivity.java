@@ -48,7 +48,6 @@ public class AlertHistoryActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Alert History");
         }
-
         initViews();
         setupRecyclerView();
         checkFirebaseAuth();

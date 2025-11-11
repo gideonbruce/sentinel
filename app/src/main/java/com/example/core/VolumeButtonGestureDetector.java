@@ -33,9 +33,6 @@ public class VolumeButtonGestureDetector {
         this.listener = listener;
     }
 
-    /**
-     * Call this when volume button is pressed down
-     */
     public void onVolumeDown() {
         long currentTime = System.currentTimeMillis();
 
@@ -53,17 +50,11 @@ public class VolumeButtonGestureDetector {
 
     }
 
-    /**
-     * Call this when volume button is released
-     */
     public void onVolumeUp() {
         volumeDownPressed = false;
         handler.removeCallbacks(longPressCheck);
     }
 
-    /**
-     * Call this when volume UP button is pressed
-     */
     public void onVolumeUpButton() {
         long currentTime = System.currentTimeMillis();
         volumeUpPresses.add(currentTime);
