@@ -115,7 +115,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Emergency Contact"
+                                android:text="@string/emergency_contact"
                                 android:textSize="20sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -154,7 +154,7 @@
                                         android:id="@+id/tv_contact_name_display"
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="John Doe"
+                                        android:text="@string/john_doe"
                                         android:textSize="18sp"
                                         android:textStyle="bold"
                                         android:textColor="#212121" />
@@ -175,8 +175,8 @@
                                     android:layout_height="44dp"
                                     android:src="@android:drawable/ic_menu_edit"
                                     android:background="@drawable/icon_button_bg"
-                                    android:contentDescription="Edit contact"
-                                    android:tint="#1976D2" />
+                                    android:contentDescription="@string/edit_contact"
+                                    app:tint="#1976D2" />
                             </LinearLayout>
                         </LinearLayout>
 
@@ -203,7 +203,7 @@
                                     android:id="@+id/et_contact_name"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:hint="Contact Name (Optional)"
+                                    android:hint="@string/contact_name_optional"
                                     android:inputType="textPersonName"
                                     android:drawableStart="@android:drawable/ic_menu_myplaces"
                                     android:drawablePadding="12dp"
@@ -286,7 +286,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Protection Status"
+                            android:text="@string/protection_status"
                             android:textSize="14sp"
                             android:textColor="#E8F5E9"
                             android:textStyle="bold"
@@ -296,7 +296,7 @@
                             android:id="@+id/btn_start_service"
                             android:layout_width="match_parent"
                             android:layout_height="64dp"
-                            android:text="Activate Protection"
+                            android:text="@string/activate_protection"
                             android:textAllCaps="false"
                             android:textSize="18sp"
                             android:textStyle="bold"
@@ -308,7 +308,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Detection will run in background until app is closed"
+                            android:text="@string/detection_will_run_in_background_until_app_is_closed"
                             android:textSize="12sp"
                             android:textColor="#E8F5E9"
                             android:layout_marginTop="8dp"
@@ -333,7 +333,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Emergency Triggers"
+                            android:text="@string/emergency_triggers"
                             android:textSize="18sp"
                             android:textStyle="bold"
                             android:textColor="#212121"
@@ -366,7 +366,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Shake Detection"
+                                    android:text="@string/shake_detection1"
                                     android:textSize="16sp"
                                     android:textStyle="bold"
                                     android:textColor="#212121" />
@@ -374,7 +374,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Shake phone 3 times rapidly"
+                                    android:text="@string/shake_phone_3_times_rapidly"
                                     android:textSize="13sp"
                                     android:textColor="#757575"
                                     android:layout_marginTop="2dp" />
@@ -419,7 +419,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Silent Alert"
+                                    android:text="@string/silent_alert"
                                     android:textSize="16sp"
                                     android:textStyle="bold"
                                     android:textColor="#212121" />
@@ -427,7 +427,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Press Volume Down 5 times"
+                                    android:text="@string/press_volume_down_5_times"
                                     android:textSize="13sp"
                                     android:textColor="#757575"
                                     android:layout_marginTop="2dp" />
@@ -471,7 +471,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Police Alert"
+                                    android:text="@string/police_alert"
                                     android:textSize="16sp"
                                     android:textStyle="bold"
                                     android:textColor="#212121" />
@@ -479,7 +479,7 @@
                                 <TextView
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Press Volume Up 3 times"
+                                    android:text="@string/press_volume_up_3_times"
                                     android:textSize="13sp"
                                     android:textColor="#757575"
                                     android:layout_marginTop="2dp" />
@@ -526,7 +526,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Protection runs continuously in the background. Ensure all permissions are enabled for optimal performance."
+                            android:text="@string/protection_runs_continuously_in_the_background_ensure_all_permissions_are_enabled_for_optimal_performance"
                             android:textSize="13sp"
                             android:textColor="#E65100"
                             android:lineSpacingExtra="2dp" />

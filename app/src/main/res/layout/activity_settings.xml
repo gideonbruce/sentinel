@@ -28,7 +28,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Emergency Contact"
+                    android:text="@string/emergency_contactt"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -69,7 +69,7 @@
                                 android:id="@+id/tv_contact_name_display"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="John Doe"
+                                android:text="@string/john_doe"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
@@ -89,14 +89,14 @@
                             android:layout_height="40dp"
                             android:src="@android:drawable/ic_menu_edit"
                             android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Edit contact" />
+                            android:contentDescription="@string/edit_contact" />
                     </LinearLayout>
 
                     <Button
                         android:id="@+id/btn_change_contact"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="Change Contact"
+                        android:text="@string/change_contact"
                         android:textAllCaps="false"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
                 </LinearLayout>
@@ -123,7 +123,7 @@
                             android:id="@+id/et_contact_name"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Contact Name"
+                            android:hint="@string/contact_name"
                             android:inputType="textPersonName"
                             android:drawableStart="@android:drawable/ic_menu_myplaces"
                             android:drawablePadding="12dp" />
@@ -143,7 +143,7 @@
                             android:id="@+id/et_contact_phone"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Phone Number"
+                            android:hint="@string/phone_number"
                             android:inputType="phone"
                             android:drawableStart="@android:drawable/stat_sys_phone_call"
                             android:drawablePadding="12dp" />
@@ -161,7 +161,7 @@
                             android:layout_height="56dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="8dp"
-                            android:text="Pick Contact"
+                            android:text="@string/pick_contact"
                             android:textAllCaps="false"
                             android:drawableStart="@android:drawable/ic_menu_search"
                             android:drawablePadding="8dp"
@@ -173,7 +173,7 @@
                             android:layout_height="56dp"
                             android:layout_weight="1"
                             android:layout_marginStart="8dp"
-                            android:text="Save"
+                            android:text="@string/save"
                             android:textAllCaps="false"
                             android:drawableStart="@android:drawable/ic_menu_save"
                             android:drawablePadding="8dp"
@@ -208,7 +208,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Emergency Message"
+                        android:text="@string/emergency_message"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="#212121" />
@@ -217,7 +217,7 @@
                         android:id="@+id/btn_reset_message"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
-                        android:text="Reset"
+                        android:text="@string/reset"
                         android:textAllCaps="false"
                         android:textSize="12sp"
                         android:paddingHorizontal="16dp"
@@ -227,7 +227,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Customize the message sent to your emergency contact"
+                    android:text="@string/customize_the_message_sent_to_your_emergency_contact"
                     android:textSize="12sp"
                     android:textColor="#757575"
                     android:layout_marginBottom="12dp" />
@@ -247,7 +247,7 @@
                         android:id="@+id/et_emergency_message"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Emergency message"
+                        android:hint="@string/emergency_message"
                         android:inputType="textMultiLine|textCapSentences"
                         android:lines="3"
                         android:maxLines="5"
@@ -301,7 +301,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Keep it under 160 characters for single SMS. Your location will be added automatically."
+                        android:text="@string/keep_it_under_160_characters_for_single_sms_your_location_will_be_added_automatically"
                         android:textSize="11sp"
                         android:textColor="#E65100" />
                 </LinearLayout>
@@ -325,7 +325,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Detection Methods"
+                    android:text="@string/detection_methods"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -347,14 +347,14 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Shake Detection"
+                            android:text="@string/shake_detection"
                             android:textSize="16sp"
                             android:textColor="#212121" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Shake phone 3 times to trigger alert"
+                            android:text="@string/shake_phone_3_times_to_trigger_alert"
                             android:textSize="12sp"
                             android:textColor="#757575" />
                     </LinearLayout>
@@ -388,14 +388,14 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Volume Button Gestures"
+                            android:text="@string/volume_button_gestures"
                             android:textSize="16sp"
                             android:textColor="#212121" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Use volume buttons for different alerts"
+                            android:text="@string/use_volume_buttons_for_different_alerts"
                             android:textSize="12sp"
                             android:textColor="#757575" />
                     </LinearLayout>
@@ -426,7 +426,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Shake Sensitivity"
+                    android:text="@string/shake_sensitivity"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -436,7 +436,7 @@
                     android:id="@+id/tv_sensitivity_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Medium"
+                    android:text="@string/medium"
                     android:textSize="14sp"
                     android:textColor="#1976D2"
                     android:textStyle="bold"
@@ -459,14 +459,14 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Less Sensitive"
+                        android:text="@string/less_sensitive"
                         android:textSize="10sp"
                         android:textColor="#757575" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="More Sensitive"
+                        android:text="@string/more_sensitive"
                         android:textSize="10sp"
                         android:textColor="#757575" />
                 </LinearLayout>
@@ -490,7 +490,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Alert Settings"
+                    android:text="@string/alert_settings"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -500,7 +500,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Countdown Duration"
+                    android:text="@string/countdown_duration"
                     android:textSize="14sp"
                     android:textColor="#212121"
                     android:layout_marginBottom="4dp" />
@@ -545,14 +545,14 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Vibration Feedback"
+                            android:text="@string/vibration_feedback"
                             android:textSize="16sp"
                             android:textColor="#212121" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Vibrate when alert is triggered"
+                            android:text="@string/vibrate_when_alert_is_triggered"
                             android:textSize="12sp"
                             android:textColor="#757575" />
                     </LinearLayout>
@@ -586,14 +586,14 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Sound Alert"
+                            android:text="@string/sound_alert"
                             android:textSize="16sp"
                             android:textColor="#212121" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Play sound when alert is triggered"
+                            android:text="@string/play_sound_when_alert_is_triggered"
                             android:textSize="12sp"
                             android:textColor="#757575" />
                     </LinearLayout>
@@ -624,7 +624,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Privacy Settings"
+                    android:text="@string/privacy_settings"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:textColor="#212121"
@@ -646,14 +646,14 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Share Location"
+                            android:text="@string/share_location"
                             android:textSize="16sp"
                             android:textColor="#212121" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Include location in emergency messages"
+                            android:text="@string/include_location_in_emergency_messages"
                             android:textSize="12sp"
                             android:textColor="#757575" />
                     </LinearLayout>
@@ -693,7 +693,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Changes to detection settings take effect after restarting the service."
+                    android:text="@string/changes_to_detection_settings_take_effect_after_restarting_the_service"
                     android:textSize="12sp"
                     android:textColor="#1565C0" />
             </LinearLayout>
