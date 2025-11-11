@@ -179,7 +179,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sent to"
+                        android:text="@string/sent_to"
                         android:textSize="11sp"
                         android:textColor="#757575"
                         android:textAllCaps="true"
@@ -212,7 +212,7 @@
                         android:layout_height="36dp"
                         android:src="@android:drawable/stat_sys_phone_call"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="Call contact"
+                        android:contentDescription="@string/call_contact"
                         app:tint="#4CAF50"
                         android:padding="6dp" />
                 </androidx.cardview.widget.CardView>
@@ -252,7 +252,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Location"
+                        android:text="@string/location"
                         android:textSize="11sp"
                         android:textColor="#757575"
                         android:textAllCaps="true"
@@ -313,7 +313,7 @@
                     android:id="@+id/tv_status"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Alert Sent Successfully"
+                    android:text="@string/alert_sent_successfully"
                     android:textSize="12sp"
                     android:textColor="#4CAF50"
                     android:textStyle="bold" />

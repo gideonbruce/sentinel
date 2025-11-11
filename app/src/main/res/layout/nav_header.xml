@@ -64,43 +64,4 @@
         android:alpha="0.3"
         android:layout_marginVertical="12dp" />
 
-    <!--<LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:id="@+id/iv_shield_icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/sentinel_main_icon"
-            android:contentDescription="@string/shield_icon"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/sentinel_"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/emergency_protection"
-                android:textSize="12sp"
-                android:textColor="@android:color/white"
-                android:alpha="0.8" />
-        </LinearLayout>
-    </LinearLayout> -->
-
 </LinearLayout>

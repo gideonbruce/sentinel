@@ -105,4 +105,8 @@
     <string name="share_location">Share Location</string>
     <string name="include_location_in_emergency_messages">Include location in emergency messages</string>
     <string name="changes_to_detection_settings_take_effect_after_restarting_the_service">Changes to detection settings take effect after restarting the service.</string>
+    <string name="alert_sent_successfully">Alert Sent Successfully</string>
+    <string name="location">Location</string>
+    <string name="call_contact">Call contact</string>
+    <string name="sent_to">Sent to</string>
 </resources>
