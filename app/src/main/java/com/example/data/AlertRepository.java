@@ -185,7 +185,7 @@ public class AlertRepository {
                     callbackInvoked[0] = true;
                     getAlertsFromLocal(callback);
                 }
-            }, 5000);
+            }, 3000);
 
             getAlertsFromFirebase(new RepositoryCallback<List<AlertEntity>>() {
                 @Override
