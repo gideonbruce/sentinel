@@ -278,7 +278,9 @@ public class EmergencyAlertDialog {
                         Toast.makeText(context, "Message sent!", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        Log.e(TAG, "SMS generic failure");
+                        String errorDetails = intent.getStringExtra("errorCode");
+                        Log.e(TAG, "SMS generic failure: " + errorDetails);
+                        Log.e(TAG, "Phone number: " + intent.getStringExtra("phone_number"));
                         Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
