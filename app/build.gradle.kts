@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.androidTestImplementation
 import org.gradle.kotlin.dsl.implementation
 
 plugins {
@@ -23,6 +24,27 @@ android {
         versionName = "2.2.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+    }
+
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt"
+            )
+        }
     }
 
     buildTypes {
@@ -51,7 +73,7 @@ android {
 }
 
 dependencies {
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation(libs.androidx.swiperefreshlayout)
@@ -91,4 +113,22 @@ dependencies {
     annotationProcessor(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    androidTestImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.2.0")
+
+
+
+    //test orchestrator
+    androidTestUtil("androidx.test:orchestrator:1.6.1")
+
+    //mockito for mocking
+    androidTestImplementation("org.mockito:mockito-android:5.20.0")
+
+    //hamcrest matchers
+    //androidTestImplementation("org.hamcrest:hamcrest:3.0")
 }

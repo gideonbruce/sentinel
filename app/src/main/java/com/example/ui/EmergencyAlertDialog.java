@@ -12,6 +12,7 @@ import android.os.Build;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -270,6 +271,11 @@ public class EmergencyAlertDialog {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+
+            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            int networkType = tm.getNetworkType();
+            Log.d(TAG, "Network type: " + networkType);
+            Log.d(TAG, "SIM state: " + tm.getSimState());
 
             if ("SMS_SENT".equals(action)) {
                 switch (getResultCode()) {
