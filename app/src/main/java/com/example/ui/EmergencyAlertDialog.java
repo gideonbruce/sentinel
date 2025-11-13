@@ -28,6 +28,7 @@ public class EmergencyAlertDialog {
 
     public interface OnAlertActionListener {
         void onAlertSent();
+
         void onAlertCancelled();
     }
 
@@ -152,12 +153,59 @@ public class EmergencyAlertDialog {
         // Try dual SIM first (API 22+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             // Check READ_PHONE_STATE permission (required for SubscriptionManager on API 29+)
+            boolean hasPhoneStatePermission = true;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
-                        != PackageManager.PERMISSION_GRANTED) {
-                    Log.w(TAG, "READ_PHONE_STATE permission not granted, using default SmsManager");
-                    smsManager = SmsManager.getDefault();
+                hasPhoneStatePermission = ContextCompat.checkSelfPermission(context,
+                        Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
+
+                if (!hasPhoneStatePermission) {
+                    Log.w(TAG, "READ_PHONE_STATE permission not granted on Android 10+, " + "skipping dual SIM detection");
                 }
+                //if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
+                //!= PackageManager.PERMISSION_GRANTED) {
+                //Log.w(TAG, "READ_PHONE_STATE permission not granted, using default SmsManager");
+                //smsManager = SmsManager.getDefault();
+                //}
+            }
+
+            if (hasPhoneStatePermission) {
+                try {
+                    SubscriptionManager subscriptionManager = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+                    if (subscriptionManager != null) {
+                        List<SubscriptionInfo> subscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+                        if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
+                            int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+                            if (defaultSmsSubscriptionId != -1) {
+                                Log.d(TAG, "Using default SIM with ID: " + defaultSmsSubscriptionId);
+                                smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                                usedDualSim = true;
+                            } else if (subscriptionInfoList.size() > 0) {
+                                int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
+                                Log.d(TAG, "Using first available SIM with ID: " + subscriptionId);
+                                smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
+                                usedDualSim = true;
+                            }
+                        } else {
+                            Log.d(TAG, "No active subscriptions found");
+                        }
+                    }
+                } catch (SecurityException e) {
+                    Log.e(TAG, "SecurityException accessing subscriptions", e);
+                    //falls back to default
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in dual SIM setup: " + e.getMessage(), e);
+                }
+            }
+
+            // Fallback to default SmsManager
+            if (smsManager == null) {
+                Log.d(TAG, "Using default SmsManager (fallback)");
+                smsManager = SmsManager.getDefault();
+            }
+
+            // Verify smsManager is not null
+            if (smsManager == null) {
+                throw new IllegalStateException("Failed to get SmsManager instance");
             }
 
             // Only try dual SIM if we have permission or don't need it
