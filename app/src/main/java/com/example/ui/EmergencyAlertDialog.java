@@ -1,10 +1,12 @@
 package com.example.ui;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.telephony.SmsManager;
@@ -12,6 +14,8 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
 
@@ -130,9 +134,20 @@ public class EmergencyAlertDialog {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
         Log.d(TAG, "Message length: " + message.length() + " characters");
 
+        //phone number validation
+        phoneNumber = normalizePhoneNumber(phoneNumber);
+        if (phoneNumber == null) {
+            throw new IllegalArgumentException("Invalid phone number format");
+        }
+
+        //double checking permission at runtime
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("SMS permission not granted");
+        }
+
         // Pending intents to track SMS status
         Intent sentIntent = new Intent("SMS_SENT");
-        sentIntent.putExtra("phone_number", phoneNumber); // Add for debugging
+        sentIntent.putExtra("phone_number", phoneNumber); 
 
         Intent deliveredIntent = new Intent("SMS_DELIVERED");
 
