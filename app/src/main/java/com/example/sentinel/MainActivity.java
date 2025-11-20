@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
         //FirebaseDatabase database = FirebaseDatabase.getInstance();
 
-        String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
+        String databaseUrl = "https://sentinel-####-default-rtdb.asia-southeast1.firebasedatabase.app";
         FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
 
         contactManager = new EmergencyContactManager(this);
