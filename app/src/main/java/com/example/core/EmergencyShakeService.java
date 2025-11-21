@@ -1,5 +1,6 @@
 package com.example.core;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,6 +16,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.os.Looper;
 import android.Manifest;
@@ -399,6 +401,21 @@ public class EmergencyShakeService extends Service {
         }
 
         return START_STICKY;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Restart the service if task is removed
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        PendingIntent restartPendingIntent = PendingIntent.getService(
+                getApplicationContext(), 1, restartServiceIntent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager alarmService = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 1000, restartPendingIntent);
+
+        super.onTaskRemoved(rootIntent);
     }
 
     private void showEmergencyAlertDialog(String emergencyType) {
