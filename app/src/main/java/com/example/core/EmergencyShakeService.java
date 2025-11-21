@@ -218,6 +218,15 @@ public class EmergencyShakeService extends Service {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
     }
+    private void refreshWakeLock() {
+        if (wakeLock != null) {
+            if (wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+            wakeLock.acquire(24 * 60 * 60 * 1000L);
+            Log.d("EmergencyService", "Wake lock refreshed");
+        }
+    }
 
     private void setupSensorReregistration() {
         sensorRestartRunnable = new Runnable() {
