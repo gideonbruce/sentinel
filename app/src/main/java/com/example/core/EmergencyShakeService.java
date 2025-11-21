@@ -14,6 +14,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -79,6 +80,10 @@ public class EmergencyShakeService extends Service {
 
     private BroadcastReceiver settingsChangedReceiver;
 
+    private static final long SENSOR_RESTART_DELAY = 5000;
+    private Handler sensorRestartRunnable = new Handler(Looper.getMainLooper());
+    private Runnable sensorRestartRunnable;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -115,9 +120,10 @@ public class EmergencyShakeService extends Service {
 
         // Acquire wake lock to keep CPU running
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+        wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
-        wakeLock.acquire();
+        wakeLock.acquire(24 * 60 * 60 * 1000L);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
@@ -145,6 +151,10 @@ public class EmergencyShakeService extends Service {
 
         if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
+        }
+
+        if (isShakeDetectionEnabled()) {
+            setupSensorReregistration();
         }
 
         volumeButtonReceiver = new BroadcastReceiver() {
@@ -207,6 +217,28 @@ public class EmergencyShakeService extends Service {
         } else {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
+    }
+
+    private void setupSensorReregistration() {
+        sensorRestartRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Check if sensor is still registered and re-register if needed
+                if (isShakeDetectionEnabled()) {
+                    if (sensorManager != null && accelerometer != null && shakeDetector != null) {
+                        sensorManager.unregisterListener(shakeDetector);
+                        sensorManager.registerListener(shakeDetector, accelerometer,
+                                SensorManager.SENSOR_DELAY_GAME);
+                        Log.d("EmergencyService", "Sensor re-registered");
+                    }
+                }
+                // Schedule next check
+                sensorRestartHandler.postDelayed(this, 60000); // Check every minute
+            }
+        };
+
+        // Start periodic checks
+        sensorRestartHandler.postDelayed(sensorRestartRunnable, 60000);
     }
 
     private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
@@ -394,10 +426,15 @@ public class EmergencyShakeService extends Service {
 
         startForeground(NOTIFICATION_ID, notification);
 
+        if (sensorManager != null && shakeDetector != null) {
+            sensorManager.unregisterListener(shakeDetector);
+        }
+
         // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
                     SensorManager.SENSOR_DELAY_GAME);
+            //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
         }
 
         return START_STICKY;
