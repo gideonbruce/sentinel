@@ -1,17 +1,22 @@
 package com.example.ui;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
 
@@ -23,6 +28,7 @@ public class EmergencyAlertDialog {
 
     public interface OnAlertActionListener {
         void onAlertSent();
+
         void onAlertCancelled();
     }
 
@@ -128,12 +134,88 @@ public class EmergencyAlertDialog {
 
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
-        Log.d(TAG, "Message length: " + message.length() + " characters");
 
-        // Pending intents to track SMS status
+        // Validate phone number format
+        phoneNumber = normalizePhoneNumber(phoneNumber);
+        if (phoneNumber == null) {
+            throw new IllegalArgumentException("Invalid phone number format");
+        }
+
+        // Double-check SMS permission
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
+                != PackageManager.PERMISSION_GRANTED) {
+            throw new SecurityException("SMS permission not granted");
+        }
+
+        SmsManager smsManager = null;
+        boolean usedDualSim = false;
+
+        // Try dual SIM first (API 22+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            // Check READ_PHONE_STATE permission (required for SubscriptionManager on API 29+)
+            boolean hasPhoneStatePermission = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                hasPhoneStatePermission = ContextCompat.checkSelfPermission(context,
+                        Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
+
+                if (!hasPhoneStatePermission) {
+                    Log.w(TAG, "READ_PHONE_STATE permission not granted on Android 10+, " +
+                            "skipping dual SIM detection");
+                }
+            }
+
+            // Only try dual SIM if we have permission (or don't need it on older Android)
+            if (hasPhoneStatePermission) {
+                try {
+                    SubscriptionManager subscriptionManager =
+                            (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+
+                    if (subscriptionManager != null) {
+                        List<SubscriptionInfo> subscriptionInfoList =
+                                subscriptionManager.getActiveSubscriptionInfoList();
+
+                        if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
+                            int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
+
+                            if (defaultSmsSubscriptionId != -1) {
+                                Log.d(TAG, "Using default SIM with ID: " + defaultSmsSubscriptionId);
+                                smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
+                                usedDualSim = true;
+                            } else if (subscriptionInfoList.size() > 0) {
+                                // Use first available SIM
+                                int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
+                                Log.d(TAG, "Using first available SIM with ID: " + subscriptionId);
+                                smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
+                                usedDualSim = true;
+                            }
+                        } else {
+                            Log.d(TAG, "No active subscriptions found");
+                        }
+                    }
+                } catch (SecurityException e) {
+                    Log.e(TAG, "SecurityException accessing subscriptions", e);
+                    // Will fall back to default
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in dual SIM setup: " + e.getMessage(), e);
+                    // Will fall back to default
+                }
+            }
+        }
+
+        // Fallback to default SmsManager if dual SIM setup failed
+        if (smsManager == null) {
+            Log.d(TAG, "Using default SmsManager (fallback)");
+            smsManager = SmsManager.getDefault();
+        }
+
+        // Verify smsManager is not null before proceeding
+        if (smsManager == null) {
+            throw new IllegalStateException("Failed to get SmsManager instance");
+        }
+
+        // Create pending intents
         Intent sentIntent = new Intent("SMS_SENT");
-        sentIntent.putExtra("phone_number", phoneNumber); // Add for debugging
-
+        sentIntent.putExtra("phone_number", phoneNumber);
         Intent deliveredIntent = new Intent("SMS_DELIVERED");
 
         PendingIntent sentPI = PendingIntent.getBroadcast(
@@ -145,137 +227,76 @@ public class EmergencyAlertDialog {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            try {
-                SubscriptionManager subscriptionManager =
-                        (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-
-                if (subscriptionManager != null) {
-                    Log.d(TAG, "SubscriptionManager obtained");
-                    List<SubscriptionInfo> subscriptionInfoList =
-                            subscriptionManager.getActiveSubscriptionInfoList();
-
-                    if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
-                        Log.d(TAG, "Active subscriptions found: " + subscriptionInfoList.size());
-
-                        int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
-                        Log.d(TAG, "Default SMS subscription ID: " + defaultSmsSubscriptionId);
-
-                        SmsManager smsManager;
-                        if (defaultSmsSubscriptionId != -1) {
-                            Log.d(TAG, "Using default SIM");
-                            smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
-                        } else {
-                            Log.d(TAG, "No default SIM, using first available SIM");
-                            int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
-                            Log.d(TAG, "First SIM subscription ID: " + subscriptionId);
-                            smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
-                        }
-
-                        Log.i(TAG, "Sending SMS via SmsManager");
-
-                        // FIXED: Always use multipart for reliability
-                        ArrayList<String> parts = smsManager.divideMessage(message);
-                        Log.d(TAG, "Message divided into " + parts.size() + " parts");
-
-                        if (parts.size() > 1) {
-                            ArrayList<PendingIntent> sentIntents = new ArrayList<>();
-                            ArrayList<PendingIntent> deliveryIntents = new ArrayList<>(); // Fixed typo
-
-                            for (int i = 0; i < parts.size(); i++) {
-                                sentIntents.add(sentPI);
-                                deliveryIntents.add(deliveredPI);
-                            }
-
-                            smsManager.sendMultipartTextMessage(
-                                    phoneNumber,
-                                    null,
-                                    parts,
-                                    sentIntents,
-                                    deliveryIntents
-                            );
-                            Log.d(TAG, "Multipart SMS sent (" + parts.size() + " parts)");
-                        } else {
-                            smsManager.sendTextMessage(
-                                    phoneNumber,
-                                    null,
-                                    message,
-                                    sentPI,
-                                    deliveredPI
-                            );
-                            Log.d(TAG, "Single SMS sent");
-                        }
-
-                        // DON'T show success toast here - wait for broadcast receiver
-                        Log.i(TAG, "SMS queued for sending");
-                        return;
-                    } else {
-                        Log.w(TAG, "No active subscriptions found");
-                    }
-                } else {
-                    Log.w(TAG, "SubscriptionManager is null");
-                }
-            } catch (SecurityException e) {
-                Log.e(TAG, "SecurityException in sendSMSWithDualSIMSupport", e);
-                throw e;
-            } catch (Exception e) {
-                Log.e(TAG, "Exception in sendSMSWithDualSIMSupport: " + e.getMessage(), e);
-                e.printStackTrace();
-                throw e;
-            }
-        }
-
-        // Fallback to default SmsManager
-        Log.d(TAG, "Falling back to default SmsManager");
+        // Send SMS using multipart
         try {
-            SmsManager smsManager = SmsManager.getDefault();
-            Log.i(TAG, "Sending SMS via default SmsManager");
-
             ArrayList<String> parts = smsManager.divideMessage(message);
-            Log.d(TAG, "Message divided into " + parts.size() + " parts");
+            Log.d(TAG, "Message divided into " + parts.size() + " part(s)");
 
-            if (parts.size() > 1) {
-                ArrayList<PendingIntent> sentIntents = new ArrayList<>();
-                ArrayList<PendingIntent> deliveryIntents = new ArrayList<>(); // Fixed typo
+            ArrayList<PendingIntent> sentIntents = new ArrayList<>();
+            ArrayList<PendingIntent> deliveryIntents = new ArrayList<>();
 
-                for (int i = 0; i < parts.size(); i++) {
-                    sentIntents.add(sentPI);
-                    deliveryIntents.add(deliveredPI);
-                }
-
-                smsManager.sendMultipartTextMessage(
-                        phoneNumber,
-                        null,
-                        parts,
-                        sentIntents,
-                        deliveryIntents
-                );
-                Log.d(TAG, "Multipart SMS sent via default manager");
-            } else {
-                smsManager.sendTextMessage(
-                        phoneNumber,
-                        null,
-                        message,
-                        sentPI,
-                        deliveredPI
-                );
-                Log.d(TAG, "Single SMS sent via default manager");
+            for (int i = 0; i < parts.size(); i++) {
+                sentIntents.add(sentPI);
+                deliveryIntents.add(deliveredPI);
             }
 
-            // DON'T show success toast here either
-            Log.i(TAG, "SMS queued for sending via default manager");
+            smsManager.sendMultipartTextMessage(
+                    phoneNumber,
+                    null,
+                    parts,
+                    sentIntents,
+                    deliveryIntents
+            );
+
+            Log.i(TAG, "SMS queued successfully (" + parts.size() + " parts, " +
+                    (usedDualSim ? "dual SIM" : "default") + ")");
+
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Invalid SMS parameters: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Invalid phone number or message: " + e.getMessage());
         } catch (Exception e) {
-            Log.e(TAG, "Failed to send via default SmsManager: " + e.getMessage(), e);
-            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
-            openSMSAppAsFallback(context, phoneNumber, message);
+            Log.e(TAG, "Failed to send SMS: " + e.getMessage(), e);
+            throw e;
         }
+    }
+
+    private static String normalizePhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return null;
+        }
+
+        // Remove all spaces, dashes, parentheses
+        phoneNumber = phoneNumber.replaceAll("[\\s()\\-]", "");
+
+        // Handle Kenyan numbers
+        // Convert 0712345678 to +254712345678
+        if (phoneNumber.startsWith("0") && phoneNumber.length() == 10) {
+            phoneNumber = "+254" + phoneNumber.substring(1);
+        }
+        // Add + if missing but has country code
+        else if (phoneNumber.startsWith("254") && !phoneNumber.startsWith("+")) {
+            phoneNumber = "+" + phoneNumber;
+        }
+
+        // Validate format
+        if (phoneNumber.length() < 10) {
+            Log.e(TAG, "Phone number too short: " + phoneNumber);
+            return null;
+        }
+
+        Log.d(TAG, "Normalized phone number format");
+        return phoneNumber;
     }
 
     public static class SmsBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+
+            TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            int networkType = tm.getNetworkType();
+            Log.d(TAG, "Network type: " + networkType);
+            Log.d(TAG, "SIM state: " + tm.getSimState());
 
             if ("SMS_SENT".equals(action)) {
                 switch (getResultCode()) {
@@ -284,7 +305,9 @@ public class EmergencyAlertDialog {
                         Toast.makeText(context, "Message sent!", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                        Log.e(TAG, "SMS generic failure");
+                        String errorDetails = intent.getStringExtra("errorCode");
+                        Log.e(TAG, "SMS generic failure: " + errorDetails);
+                        Log.e(TAG, "Phone number: " + intent.getStringExtra("phone_number"));
                         Toast.makeText(context, "Failed to send message", Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:

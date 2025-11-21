@@ -1,5 +1,6 @@
 package com.example.core;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,6 +16,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.os.Looper;
 import android.Manifest;
@@ -395,10 +397,25 @@ public class EmergencyShakeService extends Service {
         // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
-                    SensorManager.SENSOR_DELAY_UI);
+                    SensorManager.SENSOR_DELAY_GAME);
         }
 
         return START_STICKY;
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        // Restart the service if task is removed
+        Intent restartServiceIntent = new Intent(getApplicationContext(), this.getClass());
+        PendingIntent restartPendingIntent = PendingIntent.getService(
+                getApplicationContext(), 1, restartServiceIntent,
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
+
+        AlarmManager alarmService = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+        alarmService.set(AlarmManager.ELAPSED_REALTIME,
+                SystemClock.elapsedRealtime() + 1000, restartPendingIntent);
+
+        super.onTaskRemoved(rootIntent);
     }
 
     private void showEmergencyAlertDialog(String emergencyType) {
@@ -423,8 +440,9 @@ public class EmergencyShakeService extends Service {
         }
 
         LocationRequest locationRequest = new LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY, 10000) // Update every 30 seconds
-                .setMinUpdateIntervalMillis(5000) // Fastest update every 15 seconds
+                Priority.PRIORITY_HIGH_ACCURACY, 60000) // Update every 60 seconds
+                .setMinUpdateIntervalMillis(30000) // minimum 30 seconds
+                .setMaxUpdateDelayMillis(120000)  // batch updates for better battery
                 .setWaitForAccurateLocation(false) // dont wait for perfect accuracy
                 .build();
 
