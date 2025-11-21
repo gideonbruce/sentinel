@@ -81,7 +81,6 @@ public class EmergencyShakeService extends Service {
     private BroadcastReceiver settingsChangedReceiver;
 
     private static final long SENSOR_RESTART_DELAY = 5000;
-    private Handler sensorRestartRunnable = new Handler(Looper.getMainLooper());
     private Runnable sensorRestartRunnable;
 
     @Override
@@ -218,6 +217,15 @@ public class EmergencyShakeService extends Service {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
     }
+    private void reregisterSensor() {
+        if (sensorManager != null && accelerometer != null && shakeDetector != null && isShakeDetectionEnabled()) {
+            sensorManager.unregisterListener(shakeDetector);
+            boolean registered = sensorManager.registerListener(shakeDetector, accelerometer,
+                    SensorManager.SENSOR_DELAY_GAME);
+            Log.d("EmergencyService", "Sensor re-registered due to screen state change: " + registered);
+        }
+    }
+
     private void refreshWakeLock() {
         if (wakeLock != null) {
             if (wakeLock.isHeld()) {
@@ -560,6 +568,33 @@ public class EmergencyShakeService extends Service {
                     });
         } else {
             sendEmergencySMS(null, emergencyType);
+        }
+    }
+
+    private void registerScreenReceiver() {
+        screenReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null) {
+                    if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                        Log.d("EmergencyService", "Screen OFF - ensuring sensor registration");
+                        reregisterSensor();
+                    } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+                        Log.d("EmergencyService", "Screen ON - ensuring sensor registration");
+                        reregisterSensor();
+                    }
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenReceiver, filter);
         }
     }
 
