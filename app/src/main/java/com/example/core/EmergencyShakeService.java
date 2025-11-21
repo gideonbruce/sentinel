@@ -64,7 +64,7 @@ public class EmergencyShakeService extends Service {
 
     private BroadcastReceiver volumeButtonReceiver;
     private BroadcastReceiver smsConfirmReceiver;
-
+    private BroadcastReceiver screenReceiver;
     private BroadcastReceiver smsSentReceiver;
     private BroadcastReceiver smsDeliveredReceiver;
 
@@ -82,6 +82,7 @@ public class EmergencyShakeService extends Service {
 
     private static final long SENSOR_RESTART_DELAY = 5000;
     private Runnable sensorRestartRunnable;
+    private Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate() {
@@ -155,6 +156,7 @@ public class EmergencyShakeService extends Service {
         if (isShakeDetectionEnabled()) {
             setupSensorReregistration();
         }
+        registerScreenReceiver();
 
         volumeButtonReceiver = new BroadcastReceiver() {
             @Override
@@ -244,9 +246,9 @@ public class EmergencyShakeService extends Service {
                 if (isShakeDetectionEnabled()) {
                     if (sensorManager != null && accelerometer != null && shakeDetector != null) {
                         sensorManager.unregisterListener(shakeDetector);
-                        sensorManager.registerListener(shakeDetector, accelerometer,
+                        boolean registered = sensorManager.registerListener(shakeDetector, accelerometer,
                                 SensorManager.SENSOR_DELAY_GAME);
-                        Log.d("EmergencyService", "Sensor re-registered");
+                        Log.d("EmergencyService", "Periodic sensor re-registration: " + registered);
                     }
                 }
                 // Schedule next check
@@ -254,7 +256,7 @@ public class EmergencyShakeService extends Service {
             }
         };
 
-        // Start periodic checks
+        // Start periodic checks after 1 minute
         sensorRestartHandler.postDelayed(sensorRestartRunnable, 60000);
     }
 
@@ -610,6 +612,18 @@ public class EmergencyShakeService extends Service {
                 unregisterReceiver(settingsChangedReceiver);
             } catch (Exception e) {
                 Log.e("EmergencyService", "Error unregistering settings receiver", e);
+            }
+        }
+
+        if (sensorRestartHandler != null && sensorRestartRunnable != null) {
+            sensorRestartHandler.removeCallbacks(sensorRestartRunnable);
+        }
+
+        if (screenReceiver != null) {
+            try {
+                unregisterReceiver(screenReceiver);
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Error unregistering screen receiver", e);
             }
         }
 
