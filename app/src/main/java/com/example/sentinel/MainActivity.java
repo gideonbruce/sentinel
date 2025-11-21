@@ -849,6 +849,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MainActivity", "Error unregistering smsDeliveredReceiver", e);
             }
         }
+
     }
 
     private void signOut() {

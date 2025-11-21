@@ -397,7 +397,7 @@ public class EmergencyShakeService extends Service {
         // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
-                    SensorManager.SENSOR_DELAY_UI);
+                    SensorManager.SENSOR_DELAY_GAME);
         }
 
         return START_STICKY;
