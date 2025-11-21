@@ -423,8 +423,9 @@ public class EmergencyShakeService extends Service {
         }
 
         LocationRequest locationRequest = new LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY, 10000) // Update every 30 seconds
-                .setMinUpdateIntervalMillis(5000) // Fastest update every 15 seconds
+                Priority.PRIORITY_HIGH_ACCURACY, 60000) // Update every 60 seconds
+                .setMinUpdateIntervalMillis(30000) // minimum 30 seconds
+                .setMaxUpdateDelayMillis(120000)  // batch updates for better battery
                 .setWaitForAccurateLocation(false) // dont wait for perfect accuracy
                 .build();
 
