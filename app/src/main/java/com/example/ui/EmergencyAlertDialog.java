@@ -396,7 +396,8 @@ public class EmergencyAlertDialog {
 
     private static void generateAndShowAIMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
         SharedPreferences securePrefs = context.getSharedPreferences("sentinel_secure", Context.MODE_PRIVATE);
-        String apiKey = securePrefs.getString("anthropic_api_key", "");
+        // Changed to fetch Gemini API key
+        String apiKey = securePrefs.getString("gemini_api_key", "");
 
         if (apiKey.isEmpty()) {
             Log.w(TAG, "No API key found, using fallback message");
