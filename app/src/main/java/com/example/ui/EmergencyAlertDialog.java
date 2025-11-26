@@ -439,4 +439,75 @@ public class EmergencyAlertDialog {
                 }
         );
     }
+
+    private static void useFallbackMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
+        String fallbackMessage = contactManager.getEmergencyMessage();
+        if (emergencyType != null && !emergencyType.isEmpty()) {
+            fallbackMessage = "🚨 " + emergencyType + "! " + fallbackMessage;
+        }
+
+        Toast.makeText(context, "Using standard message", Toast.LENGTH_SHORT).show();
+        updateDialogWithMessage(context, contactManager, location, emergencyType, fallbackMessage, listener, "Message:\n\n");
+    }
+
+    private static void updateDialogWithMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, String messageText, OnAlertActionListener listener, String prefix) {
+        if (currentDialog != null && currentDialog.isShowing()) {
+            String preview = prefix + messageText + "\n\nSend to " + contactManager.getContactName() + "?";
+            currentDialog.setMessage(preview);
+
+            //Add/update Send button
+            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
+                Log.i(TAG, "User confirmed emergency alert with custom message");
+                sendEmergencyAlertWithCustomMessage(context, contactManager.getContactPhone(), location, emergencyType, messageText);
+                if (listener != null) {
+                    listener.onAlertSent();
+                }
+                currentDialog.dismiss();
+            });
+        }
+    }
+
+    private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
+        Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
+
+        // Build complete message with location
+        StringBuilder message = new StringBuilder();
+        message.append(customMessage);
+
+        if (location != null) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            Log.d(TAG, "Adding location to message");
+            message.append("\n\n📍 https://maps.google.com/?q=")
+                    .append(latitude)
+                    .append(",")
+                    .append(longitude);
+        } else {
+            Log.w(TAG, "Location unavailable");
+            message.append("\n\n(Location unavailable)");
+        }
+
+        String finalMessage = message.toString();
+
+        try {
+            Log.d(TAG, "Attempting to send SMS with custom AI message");
+            sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException - SMS permission denied", e);
+            Toast.makeText(context, "SMS permission denied", Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception while sending SMS: " + e.getMessage(), e);
+            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        }
+    }
+
+    public static void cleanup() {
+        if (aiGenerator != null) {
+            aiGenerator.shutdown();
+            aiGenerator = null;
+        }
+    }
 }
