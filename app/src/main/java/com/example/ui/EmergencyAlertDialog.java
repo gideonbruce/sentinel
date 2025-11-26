@@ -15,25 +15,38 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
-
+import android.app.Activity;
+import android.content.SharedPreferences;
 import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
+import com.example.ai.AIMessageGenerator;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EmergencyAlertDialog {
     private static final String TAG = "EmergencyAlertDialog";
+    private static AlertDialog currentDialog;
+    private static AIMessageGenerator aiGenerator;
 
     public interface OnAlertActionListener {
         void onAlertSent();
-
         void onAlertCancelled();
     }
 
     public static void show(Context context, OnAlertActionListener listener, android.location.Location location) {
+        show(context, listener, location, null, false);  // Call overloaded version
+    }
+
+    public static void show(Context context, OnAlertActionListener listener, android.location.Location location, String emergencyType, boolean useAI) {
         Log.d(TAG, "show() called");
+
+        if (currentDialog != null && currentDialog.isShowing()) {
+            currentDialog.dismiss();
+        }
+        Log.d(TAG, "show() called - AI enabled: " + useAI);
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
 
         if (!contactManager.hasEmergencyContact()) {
@@ -44,15 +57,21 @@ public class EmergencyAlertDialog {
 
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
+
+        String title = emergencyType != null ? emergencyType : "Emergency Alert";
+        String message = useAI ?
+                "Preparing intelligent emergency message..." :
+                "Send emergency alert to " + (contactName != null ? contactName : contactPhone) + "?";
+
         Log.d(TAG, "Emergency contact - Name: " + contactName + ", Phone: " +
-                (contactPhone != null ? "[REDACTED]" : "null"));
+                (contactPhone != null ? contactPhone : "null"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Emergency Alert");
-        builder.setMessage("Send emergency notification to " +
-                (contactName != null ? contactName : contactPhone) + "?");
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(false);
 
-        builder.setPositiveButton("Send Alert", (dialog, which) -> {
+        {/*builder.setPositiveButton("Send Alert", (dialog, which) -> {
             Log.i(TAG, "User confirmed emergency alert");
             sendEmergencyAlert(context, contactPhone, location);    // only notify listener
             if (listener != null) {
@@ -61,7 +80,7 @@ public class EmergencyAlertDialog {
             } else {
                 Log.w(TAG, "No listener to notify");
             }
-        });
+        });*/}
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             Log.i(TAG, "User cancelled emergency alert");
@@ -73,10 +92,21 @@ public class EmergencyAlertDialog {
             }
         });
 
-        builder.setCancelable(false);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        Log.d(TAG, "Emergency alert dialog displayed");
+        currentDialog = builder.create();
+        currentDialog.show();
+
+        if (useAI) {
+            generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
+        } else {
+            //trad flow - add send button immediately
+            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
+                Log.i(TAG, "User confirmed emergency alert");
+                sendEmergencyAlert(context, contactPhone, location);
+                if (listener != null) {
+                    listener.onAlertSent();
+                }
+            });
+        }
     }
 
     private static void showSetupContactDialog(Context context) {
@@ -362,5 +392,51 @@ public class EmergencyAlertDialog {
                     Toast.LENGTH_LONG).show();
             ex.printStackTrace();
         }
+    }
+
+    private static void generateAndShowAIMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
+        SharedPreferences securePrefs = context.getSharedPreferences("sentinel_secure", Context.MODE_PRIVATE);
+        String apiKey = securePrefs.getString("anthropic_api_key", "");
+
+        if (apiKey.isEmpty()) {
+            Log.w(TAG, "No API key found, using fallback message");
+            useFallbackMessage(context, contactManager, location, emergencyType, listener);
+            return;
+        }
+
+        //initializing ai generator
+        if (aiGenerator == null) {
+            aiGenerator = new AIMessageGenerator(context, apiKey);
+        }
+
+        String userName = contactManager.getContactName();
+        String customMessage = contactManager.getEmergencyMessage();
+
+        //Generate ai message
+        aiGenerator.generateEmergencyMessage(
+                emergencyType,
+                location,
+                userName,
+                customMessage,
+                new AIMessageGenerator.MessageCallback() {
+                    @Override
+                    public void onMessageGenerated(String aiMessage) {
+                        if (context instanceof Activity) {
+                            ((Activity) context).runOnUiThread(() -> {
+                                updateDialogWithMessage(context, contactManager, location, emergencyType, aiMessage, listener, "AI-generated message:\n\n");
+                            });
+                        }
+                    }
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "AI generation failed: " + error);
+                        if (context instanceof Activity) {
+                            ((Activity) context).runOnUiThread(() -> {
+                                useFallbackMessage(context, contactManager, location, emergencyType, listener);
+                            });
+                        }
+                    }
+                }
+        );
     }
 }
