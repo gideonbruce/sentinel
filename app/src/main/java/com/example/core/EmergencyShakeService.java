@@ -82,7 +82,7 @@ public class EmergencyShakeService extends Service {
 
     private static final long SENSOR_RESTART_DELAY = 5000;
     private Runnable sensorRestartRunnable;
-    private Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
+    private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate() {
@@ -90,11 +90,10 @@ public class EmergencyShakeService extends Service {
 
         prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
 
-        Log.d("EmergencyService", "=== Service onCreate ===");
+        Log.d("EmergencyService", "=============== Service onCreate ===============");
 
         contactManager = new EmergencyContactManager(this);
         alertRepository = AlertRepository.getInstance(getApplication());
-
 
         //registerSMSReceivers();
 
@@ -420,7 +419,6 @@ public class EmergencyShakeService extends Service {
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
             volumeGestureDetector.onVolumeUpButton();
         }
-
     }
 
     private void getLocationAndSendSMS() {
