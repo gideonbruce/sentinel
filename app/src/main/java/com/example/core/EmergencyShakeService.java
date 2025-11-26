@@ -14,6 +14,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -63,7 +64,7 @@ public class EmergencyShakeService extends Service {
 
     private BroadcastReceiver volumeButtonReceiver;
     private BroadcastReceiver smsConfirmReceiver;
-
+    private BroadcastReceiver screenReceiver;
     private BroadcastReceiver smsSentReceiver;
     private BroadcastReceiver smsDeliveredReceiver;
 
@@ -79,17 +80,20 @@ public class EmergencyShakeService extends Service {
 
     private BroadcastReceiver settingsChangedReceiver;
 
+    private static final long SENSOR_RESTART_DELAY = 5000;
+    private Runnable sensorRestartRunnable;
+    private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
+
     @Override
     public void onCreate() {
         super.onCreate();
 
         prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
 
-        Log.d("EmergencyService", "=== Service onCreate ===");
+        Log.d("EmergencyService", "=============== Service onCreate ===============");
 
         contactManager = new EmergencyContactManager(this);
         alertRepository = AlertRepository.getInstance(getApplication());
-
 
         //registerSMSReceivers();
 
@@ -115,9 +119,10 @@ public class EmergencyShakeService extends Service {
 
         // Acquire wake lock to keep CPU running
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+        wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
-        wakeLock.acquire();
+        wakeLock.acquire(24 * 60 * 60 * 1000L);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
@@ -146,6 +151,11 @@ public class EmergencyShakeService extends Service {
         if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
         }
+
+        if (isShakeDetectionEnabled()) {
+            setupSensorReregistration();
+        }
+        registerScreenReceiver();
 
         volumeButtonReceiver = new BroadcastReceiver() {
             @Override
@@ -207,6 +217,46 @@ public class EmergencyShakeService extends Service {
         } else {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
+    }
+    private void reregisterSensor() {
+        if (sensorManager != null && accelerometer != null && shakeDetector != null && isShakeDetectionEnabled()) {
+            sensorManager.unregisterListener(shakeDetector);
+            boolean registered = sensorManager.registerListener(shakeDetector, accelerometer,
+                    SensorManager.SENSOR_DELAY_GAME);
+            Log.d("EmergencyService", "Sensor re-registered due to screen state change: " + registered);
+        }
+    }
+
+    private void refreshWakeLock() {
+        if (wakeLock != null) {
+            if (wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+            wakeLock.acquire(24 * 60 * 60 * 1000L);
+            Log.d("EmergencyService", "Wake lock refreshed");
+        }
+    }
+
+    private void setupSensorReregistration() {
+        sensorRestartRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Check if sensor is still registered and re-register if needed
+                if (isShakeDetectionEnabled()) {
+                    if (sensorManager != null && accelerometer != null && shakeDetector != null) {
+                        sensorManager.unregisterListener(shakeDetector);
+                        boolean registered = sensorManager.registerListener(shakeDetector, accelerometer,
+                                SensorManager.SENSOR_DELAY_GAME);
+                        Log.d("EmergencyService", "Periodic sensor re-registration: " + registered);
+                    }
+                }
+                // Schedule next check
+                sensorRestartHandler.postDelayed(this, 60000); // Check every minute
+            }
+        };
+
+        // Start periodic checks after 1 minute
+        sensorRestartHandler.postDelayed(sensorRestartRunnable, 60000);
     }
 
     private void openSMSAppAsFallback(String phoneNumber, String message, String emergencyType, Location location) {
@@ -369,7 +419,6 @@ public class EmergencyShakeService extends Service {
         } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && isKeyDown) {
             volumeGestureDetector.onVolumeUpButton();
         }
-
     }
 
     private void getLocationAndSendSMS() {
@@ -394,10 +443,15 @@ public class EmergencyShakeService extends Service {
 
         startForeground(NOTIFICATION_ID, notification);
 
+        if (sensorManager != null && shakeDetector != null) {
+            sensorManager.unregisterListener(shakeDetector);
+        }
+
         // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
                     SensorManager.SENSOR_DELAY_GAME);
+            //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
         }
 
         return START_STICKY;
@@ -517,6 +571,33 @@ public class EmergencyShakeService extends Service {
         }
     }
 
+    private void registerScreenReceiver() {
+        screenReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction() != null) {
+                    if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+                        Log.d("EmergencyService", "Screen OFF - ensuring sensor registration");
+                        reregisterSensor();
+                    } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+                        Log.d("EmergencyService", "Screen ON - ensuring sensor registration");
+                        reregisterSensor();
+                    }
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(Intent.ACTION_SCREEN_ON);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenReceiver, filter);
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
@@ -529,6 +610,18 @@ public class EmergencyShakeService extends Service {
                 unregisterReceiver(settingsChangedReceiver);
             } catch (Exception e) {
                 Log.e("EmergencyService", "Error unregistering settings receiver", e);
+            }
+        }
+
+        if (sensorRestartHandler != null && sensorRestartRunnable != null) {
+            sensorRestartHandler.removeCallbacks(sensorRestartRunnable);
+        }
+
+        if (screenReceiver != null) {
+            try {
+                unregisterReceiver(screenReceiver);
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Error unregistering screen receiver", e);
             }
         }
 
