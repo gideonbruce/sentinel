@@ -10,10 +10,11 @@ import com.google.ai.client.generativeai.GenerativeModel;
 import com.google.ai.client.generativeai.java.GenerativeModelFutures;
 import com.google.ai.client.generativeai.type.Content;
 import com.google.ai.client.generativeai.type.GenerateContentResponse;
-
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.firebase.vertexai.FirebaseVertexAI;
+import com.google.firebase.vertexai.type.GenerationConfig;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,7 +32,6 @@ public class AIMessageGenerator {
     // Use "gemini-1.5-flash" for speed (critical in emergencies)
     private static final String MODEL_NAME = "gemini-1.5-flash";
 
-    private final String apiKey;
     private final ExecutorService executor;
     private final GenerativeModelFutures model;
 
@@ -40,22 +40,34 @@ public class AIMessageGenerator {
         void onError(String error);
     }
 
-    public AIMessageGenerator(Context context, String apiKey) {
-        this.apiKey = apiKey;
-
-        // Use a single thread executor for background callback execution
+    public AIMessageGenerator(Context context) {
         this.executor = Executors.newSingleThreadExecutor();
+        // Use a single thread executor for background callback execution
 
-        // 1. Initialize the base Kotlin Model
-        GenerativeModel gm = new GenerativeModel(
-                MODEL_NAME,
-                apiKey,
-                null, // generation config (optional, can be null)
-                null  // safety settings (optional, can be null)
-        );
+        try {
+            //init vertex
+            FirebaseVertexAI firebaseVertexAI = FirebaseVertexAI.getInstance();
 
-        // 2. Wrap it in GenerativeModelFutures for Java compatibility
-        this.model = GenerativeModelFutures.from(gm);
+            //gen params
+            GenerationConfig config = new GenerationConfig.Builder()
+                    .setTemperature(0.7f)
+                    .setTopK(40)
+                    .setTopP(0.95f)
+                    .setMaxOutputTokens(200)
+                    .build();
+
+            // creating gemini model instance
+            GenerativeModel gm = firebaseVertexAI.generativeModel(
+                    MODEL_NAME,
+                    config
+            );
+            // for Java compatibility
+            this.model = GenerativeModelFutures.from(gm);
+            Log.d(TAG, "Firebase Vertex AI initialized successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize Firebase Vertex AI", e);
+            throw new RuntimeException("Failed to initialize AI", e);
+        }
     }
 
     /**
@@ -132,7 +144,7 @@ public class AIMessageGenerator {
         context.append("Time: ").append(currentTime).append("\n");
 
         if (location != null) {
-            context.append("Location: Available\n"); // Don't put raw coords in prompt to save tokens/privacy
+            context.append("Location: Available\n");
         }
 
         if (emergencyType != null && !emergencyType.isEmpty()) {
@@ -145,8 +157,7 @@ public class AIMessageGenerator {
     /**
      * Build the prompt for Gemini
      */
-    private String buildPrompt(String emergencyType, String contextInfo,
-                               String userName, String customMessage) {
+    private String buildPrompt(String emergencyType, String contextInfo, String userName, String customMessage) {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("Generate a concise emergency SMS (max 160 chars). ");

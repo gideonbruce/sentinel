@@ -73,6 +73,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.firebase:firebase-vertexai:16.5.0")
     annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.room:room-runtime:2.6.1")
