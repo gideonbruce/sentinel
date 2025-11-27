@@ -99,6 +99,8 @@ dependencies {
     implementation("com.google.firebase:firebase-ai")
     implementation("com.google.guava:guava:33.5.0-android")
     implementation("org.reactivestreams:reactive-streams:1.0.4")
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.10.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
