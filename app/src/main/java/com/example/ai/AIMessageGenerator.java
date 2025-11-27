@@ -6,15 +6,14 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.ai.client.generativeai.GenerativeModel;
-import com.google.ai.client.generativeai.java.GenerativeModelFutures;
-import com.google.ai.client.generativeai.type.Content;
-import com.google.ai.client.generativeai.type.GenerateContentResponse;
+import com.google.firebase.vertexai.type.Content;
+import com.google.firebase.vertexai.type.GenerateContentResponse;
+import com.google.firebase.vertexai.GenerativeModel;
+import com.google.firebase.vertexai.java.GenerativeModelFutures;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.vertexai.FirebaseVertexAI;
-import com.google.firebase.vertexai.type.GenerationConfig;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,14 +22,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * AI-powered emergency message generator using Google Gemini Developer API.
+ * AI-powered emergency message generator using Firebase AI with Gemini Developer API.
  * Uses GenerativeModelFutures to bridge the Kotlin SDK to Java.
  */
 public class AIMessageGenerator {
     private static final String TAG = "AIMessageGenerator";
 
-    // Use "gemini-1.5-flash" for speed (critical in emergencies)
-    private static final String MODEL_NAME = "gemini-1.5-flash";
+    // Use "gemini-2.5-flash" for speed (critical in emergencies)
+    private static final String MODEL_NAME = "gemini-2.5-flash";
 
     private final ExecutorService executor;
     private final GenerativeModelFutures model;
@@ -45,27 +44,18 @@ public class AIMessageGenerator {
         // Use a single thread executor for background callback execution
 
         try {
-            //init vertex
+            // Initialize Firebase Vertex AI
             FirebaseVertexAI firebaseVertexAI = FirebaseVertexAI.getInstance();
 
-            //gen params
-            GenerationConfig config = new GenerationConfig.Builder()
-                    .setTemperature(0.7f)
-                    .setTopK(40)
-                    .setTopP(0.95f)
-                    .setMaxOutputTokens(200)
-                    .build();
+            // Create GenerativeModel instance
+            GenerativeModel ai = firebaseVertexAI.generativeModel(MODEL_NAME);
 
-            // creating gemini model instance
-            GenerativeModel gm = firebaseVertexAI.generativeModel(
-                    MODEL_NAME,
-                    config
-            );
-            // for Java compatibility
-            this.model = GenerativeModelFutures.from(gm);
-            Log.d(TAG, "Firebase Vertex AI initialized successfully");
+            // Use the GenerativeModelFutures Java compatibility layer
+            this.model = GenerativeModelFutures.from(ai);
+
+            Log.d(TAG, "Firebase AI with Gemini Developer API initialized successfully");
         } catch (Exception e) {
-            Log.e(TAG, "Failed to initialize Firebase Vertex AI", e);
+            Log.e(TAG, "Failed to initialize Firebase AI", e);
             throw new RuntimeException("Failed to initialize AI", e);
         }
     }
