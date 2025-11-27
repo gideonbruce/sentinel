@@ -52,6 +52,11 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchVibration;
     private Switch switchSound;
     private Switch switchLocationSharing;
+    private Switch switchAIMessages;
+    private LinearLayout layoutApiKey;
+    private TextInputEditText etApiKey;
+    private Button btnSaveApiKey;
+    private SharedPreferences securePrefs;
 
     private SeekBar seekShakeSensitivity;
     private TextView tvSensitivityValue;
@@ -129,6 +134,14 @@ public class SettingsActivity extends AppCompatActivity {
 
         seekCountdown = findViewById(R.id.seek_countdown);
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
+
+        switchAIMessages = findViewById(R.id.switch_ai_messages);
+        layoutApiKey = findViewById(R.id.layout_api_key);
+        etApiKey = findViewById(R.id.et_api_key);
+        btnSaveApiKey = findViewById(R.id.btn_save_api_key);
+
+        securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
+        btnSaveApiKey.setOnClickListener(v -> saveApiKey());
 
         setupListeners();
     }
@@ -217,6 +230,20 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.edit().putInt("countdown_seconds", seconds).apply();
             }
         });
+
+        switchAIMessages.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
+
+            //show/hide api key section
+            layoutApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            if (isChecked) {
+                String existingKey = securePrefs.getString("gemini_api_key", "");
+                if (existingKey.isEmpty()) {
+                    Toast.makeText(this, "Please enter your Gemini API key",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     private void loadSettings() {
@@ -271,6 +298,17 @@ public class SettingsActivity extends AppCompatActivity {
                 });
             }
         });
+
+        //loading ai settings
+        boolean useAI = prefs.getBoolean("use_ai_messages", false);
+        switchAIMessages.setChecked(useAI);
+        layoutApiKey.setVisibility(useAI ? View.VISIBLE : View.GONE);
+        String existingKey = securePrefs.getString("gemini_api_key", "");
+        if (!existingKey.isEmpty()) {
+            // Show masked version
+            String masked = "••••••••" + existingKey.substring(Math.max(0, existingKey.length() - 4));
+            etApiKey.setText(masked);
+        }
     }
 
     private void pickContact() {
@@ -332,6 +370,44 @@ public class SettingsActivity extends AppCompatActivity {
             Toast.makeText(this, "Error reading contact: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
         }
+    }
+    private void saveApiKey() {
+        String apiKey = Objects.requireNonNull(etApiKey.getText()).toString().trim();
+
+        if (apiKey.isEmpty()) {
+            Toast.makeText(this, "Please enter an API key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Don't save if it's the masked version
+        if (apiKey.startsWith("••••")) {
+            Toast.makeText(this, "API key already saved", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Basic validation - Gemini API keys start with "AIza"
+        if (!apiKey.startsWith("AIza")) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Invalid API Key")
+                    .setMessage("Gemini API keys typically start with 'AIza'. Are you sure this is correct?")
+                    .setPositiveButton("Save Anyway", (dialog, which) -> {
+                        saveApiKeyToPrefs(apiKey);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else {
+            saveApiKeyToPrefs(apiKey);
+        }
+    }
+
+    private void saveApiKeyToPrefs(String apiKey) {
+        securePrefs.edit().putString("gemini_api_key", apiKey).apply();
+
+        // Mask the display
+        String masked = "••••••••" + apiKey.substring(Math.max(0, apiKey.length() - 4));
+        etApiKey.setText(masked);
+
+        Toast.makeText(this, "API key saved securely", Toast.LENGTH_SHORT).show();
     }
 
     private void saveContact() {
