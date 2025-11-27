@@ -71,7 +71,7 @@ public class EmergencyAlertDialog {
         builder.setMessage(message);
         builder.setCancelable(false);
 
-        {/*builder.setPositiveButton("Send Alert", (dialog, which) -> {
+        builder.setPositiveButton("Send Alert", (dialog, which) -> {
             Log.i(TAG, "User confirmed emergency alert");
             sendEmergencyAlert(context, contactPhone, location);    // only notify listener
             if (listener != null) {
@@ -80,7 +80,7 @@ public class EmergencyAlertDialog {
             } else {
                 Log.w(TAG, "No listener to notify");
             }
-        });*/}
+        });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> {
             Log.i(TAG, "User cancelled emergency alert");
