@@ -323,7 +323,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.nav_home) {
             //already on home
-            Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
             //Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
             //TODO: open settings activity
@@ -344,6 +344,9 @@ public class MainActivity extends AppCompatActivity {
             //TODO: open  about dialog
             Intent intent = new Intent(this, AboutActivity.class);
             startActivity(intent);
+        //} else if (id == R.id.nav_aiSettings){
+            //Intent intent = new Intent(this, AISettingsActivity.class);
+            //startActivity(intent);
         } else if (id == R.id.nav_sign_out) {
             signOut();
         }
@@ -705,6 +708,9 @@ public class MainActivity extends AppCompatActivity {
         if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
 
+            //checking if ai is enabled
+            SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+            boolean useAI = prefs.getBoolean("use_ai_messages", false);
             currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
 
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
@@ -719,7 +725,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "Emergency alert cancelled",
                             Toast.LENGTH_SHORT).show();
                 }
-            }, currentEmergencyLocation);
+            }, currentEmergencyLocation, emergencyType, useAI);
         }
     }
 
@@ -829,9 +835,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void saveGeminiApiKey() {
+        SharedPreferences securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
+        SharedPreferences.Editor editor = securePrefs.edit();
+        editor.putString("gemini_api_key", "YOUR_GEMINI_API_KEY_HERE");
+        editor.apply();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        EmergencyAlertDialog.cleanup();
 
         // Unregister SMS receivers
         if (smsSentReceiver != null) {
