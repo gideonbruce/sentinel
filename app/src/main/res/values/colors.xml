@@ -5,4 +5,10 @@
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
+    <color name="emergency_red">#DC3545</color>
+    <color name="emergency_red_pressed">#C82333</color>
+    <color name="text_primary">#212529</color>
+    <color name="text_secondary">#6C757D</color>
+    <color name="border_color">#CED4DA</color>
+    <color name="background_light">#F8F9FA</color>
 </resources>
