@@ -21,8 +21,6 @@ import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
 import com.example.ai.AIMessageGenerator;
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.firebase.vertexai.type.GenerationConfig;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -395,10 +393,6 @@ public class EmergencyAlertDialog {
     }
 
     private static void generateAndShowAIMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
-        //SharedPreferences securePrefs = context.getSharedPreferences("sentinel_secure", Context.MODE_PRIVATE);
-        // Changed to fetch Gemini API key
-        //String apiKey = securePrefs.getString("gemini_api_key", "");
-
         //init ai generator
         if (aiGenerator == null) {
             try {
@@ -409,20 +403,12 @@ public class EmergencyAlertDialog {
                 useFallbackMessage(context, contactManager, location, emergencyType, listener);
                 return;
             }
-            //Log.w(TAG, "No API key found, using fallback message");
-            //useFallbackMessage(context, contactManager, location, emergencyType, listener);
-            //return;
         }
-
-        //initializing ai generator
-        //if (aiGenerator == null) {
-            //aiGenerator = new AIMessageGenerator(context, apiKey);
-        //}
 
         String userName = contactManager.getContactName();
         String customMessage = contactManager.getEmergencyMessage();
 
-        //Generate ai message
+        //generate ai message
         aiGenerator.generateEmergencyMessage(
                 emergencyType,
                 location,
