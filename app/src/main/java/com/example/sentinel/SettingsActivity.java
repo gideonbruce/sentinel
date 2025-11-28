@@ -53,10 +53,10 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchSound;
     private Switch switchLocationSharing;
     private Switch switchAIMessages;
-    private LinearLayout layoutApiKey;
-    private TextInputEditText etApiKey;
-    private Button btnSaveApiKey;
-    private SharedPreferences securePrefs;
+    //private LinearLayout layoutApiKey;
+    //private TextInputEditText etApiKey;
+    //private Button btnSaveApiKey;
+    //private SharedPreferences securePrefs;
 
     private SeekBar seekShakeSensitivity;
     private TextView tvSensitivityValue;
@@ -136,12 +136,12 @@ public class SettingsActivity extends AppCompatActivity {
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
 
         switchAIMessages = findViewById(R.id.switch_ai_messages);
-        layoutApiKey = findViewById(R.id.layout_api_key);
-        etApiKey = findViewById(R.id.et_api_key);
-        btnSaveApiKey = findViewById(R.id.btn_save_api_key);
+        //layoutApiKey = findViewById(R.id.layout_api_key);
+        //etApiKey = findViewById(R.id.et_api_key);
+        //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
 
-        securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
-        btnSaveApiKey.setOnClickListener(v -> saveApiKey());
+        //securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
+        //btnSaveApiKey.setOnClickListener(v -> saveApiKey());
 
         setupListeners();
     }
@@ -235,13 +235,13 @@ public class SettingsActivity extends AppCompatActivity {
             prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
 
             //show/hide api key section
-            layoutApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            //layoutApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             if (isChecked) {
-                String existingKey = securePrefs.getString("gemini_api_key", "");
-                if (existingKey.isEmpty()) {
-                    Toast.makeText(this, "Please enter your Gemini API key",
-                            Toast.LENGTH_LONG).show();
-                }
+                Toast.makeText(this, "AI messages enabled", Toast.LENGTH_SHORT).show();
+                //if (existingKey.isEmpty()) {
+                //    Toast.makeText(this, "Please enter your Gemini API key",
+                //            Toast.LENGTH_LONG).show();
+                //}
             }
         });
     }
@@ -302,13 +302,13 @@ public class SettingsActivity extends AppCompatActivity {
         //loading ai settings
         boolean useAI = prefs.getBoolean("use_ai_messages", false);
         switchAIMessages.setChecked(useAI);
-        layoutApiKey.setVisibility(useAI ? View.VISIBLE : View.GONE);
-        String existingKey = securePrefs.getString("gemini_api_key", "");
-        if (!existingKey.isEmpty()) {
-            // Show masked version
-            String masked = "••••••••" + existingKey.substring(Math.max(0, existingKey.length() - 4));
-            etApiKey.setText(masked);
-        }
+        //layoutApiKey.setVisibility(useAI ? View.VISIBLE : View.GONE);
+        //String existingKey = securePrefs.getString("gemini_api_key", "");
+        //if (!existingKey.isEmpty()) {
+        //    // Show masked version
+        //    String masked = "••••••••" + existingKey.substring(Math.max(0, existingKey.length() - 4));
+        //    etApiKey.setText(masked);
+        //}
     }
 
     private void pickContact() {
@@ -371,7 +371,8 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
         }
     }
-    private void saveApiKey() {
+
+    {/*private void saveApiKey() {
         String apiKey = Objects.requireNonNull(etApiKey.getText()).toString().trim();
 
         if (apiKey.isEmpty()) {
@@ -398,9 +399,9 @@ public class SettingsActivity extends AppCompatActivity {
         } else {
             saveApiKeyToPrefs(apiKey);
         }
-    }
+    }*/}
 
-    private void saveApiKeyToPrefs(String apiKey) {
+    {/*private void saveApiKeyToPrefs(String apiKey) {
         securePrefs.edit().putString("gemini_api_key", apiKey).apply();
 
         // Mask the display
@@ -408,7 +409,7 @@ public class SettingsActivity extends AppCompatActivity {
         etApiKey.setText(masked);
 
         Toast.makeText(this, "API key saved securely", Toast.LENGTH_SHORT).show();
-    }
+    }*/}
 
     private void saveContact() {
         String name = Objects.requireNonNull(etContactName.getText()).toString().trim();
