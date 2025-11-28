@@ -310,17 +310,20 @@
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp">
 
             <!-- AI Message Settings Section -->
-            <TextView
+            <!--<TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="AI Message Settings"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:paddingTop="16dp"
-                android:paddingBottom="8dp"/>
+                android:paddingBottom="8dp"/>-->
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -339,7 +342,9 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Use AI-Generated Messages"
-                        android:textSize="16sp"/>
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:textSize="18sp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -357,7 +362,7 @@
             </LinearLayout>
 
             <!-- API Key Section (only visible when AI is enabled) -->
-            <LinearLayout
+            <!--<LinearLayout
                 android:id="@+id/layout_api_key"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -392,7 +397,7 @@
                     android:textColor="@android:color/holo_blue_dark"
                     android:autoLink="web"
                     android:layout_marginTop="8dp"/>
-            </LinearLayout>
+            </LinearLayout>-->
         </androidx.cardview.widget.CardView>
 
         <!-- Detection Settings Card -->
