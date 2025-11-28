@@ -7,6 +7,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.telephony.SmsManager;
@@ -14,6 +16,11 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -21,6 +28,8 @@ import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
 import com.example.ai.AIMessageGenerator;
+import com.example.sentinel.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +37,7 @@ public class EmergencyAlertDialog {
     private static final String TAG = "EmergencyAlertDialog";
     private static AlertDialog currentDialog;
     private static AIMessageGenerator aiGenerator;
+    private static View currentCustomView;
 
     public interface OnAlertActionListener {
         void onAlertSent();
@@ -56,20 +66,76 @@ public class EmergencyAlertDialog {
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
 
+        //custom dialog view
+        View customView = LayoutInflater.from(context).inflate(R.layout.dialog_emergency_alert, null);
+        currentCustomView = customView;   //store reference for later use
+
+        // Get references to custom views
+        TextView titleText = customView.findViewById(R.id.dialog_title);
+        TextView messageText = customView.findViewById(R.id.dialog_message);
+        TextView contactText = customView.findViewById(R.id.dialog_contact);
+        ProgressBar loadingProgress = customView.findViewById(R.id.loading_progress);
+        Button sendButton = customView.findViewById(R.id.btn_send);
+        Button cancelButton = customView.findViewById(R.id.btn_cancel);
+
+        //set content
         String title = emergencyType != null ? emergencyType : "Emergency Alert";
-        String message = useAI ?
-                "Preparing intelligent emergency message..." :
-                "Send emergency alert to " + (contactName != null ? contactName : contactPhone) + "?";
+        titleText.setText(title);
 
-        Log.d(TAG, "Emergency contact - Name: " + contactName + ", Phone: " +
-                (contactPhone != null ? contactPhone : "null"));
+        if (useAI) {
+            messageText.setText("Preparing intelligent emergency message...");
+            loadingProgress.setVisibility(View.VISIBLE);
+            sendButton.setEnabled(false);
+        } else {
+            messageText.setText("Send emergency alert now?");
+            loadingProgress.setVisibility(View.GONE);
+            sendButton.setEnabled(true);
+        }
+        contactText.setText("To: " + (contactName != null ? contactName : contactPhone));
+                //"Preparing intelligent emergency message..." :
+                //"Send emergency alert to " + (contactName != null ? contactName : contactPhone) + "?";
 
+        Log.d(TAG, "Emergency contact - Name: " + contactName + ", Phone: " + (contactPhone != null ? contactPhone : "null"));
+
+        //creating dialog with custom view
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(title);
-        builder.setMessage(message);
+        builder.setView(customView);
         builder.setCancelable(false);
 
-        builder.setPositiveButton("Send Alert", (dialog, which) -> {
+        currentDialog = builder.create();
+
+        //making dialog background transparent for rounded corners
+        if (currentDialog.getWindow() != null) {
+            currentDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        //setting button click listeners
+        sendButton.setOnClickListener(v -> {
+            Log.i(TAG, "User confirmed emergency alert");
+            sendEmergencyAlert(context, contactPhone, location);
+            if (listener != null) {
+                Log.d(TAG, "Notifying listener: onAlertSent()");
+                listener.onAlertSent();
+            }
+            currentDialog.dismiss();
+        });
+
+        cancelButton.setOnClickListener(v -> {
+            Log.i(TAG, "User cancelled emergency alert");
+            if (listener != null) {
+                Log.d(TAG, "Notifying listeners: onAlertCancelled()");
+                listener.onAlertCancelled();
+            }
+            currentDialog.dismiss();
+        });
+
+        currentDialog.show();
+
+        if (useAI) {
+            generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
+        }
+
+        {/*builder.setPositiveButton("Send Alert", (dialog, which) -> {
             Log.i(TAG, "User confirmed emergency alert");
             sendEmergencyAlert(context, contactPhone, location);    // only notify listener
             if (listener != null) {
@@ -104,7 +170,7 @@ public class EmergencyAlertDialog {
                     listener.onAlertSent();
                 }
             });
-        }
+        }*/}
     }
 
     private static void showSetupContactDialog(Context context) {
@@ -469,16 +535,28 @@ public class EmergencyAlertDialog {
     }
 
     private static void updateDialogWithMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, String messageText, OnAlertActionListener listener, String prefix) {
-        if (currentDialog != null && currentDialog.isShowing()) {
-            String preview = prefix + messageText + "\n\nSend to " + contactManager.getContactName() + "?";
-            currentDialog.setMessage(preview);
+        if (currentDialog != null && currentDialog.isShowing() && currentCustomView != null) {
+            // Use currentCustomView directly instead of finding from dialog
+            TextView messageView = currentCustomView.findViewById(R.id.dialog_message);
+            TextView previewLabel = currentCustomView.findViewById(R.id.dialog_preview_label);
+            TextView previewText = currentCustomView.findViewById(R.id.dialog_preview_text);
+            ProgressBar loadingProgress = currentCustomView.findViewById(R.id.loading_progress);
+            Button sendButton = currentCustomView.findViewById(R.id.btn_send);
 
-            //Add/update Send button
-            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
+            //hide loading/show message
+            loadingProgress.setVisibility(View.GONE);
+            messageView.setVisibility(View.GONE);
+            previewLabel.setVisibility(View.VISIBLE);
+            previewText.setVisibility(View.VISIBLE);
+            previewLabel.setText(prefix.trim());
+            previewText.setText(messageText);
+            sendButton.setEnabled(true);
+
+            sendButton.setOnClickListener(v -> {
                 Log.i(TAG, "User confirmed emergency alert with custom message");
                 sendEmergencyAlertWithCustomMessage(context, contactManager.getContactPhone(), location, emergencyType, messageText);
                 if (listener != null) {
-                    listener.onAlertSent();
+                    listener.onAlertSent(); // This should be onAlertSent(), not onAlertCancelled()
                 }
                 currentDialog.dismiss();
             });
