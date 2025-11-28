@@ -322,9 +322,30 @@ public class EmergencyAlertDialog {
             String action = intent.getAction();
 
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            int networkType = tm.getNetworkType();
-            Log.d(TAG, "Network type: " + networkType);
-            Log.d(TAG, "SIM state: " + tm.getSimState());
+            int networkType = TelephonyManager.NETWORK_TYPE_UNKNOWN; // Default value
+            int simState = TelephonyManager.SIM_STATE_UNKNOWN;      // Default value
+
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                try {
+                    if (tm != null) {
+                        networkType = tm.getNetworkType();
+                        simState = tm.getSimState();
+                        Log.d(TAG, "Network type: " + networkType);
+                        Log.d(TAG, "SIM state: " + simState);
+                    } else {
+                        Log.w(TAG, "TelephonyManager is null");
+                    }
+                } catch (SecurityException e) {
+                    //// This should ideally not happen if the check above passed, but as a safeguard
+                    Log.e(TAG, "SecurityException getting network info: " + e.getMessage());
+                }
+            } else {
+                Log.w(TAG, "READ_PHONE_STATE permission not granted to read network type/SIM state");
+                //broadcast receiver still proceed with SMS status checks
+            }
+            //int networkType = tm.getNetworkType();
+            //Log.d(TAG, "Network type: " + networkType);
+            //Log.d(TAG, "SIM state: " + tm.getSimState());
 
             if ("SMS_SENT".equals(action)) {
                 switch (getResultCode()) {
