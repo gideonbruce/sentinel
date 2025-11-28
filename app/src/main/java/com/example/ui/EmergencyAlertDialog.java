@@ -15,25 +15,36 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
-
+import android.app.Activity;
+import android.content.SharedPreferences;
 import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
-
+import com.example.ai.AIMessageGenerator;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EmergencyAlertDialog {
     private static final String TAG = "EmergencyAlertDialog";
+    private static AlertDialog currentDialog;
+    private static AIMessageGenerator aiGenerator;
 
     public interface OnAlertActionListener {
         void onAlertSent();
-
         void onAlertCancelled();
     }
 
     public static void show(Context context, OnAlertActionListener listener, android.location.Location location) {
+        show(context, listener, location, null, false);  // Call overloaded version
+    }
+
+    public static void show(Context context, OnAlertActionListener listener, android.location.Location location, String emergencyType, boolean useAI) {
         Log.d(TAG, "show() called");
+
+        if (currentDialog != null && currentDialog.isShowing()) {
+            currentDialog.dismiss();
+        }
+        Log.d(TAG, "show() called - AI enabled: " + useAI);
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
 
         if (!contactManager.hasEmergencyContact()) {
@@ -44,13 +55,19 @@ public class EmergencyAlertDialog {
 
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
+
+        String title = emergencyType != null ? emergencyType : "Emergency Alert";
+        String message = useAI ?
+                "Preparing intelligent emergency message..." :
+                "Send emergency alert to " + (contactName != null ? contactName : contactPhone) + "?";
+
         Log.d(TAG, "Emergency contact - Name: " + contactName + ", Phone: " +
-                (contactPhone != null ? "[REDACTED]" : "null"));
+                (contactPhone != null ? contactPhone : "null"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle("Emergency Alert");
-        builder.setMessage("Send emergency notification to " +
-                (contactName != null ? contactName : contactPhone) + "?");
+        builder.setTitle(title);
+        builder.setMessage(message);
+        builder.setCancelable(false);
 
         builder.setPositiveButton("Send Alert", (dialog, which) -> {
             Log.i(TAG, "User confirmed emergency alert");
@@ -73,10 +90,21 @@ public class EmergencyAlertDialog {
             }
         });
 
-        builder.setCancelable(false);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        Log.d(TAG, "Emergency alert dialog displayed");
+        currentDialog = builder.create();
+        currentDialog.show();
+
+        if (useAI) {
+            generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
+        } else {
+            //trad flow - add send button immediately
+            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
+                Log.i(TAG, "User confirmed emergency alert");
+                sendEmergencyAlert(context, contactPhone, location);
+                if (listener != null) {
+                    listener.onAlertSent();
+                }
+            });
+        }
     }
 
     private static void showSetupContactDialog(Context context) {
@@ -361,6 +389,122 @@ public class EmergencyAlertDialog {
             Toast.makeText(context, "Cannot open SMS app: " + ex.getMessage(),
                     Toast.LENGTH_LONG).show();
             ex.printStackTrace();
+        }
+    }
+
+    private static void generateAndShowAIMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
+        //init ai generator
+        if (aiGenerator == null) {
+            try {
+                aiGenerator = new AIMessageGenerator(context);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to initialize AI: " + e.getMessage());
+                Toast.makeText(context, "AI not available, using standard message", Toast.LENGTH_SHORT).show();
+                useFallbackMessage(context, contactManager, location, emergencyType, listener);
+                return;
+            }
+        }
+
+        String userName = contactManager.getContactName();
+        String customMessage = contactManager.getEmergencyMessage();
+
+        //generate ai message
+        aiGenerator.generateEmergencyMessage(
+                emergencyType,
+                location,
+                userName,
+                customMessage,
+                new AIMessageGenerator.MessageCallback() {
+                    @Override
+                    public void onMessageGenerated(String aiMessage) {
+                        if (context instanceof Activity) {
+                            ((Activity) context).runOnUiThread(() -> {
+                                updateDialogWithMessage(context, contactManager, location, emergencyType, aiMessage, listener, "AI-generated message:\n\n");
+                            });
+                        }
+                    }
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, "AI generation failed: " + error);
+                        if (context instanceof Activity) {
+                            ((Activity) context).runOnUiThread(() -> {
+                                Toast.makeText(context, "AI failed, using standard message", Toast.LENGTH_SHORT).show();
+                                useFallbackMessage(context, contactManager, location, emergencyType, listener);
+                            });
+                        }
+                    }
+                }
+        );
+    }
+
+    private static void useFallbackMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, OnAlertActionListener listener) {
+        String fallbackMessage = contactManager.getEmergencyMessage();
+        if (emergencyType != null && !emergencyType.isEmpty()) {
+            fallbackMessage = "🚨 " + emergencyType + "! " + fallbackMessage;
+        }
+
+        Toast.makeText(context, "Using standard message", Toast.LENGTH_SHORT).show();
+        updateDialogWithMessage(context, contactManager, location, emergencyType, fallbackMessage, listener, "Message:\n\n");
+    }
+
+    private static void updateDialogWithMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, String messageText, OnAlertActionListener listener, String prefix) {
+        if (currentDialog != null && currentDialog.isShowing()) {
+            String preview = prefix + messageText + "\n\nSend to " + contactManager.getContactName() + "?";
+            currentDialog.setMessage(preview);
+
+            //Add/update Send button
+            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
+                Log.i(TAG, "User confirmed emergency alert with custom message");
+                sendEmergencyAlertWithCustomMessage(context, contactManager.getContactPhone(), location, emergencyType, messageText);
+                if (listener != null) {
+                    listener.onAlertSent();
+                }
+                currentDialog.dismiss();
+            });
+        }
+    }
+
+    private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
+        Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
+
+        // Build complete message with location
+        StringBuilder message = new StringBuilder();
+        message.append(customMessage);
+
+        if (location != null) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            Log.d(TAG, "Adding location to message");
+            message.append("\n\n📍 https://maps.google.com/?q=")
+                    .append(latitude)
+                    .append(",")
+                    .append(longitude);
+        } else {
+            Log.w(TAG, "Location unavailable");
+            message.append("\n\n(Location unavailable)");
+        }
+
+        String finalMessage = message.toString();
+
+        try {
+            Log.d(TAG, "Attempting to send SMS with custom AI message");
+            sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
+        } catch (SecurityException e) {
+            Log.e(TAG, "SecurityException - SMS permission denied", e);
+            Toast.makeText(context, "SMS permission denied", Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception while sending SMS: " + e.getMessage(), e);
+            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        }
+    }
+
+    public static void cleanup() {
+        if (aiGenerator != null) {
+            aiGenerator.shutdown();
+            aiGenerator = null;
         }
     }
 }
