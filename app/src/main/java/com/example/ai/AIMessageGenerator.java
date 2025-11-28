@@ -6,14 +6,14 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import com.google.firebase.vertexai.type.Content;
-import com.google.firebase.vertexai.type.GenerateContentResponse;
-import com.google.firebase.vertexai.GenerativeModel;
-import com.google.firebase.vertexai.java.GenerativeModelFutures;
+import com.google.firebase.ai.FirebaseAI;
+import com.google.firebase.ai.GenerativeModel;
+import com.google.firebase.ai.java.GenerativeModelFutures;
+import com.google.firebase.ai.type.Content;
+import com.google.firebase.ai.type.GenerateContentResponse;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.firebase.vertexai.FirebaseVertexAI;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,11 +44,11 @@ public class AIMessageGenerator {
         // Use a single thread executor for background callback execution
 
         try {
-            // Initialize Firebase Vertex AI
-            FirebaseVertexAI firebaseVertexAI = FirebaseVertexAI.getInstance();
+            // Initialize Firebase AI
+            GenerativeModel ai = FirebaseAI.getInstance().generativeModel(MODEL_NAME);
 
             // Create GenerativeModel instance
-            GenerativeModel ai = firebaseVertexAI.generativeModel(MODEL_NAME);
+            //GenerativeModel ai = firebaseVertexAI.generativeModel(MODEL_NAME);
 
             // Use the GenerativeModelFutures Java compatibility layer
             this.model = GenerativeModelFutures.from(ai);
