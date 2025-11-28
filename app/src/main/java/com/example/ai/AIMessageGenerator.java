@@ -150,14 +150,14 @@ public class AIMessageGenerator {
      */
     private String buildPrompt(String emergencyType, String contextInfo, String userName, String customMessage) {
         // Using a more descriptive persona for better results
-        return "You are an AI assistant for an emergency alert app called Sentinel. Your task is to generate a single, concise SMS message (under 160 characters) to be sent to an emergency contact.\n\n" +
+        return "You are an AI assistant for an emergency alert app called Sentinel. Your task is to generate a single, concise SMS message (under 400 characters) to be sent to an emergency contact.\n\n" +
                 "Follow these rules strictly:\n" +
                 "1. The tone must be urgent and clear. 🚨\n" +
                 "2. Start with the user's name if available.\n" +
                 "3. State the emergency clearly.\n" +
-                "4. Do NOT include latitude/longitude coordinates. The app sends a map link separately.\n" +
-                "5. If the user provided a custom note, integrate its meaning naturally.\n" +
-                "6. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
+                "4. You may include latitude/longitude coordinates. The app sends a map link separately.\n" +
+                //"5. If the user provided a custom note, integrate its meaning naturally.\n" +
+                "5. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
                 "---\n" +
                 "EMERGENCY DETAILS:\n" +
                 (userName != null && !userName.isEmpty() ? "User's Name: " + userName + "\n" : "") +
