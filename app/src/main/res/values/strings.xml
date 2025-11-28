@@ -109,4 +109,5 @@
     <string name="location">Location</string>
     <string name="call_contact">Call contact</string>
     <string name="sent_to">Sent to</string>
+    <string name="send_alert">Send Alert</string>
 </resources>
