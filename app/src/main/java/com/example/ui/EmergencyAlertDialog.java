@@ -83,11 +83,11 @@ public class EmergencyAlertDialog {
         titleText.setText(title);
 
         if (useAI) {
-            messageText.setText("Preparing intelligent emergency message...");
+            messageText.setText(R.string.preparing_intelligent_emergency_message);
             loadingProgress.setVisibility(View.VISIBLE);
             sendButton.setEnabled(false);
         } else {
-            messageText.setText("Send emergency alert now?");
+            messageText.setText(R.string.send_emergency_alert_now);
             loadingProgress.setVisibility(View.GONE);
             sendButton.setEnabled(true);
         }
@@ -134,43 +134,6 @@ public class EmergencyAlertDialog {
         if (useAI) {
             generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
         }
-
-        {/*builder.setPositiveButton("Send Alert", (dialog, which) -> {
-            Log.i(TAG, "User confirmed emergency alert");
-            sendEmergencyAlert(context, contactPhone, location);    // only notify listener
-            if (listener != null) {
-                Log.d(TAG, "Notifying listener: onAlertSent()");
-                listener.onAlertSent();
-            } else {
-                Log.w(TAG, "No listener to notify");
-            }
-        });
-
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            Log.i(TAG, "User cancelled emergency alert");
-            if (listener != null) {
-                Log.d(TAG, "Notifying listener: onAlertCancelled()");
-                listener.onAlertCancelled();
-            } else {
-                Log.w(TAG, "No listener to notify");
-            }
-        });
-
-        currentDialog = builder.create();
-        currentDialog.show();
-
-        if (useAI) {
-            generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
-        } else {
-            //trad flow - add send button immediately
-            currentDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Send Alert", (dialog, which) -> {
-                Log.i(TAG, "User confirmed emergency alert");
-                sendEmergencyAlert(context, contactPhone, location);
-                if (listener != null) {
-                    listener.onAlertSent();
-                }
-            });
-        }*/}
     }
 
     private static void showSetupContactDialog(Context context) {
