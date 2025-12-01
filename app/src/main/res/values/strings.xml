@@ -112,4 +112,5 @@
     <string name="send_alert">Send Alert</string>
     <string name="preparing_intelligent_emergency_message">Preparing intelligent emergency message...</string>
     <string name="send_emergency_alert_now">Send emergency alert now?</string>
+    <string name="widget_description">Quick access to emergency protection</string>
 </resources>
