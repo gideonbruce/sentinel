@@ -112,6 +112,19 @@
                 android:value="Emergency shake detection for safety alerts" />
         </service>
 
+        <receiver
+            android:name=".SentinelWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.sentinel.TOGGLE_SERVICE" />
+                <action android:name="com.example.sentinel.OPEN_APP" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sentinel_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>
