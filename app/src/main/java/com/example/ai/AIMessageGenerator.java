@@ -242,8 +242,8 @@ public class AIMessageGenerator {
                 "3. State the emergency clearly.\n" +
                 "4. If detailed location information (address, street name, city) is provided, include all location details in a natural way.\n" +
                 "5. Do NOT include GPS coordinates - the app sends a map link separately.\n" +
-                //"6. If the user provided a custom note, integrate its meaning naturally.\n" +
-                "6. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
+                "6. If the time is provided, include it.\n" +
+                "7. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
                 "---\n" +
                 "EMERGENCY DETAILS:\n" +
                 (userName != null && !userName.isEmpty() ? "User's Name: " + userName + "\n" : "") +
