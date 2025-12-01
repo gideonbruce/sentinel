@@ -22,14 +22,9 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * AI-powered emergency message generator using Firebase AI with Gemini Developer API.
- * Uses GenerativeModelFutures to bridge the Kotlin SDK to Java.
- */
 public class AIMessageGenerator {
     private static final String TAG = "AIMessageGenerator";
 
-    // Use "gemini-2.5-flash" for speed (critical in emergencies)
     private static final String MODEL_NAME = "gemini-2.5-flash";
 
     private final ExecutorService executor;
@@ -161,10 +156,6 @@ public class AIMessageGenerator {
         );
     }
 
-    /**
-     * Build a detailed context string from available data.
-     * This method includes location details including geocoded address information.
-     */
     private String buildContextInfo(Location location, LocationGeocoder.LocationInfo locationInfo) {
         StringBuilder context = new StringBuilder();
         SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
@@ -179,13 +170,13 @@ public class AIMessageGenerator {
                     location.getLatitude(),
                     location.getLongitude()
             ));
-
+            //context.append(String.format(Locale.US, "Location Accuracy: %.1f meters\n", location.getAccuracy()));
             context.append(String.format(Locale.US,
                     "Location Accuracy: %.1f meters\n",
                     location.getAccuracy()
             ));
 
-            if (location.hasSpeed()) {
+            if (location.hasSpeed() && location.getSpeed() > 0) {
                 context.append(String.format(Locale.US,
                         "Speed: %.1f m/s\n",
                         location.getSpeed()
@@ -195,6 +186,10 @@ public class AIMessageGenerator {
             // Add geocoded location details if available
             if (locationInfo != null) {
                 context.append("--- LOCATION DETAILS ---\n");
+
+                if (locationInfo.getPremises() != null) {
+                    context.append("Building/Complex: ").append(locationInfo.getPremises()).append("\n");
+                }
 
                 if (locationInfo.getFeatureName() != null) {
                     context.append("Feature/Building: ").append(locationInfo.getFeatureName()).append("\n");
@@ -216,8 +211,8 @@ public class AIMessageGenerator {
                     context.append("City: ").append(locationInfo.getLocality()).append("\n");
                 }
 
-                if (locationInfo.getAdminArea() != null) {
-                    context.append("State/Province: ").append(locationInfo.getAdminArea()).append("\n");
+                if (locationInfo.getSubAdminArea() != null) {
+                    context.append("County/District: ").append(locationInfo.getSubAdminArea()).append("\n");
                 }
 
                 if (locationInfo.getPostalCode() != null) {
@@ -238,20 +233,17 @@ public class AIMessageGenerator {
         return context.toString();
     }
 
-    /**
-     * Build the final prompt for the Gemini model with clear instructions.
-     */
     private String buildPrompt(String emergencyType, String contextInfo, String userName, String customMessage) {
         // Using a more descriptive persona for better results
-        return "You are an AI assistant for an emergency alert app called Sentinel. Your task is to generate a single, concise SMS message (under 400 characters) to be sent to an emergency contact.\n\n" +
+        return "You are an AI assistant for an emergency alert app called Sentinel. Your task is to generate a single, concise SMS message (not less than 300 characters) to be sent to an emergency contact.\n\n" +
                 "Follow these rules strictly:\n" +
                 "1. The tone must be urgent and clear. 🚨\n" +
                 "2. Start with the user's name if available.\n" +
                 "3. State the emergency clearly.\n" +
-                "4. If detailed location information (address, street name, city) is provided, include the most relevant location details in a natural way.\n" +
+                "4. If detailed location information (address, street name, city) is provided, include all location details in a natural way.\n" +
                 "5. Do NOT include GPS coordinates - the app sends a map link separately.\n" +
-                "6. If the user provided a custom note, integrate its meaning naturally.\n" +
-                "7. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
+                //"6. If the user provided a custom note, integrate its meaning naturally.\n" +
+                "6. Output ONLY the raw text for the SMS message. No extra explanations, labels, or quotation marks.\n\n" +
                 "---\n" +
                 "EMERGENCY DETAILS:\n" +
                 (userName != null && !userName.isEmpty() ? "User's Name: " + userName + "\n" : "") +
