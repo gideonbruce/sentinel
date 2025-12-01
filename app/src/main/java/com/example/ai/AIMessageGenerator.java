@@ -22,14 +22,9 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * AI-powered emergency message generator using Firebase AI with Gemini Developer API.
- * Uses GenerativeModelFutures to bridge the Kotlin SDK to Java.
- */
 public class AIMessageGenerator {
     private static final String TAG = "AIMessageGenerator";
 
-    // Use "gemini-2.5-flash" for speed (critical in emergencies)
     private static final String MODEL_NAME = "gemini-2.5-flash";
 
     private final ExecutorService executor;
@@ -161,10 +156,6 @@ public class AIMessageGenerator {
         );
     }
 
-    /**
-     * Build a detailed context string from available data.
-     * This method includes location details including geocoded address information.
-     */
     private String buildContextInfo(Location location, LocationGeocoder.LocationInfo locationInfo) {
         StringBuilder context = new StringBuilder();
         SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
@@ -179,13 +170,13 @@ public class AIMessageGenerator {
                     location.getLatitude(),
                     location.getLongitude()
             ));
-
+            //context.append(String.format(Locale.US, "Location Accuracy: %.1f meters\n", location.getAccuracy()));
             context.append(String.format(Locale.US,
                     "Location Accuracy: %.1f meters\n",
                     location.getAccuracy()
             ));
 
-            if (location.hasSpeed()) {
+            if (location.hasSpeed() && location.getSpeed() > 0) {
                 context.append(String.format(Locale.US,
                         "Speed: %.1f m/s\n",
                         location.getSpeed()
@@ -195,6 +186,10 @@ public class AIMessageGenerator {
             // Add geocoded location details if available
             if (locationInfo != null) {
                 context.append("--- LOCATION DETAILS ---\n");
+
+                if (locationInfo.getPremises() != null) {
+                    context.append("Building/Complex: ").append(locationInfo.getPremises()).append("\n");
+                }
 
                 if (locationInfo.getFeatureName() != null) {
                     context.append("Feature/Building: ").append(locationInfo.getFeatureName()).append("\n");
@@ -216,8 +211,8 @@ public class AIMessageGenerator {
                     context.append("City: ").append(locationInfo.getLocality()).append("\n");
                 }
 
-                if (locationInfo.getAdminArea() != null) {
-                    context.append("State/Province: ").append(locationInfo.getAdminArea()).append("\n");
+                if (locationInfo.getSubAdminArea() != null) {
+                    context.append("County/District: ").append(locationInfo.getSubAdminArea()).append("\n");
                 }
 
                 if (locationInfo.getPostalCode() != null) {
@@ -237,7 +232,7 @@ public class AIMessageGenerator {
 
         return context.toString();
     }
-    
+
     private String buildPrompt(String emergencyType, String contextInfo, String userName, String customMessage) {
         // Using a more descriptive persona for better results
         return "You are an AI assistant for an emergency alert app called Sentinel. Your task is to generate a single, concise SMS message (not less than 300 characters) to be sent to an emergency contact.\n\n" +
