@@ -25,9 +25,7 @@ public class LocationGeocoder {
     private final ExecutorService executorService;
     private final Handler mainHandler;
 
-    /**
-     * Interface for receiving geocoding results
-     */
+
     public interface GeocoderCallback {
         void onLocationResolved(LocationInfo locationInfo);
         void onGeocoderError(String error);
@@ -49,12 +47,12 @@ public class LocationGeocoder {
         private final String premises;
         private final String thoroughfare;
         private final String subThoroughfare;
+        private final String subAdminArea;
 
         public LocationInfo(Address address) {
             this.latitude = address.getLatitude();
             this.longitude = address.getLongitude();
-            this.addressLine = address.getMaxAddressLineIndex() >= 0 ?
-                    address.getAddressLine(0) : null;
+            this.addressLine = address.getMaxAddressLineIndex() >= 0 ? address.getAddressLine(0) : null;
             this.featureName = address.getFeatureName();
             this.locality = address.getLocality();
             this.subLocality = address.getSubLocality();
@@ -64,6 +62,7 @@ public class LocationGeocoder {
             this.premises = address.getPremises();
             this.thoroughfare = address.getThoroughfare();
             this.subThoroughfare = address.getSubThoroughfare();
+            this.subAdminArea = address.getSubAdminArea();
         }
 
         // Getters
@@ -77,6 +76,7 @@ public class LocationGeocoder {
         public String getCountryName() { return countryName; }
         public String getPostalCode() { return postalCode; }
         public String getPremises() { return premises; }
+        public String getSubAdminArea() { return subAdminArea; }
         public String getThoroughfare() { return thoroughfare; }
         public String getSubThoroughfare() { return subThoroughfare; }
 
@@ -85,6 +85,20 @@ public class LocationGeocoder {
          */
         public String getShortDescription() {
             StringBuilder sb = new StringBuilder();
+
+            //trying specific point
+            if (premises != null) {
+                sb.append(premises);
+            } else if (featureName != null) {
+                sb.append(featureName);
+            }
+            if (thoroughfare != null) {
+                if (sb.length() > 0) sb.append(", ");
+                if (subThoroughfare != null) {
+                    sb.append(subThoroughfare).append(" ");
+                }
+                sb.append(thoroughfare);
+            }
 
             if (featureName != null && !featureName.matches(".*\\d+.*")) {
                 // Only use feature name if it's not just a street number
@@ -99,6 +113,14 @@ public class LocationGeocoder {
             if (locality != null) {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append(locality);
+            } else if (subLocality != null) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(subLocality);
+            }
+
+            if (sb.length() == 0 && subAdminArea != null) {
+                sb.append(subAdminArea);
+                if (adminArea != null) sb.append(", ").append(adminArea);
             }
 
             return sb.length() > 0 ? sb.toString() : "Unknown location";
@@ -108,7 +130,19 @@ public class LocationGeocoder {
          * Returns a full, detailed location description
          */
         public String getFullDescription() {
-            return addressLine != null ? addressLine : getShortDescription();
+            if (addressLine != null && !addressLine.isEmpty()) {
+                return addressLine;
+            }
+
+            StringBuilder sb = new StringBuilder(getShortDescription());
+
+            if (subAdminArea != null && !sb.toString().contains(subAdminArea)) {
+                sb.append(", ").append(subAdminArea);
+            }
+            if (adminArea != null && !sb.toString().contains(adminArea)) {
+                sb.append(", ").append(adminArea);
+            }
+            return sb.toString();
         }
 
         @Override
@@ -119,6 +153,7 @@ public class LocationGeocoder {
                     ", featureName='" + featureName + '\'' +
                     ", locality='" + locality + '\'' +
                     ", adminArea='" + adminArea + '\'' +
+                    ", county='" + subAdminArea + '\'' +
                     ", country='" + countryName + '\'' +
                     '}';
         }
