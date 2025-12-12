@@ -44,6 +44,8 @@ import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
 import com.example.ui.EmergencyAlertDialog;
+import com.example.ml.FallDetectionResult;
+import com.example.ml.FallDetectionService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -82,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvUserEmail;
     private ImageView ivUserProfile;
     private FirebaseAuth mAuth;
+    private FallDetectionService detectionService;
 
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
@@ -344,9 +347,12 @@ public class MainActivity extends AppCompatActivity {
             //TODO: open  about dialog
             Intent intent = new Intent(this, AboutActivity.class);
             startActivity(intent);
-        //} else if (id == R.id.nav_aiSettings){
+            //} else if (id == R.id.nav_aiSettings){
             //Intent intent = new Intent(this, AISettingsActivity.class);
             //startActivity(intent);
+        } else if (id == R.id.nav_fall_detection) {
+            Intent intent = new Intent(this, FallDetectionActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_sign_out) {
             signOut();
         }
