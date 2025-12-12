@@ -3,11 +3,11 @@ package com.example.ml;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.walkerfall.ml.FallDetectionModel;
-import com.example.walkerfall.ml.FallDetectionResult;
-import com.example.walkerfall.preprocessing.DataPreprocessor;
-import com.example.walkerfall.sensors.SensorDataCollector;
-import com.example.walkerfall.sensors.SensorWindow;
+import com.example.ml.FallDetectionModel;
+import com.example.ml.FallDetectionResult;
+import com.example.ml.DataPreprocessor;
+import com.example.ml.SensorDataCollector;
+import com.example.ml.SensorWindow;
 
 import java.io.IOException;
 
