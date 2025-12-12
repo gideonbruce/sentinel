@@ -10,6 +10,10 @@
             android:id="@+id/nav_settings"
             android:icon="@android:drawable/ic_menu_preferences"
             android:title="Settings" />
+        <item
+            android:id="@+id/nav_fall_detection"
+            android:icon="@drawable/ic_fall_detection"
+            android:title="Fall Detection" />
 
         <item
             android:id="@+id/nav_history"
