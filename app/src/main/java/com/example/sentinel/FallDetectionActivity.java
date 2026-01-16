@@ -2,6 +2,7 @@ package com.example.sentinel;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -15,15 +16,25 @@ import androidx.core.content.ContextCompat;
 import com.example.ml.FallDetectionModel;
 import com.example.ml.FallDetectionResult;
 import com.example.ml.FallDetectionService;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Dedicated screen for Fall Detection monitoring
+ * Dedicated screen for Fall Detection monitoring with real-time graph
  */
 public class FallDetectionActivity extends AppCompatActivity {
     private static final String TAG = "FallDetectionActivity";
     private static final int PERMISSION_REQUEST_CODE = 200;
+    private static final int MAX_DATA_POINTS = 50; // Show last 50 predictions
 
     private FallDetectionService detectionService;
 
@@ -36,6 +47,14 @@ public class FallDetectionActivity extends AppCompatActivity {
     private TextView tvFallProb;
     private TextView tvStepProb;
     private TextView tvMotionProb;
+    private LineChart lineChart;
+
+    // Graph data
+    private List<Entry> idleEntries = new ArrayList<>();
+    private List<Entry> fallEntries = new ArrayList<>();
+    private List<Entry> stepEntries = new ArrayList<>();
+    private List<Entry> motionEntries = new ArrayList<>();
+    private int dataPointCounter = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +68,7 @@ public class FallDetectionActivity extends AppCompatActivity {
         }
 
         initializeViews();
+        initializeChart();
 
         if (!checkSensorPermissions()) {
             requestSensorPermissions();
@@ -68,8 +88,49 @@ public class FallDetectionActivity extends AppCompatActivity {
         tvFallProb = findViewById(R.id.tv_fall_prob);
         tvStepProb = findViewById(R.id.tv_step_prob);
         tvMotionProb = findViewById(R.id.tv_motion_prob);
+        lineChart = findViewById(R.id.chart_activity);
 
         updateUI();
+    }
+
+    private void initializeChart() {
+        // Configure chart appearance
+        lineChart.getDescription().setEnabled(false);
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+        lineChart.setDrawGridBackground(false);
+        lineChart.setBackgroundColor(Color.WHITE);
+
+        // Configure X axis
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(true);
+        xAxis.setGranularity(1f);
+        xAxis.setLabelCount(5);
+
+        // Configure left Y axis (probabilities)
+        YAxis leftAxis = lineChart.getAxisLeft();
+        leftAxis.setAxisMinimum(0f);
+        leftAxis.setAxisMaximum(100f);
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGranularity(20f);
+
+        // Disable right Y axis
+        lineChart.getAxisRight().setEnabled(false);
+
+        // Configure legend
+        Legend legend = lineChart.getLegend();
+        legend.setForm(Legend.LegendForm.LINE);
+        legend.setTextSize(10f);
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        legend.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        legend.setDrawInside(false);
+
+        // Initialize with empty data
+        updateChartData();
     }
 
     private void initializeService() {
@@ -98,6 +159,8 @@ public class FallDetectionActivity extends AppCompatActivity {
             detectionService.stop();
             Toast.makeText(this, "Detection stopped", Toast.LENGTH_SHORT).show();
         } else {
+            // Clear previous data when starting fresh
+            clearChartData();
             detectionService.start();
             Toast.makeText(this, "Detection started", Toast.LENGTH_SHORT).show();
         }
@@ -127,6 +190,15 @@ public class FallDetectionActivity extends AppCompatActivity {
         tvMotionProb.setText("Motion: 0%");
     }
 
+    private void clearChartData() {
+        idleEntries.clear();
+        fallEntries.clear();
+        stepEntries.clear();
+        motionEntries.clear();
+        dataPointCounter = 0;
+        updateChartData();
+    }
+
     private void onPrediction(FallDetectionResult result) {
         runOnUiThread(() -> {
             tvPrediction.setText("Activity: " + capitalizeFirst(result.getClassName()));
@@ -139,7 +211,79 @@ public class FallDetectionActivity extends AppCompatActivity {
             tvMotionProb.setText(String.format("Motion: %.1f%%", probs[3] * 100));
 
             highlightPrediction(result.getClassIndex());
+
+            // Update graph with new data
+            updateGraphData(probs);
         });
+    }
+
+    private void updateGraphData(float[] probs) {
+        // Add new data points
+        idleEntries.add(new Entry(dataPointCounter, probs[0] * 100));
+        fallEntries.add(new Entry(dataPointCounter, probs[1] * 100));
+        stepEntries.add(new Entry(dataPointCounter, probs[2] * 100));
+        motionEntries.add(new Entry(dataPointCounter, probs[3] * 100));
+
+        // Remove old data points if exceeding max
+        if (idleEntries.size() > MAX_DATA_POINTS) {
+            idleEntries.remove(0);
+            fallEntries.remove(0);
+            stepEntries.remove(0);
+            motionEntries.remove(0);
+
+            // Shift all x values back
+            shiftEntriesLeft(idleEntries);
+            shiftEntriesLeft(fallEntries);
+            shiftEntriesLeft(stepEntries);
+            shiftEntriesLeft(motionEntries);
+            dataPointCounter--;
+        }
+
+        dataPointCounter++;
+        updateChartData();
+    }
+
+    private void shiftEntriesLeft(List<Entry> entries) {
+        for (int i = 0; i < entries.size(); i++) {
+            Entry entry = entries.get(i);
+            entries.set(i, new Entry(entry.getX() - 1, entry.getY()));
+        }
+    }
+
+    private void updateChartData() {
+        // Create datasets
+        LineDataSet idleDataSet = createDataSet(new ArrayList<>(idleEntries), "Idle",
+                Color.rgb(76, 175, 80)); // Green
+        LineDataSet fallDataSet = createDataSet(new ArrayList<>(fallEntries), "Fall",
+                Color.rgb(244, 67, 54)); // Red
+        LineDataSet stepDataSet = createDataSet(new ArrayList<>(stepEntries), "Step",
+                Color.rgb(33, 150, 243)); // Blue
+        LineDataSet motionDataSet = createDataSet(new ArrayList<>(motionEntries), "Motion",
+                Color.rgb(255, 152, 0)); // Orange
+
+        // Combine into LineData
+        LineData lineData = new LineData(idleDataSet, fallDataSet, stepDataSet, motionDataSet);
+        lineChart.setData(lineData);
+
+        // Refresh chart
+        lineChart.notifyDataSetChanged();
+        lineChart.invalidate();
+
+        // Auto-scroll to show latest data
+        if (dataPointCounter > 10) {
+            lineChart.moveViewToX(dataPointCounter - 10);
+        }
+    }
+
+    private LineDataSet createDataSet(List<Entry> entries, String label, int color) {
+        LineDataSet dataSet = new LineDataSet(entries, label);
+        dataSet.setColor(color);
+        dataSet.setLineWidth(2f);
+        dataSet.setDrawCircles(false);
+        dataSet.setDrawValues(false);
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setCubicIntensity(0.2f);
+        return dataSet;
     }
 
     private void highlightPrediction(int classIndex) {
