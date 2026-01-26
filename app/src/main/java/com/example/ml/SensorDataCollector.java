@@ -21,7 +21,7 @@ public class SensorDataCollector implements SensorEventListener {
     private final Sensor gyroscope;
 
     // Data collection parameters
-    private static final int WINDOW_SIZE = 160; // Must match model's TIMESTEPS
+    private static final int WINDOW_SIZE = 160;
     private static final int SAMPLING_RATE_US = 20000; // 50Hz (20ms intervals)
 
     // Data buffers
@@ -42,10 +42,22 @@ public class SensorDataCollector implements SensorEventListener {
      * Constructor
      */
     public SensorDataCollector(Context context) {
+        if (context == null) {
+            Log.e(TAG, "Context is null!");
+            return;
+        }
+
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        if (sensorManager == null) {
+            Log.e(TAG, "SensorManager is null");
+        }
+
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
 
+        Log.d(TAG, "Accelerometer: " + (accelerometer != null));
+        Log.d(TAG, "Gyroscope: " + (gyroscope != null));
+        
         if (accelerometer == null || gyroscope == null) {
             Log.e(TAG, "Required sensors not available!");
         }
