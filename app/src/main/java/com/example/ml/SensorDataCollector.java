@@ -75,7 +75,7 @@ public class SensorDataCollector implements SensorEventListener {
     }
 
     /**
-     * Start collecting sensor data
+     * Starts collecting sensor data
      */
     public void startCollecting() {
         if (accelerometer == null) {
@@ -88,6 +88,7 @@ public class SensorDataCollector implements SensorEventListener {
         gyroDataBuffer.clear();
         lastAccData = null;
         lastAccTimestamp = 0;
+        smoothedGyro = new float[]{0.0f, 0.0f, 0.0f};
 
         sensorManager.registerListener(this, accelerometer, SAMPLING_RATE_US);
         if (hasGyroscope) {
@@ -106,6 +107,7 @@ public class SensorDataCollector implements SensorEventListener {
         sensorManager.unregisterListener(this);
         lastAccData = null;
         lastAccTimestamp = 0;
+        smoothedGyro = new float[]{0.0f, 0.0f, 0.0f};
         Log.i(TAG, "Stopped collecting sensor data");
     }
 
@@ -122,6 +124,13 @@ public class SensorDataCollector implements SensorEventListener {
                 if (lastAccData != null && lastAccTimestamp > 0) {
                     float dt = (event.timestamp - lastAccTimestamp) / 1_000_000_000.0f; // Convert to seconds
                     float[] estimatedGyro = estimateGyroFromAccel(lastAccData, currentAcc, dt);
+
+                    //applying smoothing filters
+                    smoothedGyro[0] = GYRO_ALPHA * estimatedGyro[0] + (1 - GYRO_ALPHA) * smoothedGyro[0];
+                    smoothedGyro[1] = GYRO_ALPHA * estimatedGyro[1] + (1 - GYRO_ALPHA) * smoothedGyro[1];
+                    smoothedGyro[2] = GYRO_ALPHA * estimatedGyro[2] + (1 - GYRO_ALPHA) * smoothedGyro[2];
+
+                    //Apply scaling factor
                     gyroDataBuffer.add(estimatedGyro);
                 } else {
                     // First sample - add zero gyro data to keep buffers in sync
