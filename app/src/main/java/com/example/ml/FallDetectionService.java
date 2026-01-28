@@ -10,6 +10,7 @@ import com.example.ml.SensorDataCollector;
 import com.example.ml.SensorWindow;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Main service that coordinates fall detection
@@ -55,6 +56,13 @@ public class FallDetectionService {
         sensorCollector = new SensorDataCollector(context);
         sensorCollector.setOnWindowCompleteListener(this::onSensorWindowComplete);
 
+        if (!sensorCollector.hasGyroscope()) {
+            fallConfidenceThreshold = 0.85f; // Higher threshold for estimated gyro
+            Log.w(TAG, "No hardware gyroscope - using higher confidence threshold: " + fallConfidenceThreshold);
+        } else {
+            fallConfidenceThreshold = 0.7f;
+        }
+
         Log.i(TAG, "Service initialized successfully");
     }
 
@@ -92,6 +100,21 @@ public class FallDetectionService {
         // Run inference
         FallDetectionResult result = model.predict(preprocessedInput);
 
+        //Additional validation for devices without gyroscope
+        if (!sensorCollector.hasGyroscope()) {
+            boolean isLikelyFall = validateFallWithAccelerometer(window);
+
+            //only trigger if both ML model and heiristics agree
+            if (result.isFall() && !isLikelyFall) {
+                Log.d(TAG, "ML detected fall but heuristics disagree - likely false positive");
+                result = new FallDetectionResult(
+                        0,
+                        "Not a Fall (Heuristic Rejected)",
+                        result.getConfidence() * 0.3f,
+                        new float[]{1.0f, 0.0f}
+                );
+            }
+        }
         Log.d(TAG, "Prediction: " + result.toString());
 
         // Notify prediction listener
@@ -108,6 +131,33 @@ public class FallDetectionService {
             }
         }
     }
+
+    /**
+     * Validate fall using accelerometer-based heuristics
+     * Returns true if acceleration pattern matches a fall
+     */
+    private boolean validateFallWithAccelerometer(SensorWindow window) {
+        List<float[]> accData = window.getAccelerometerData();
+
+        // Check for high impact (sudden deceleration)
+        float maxMagnitude = 0;
+        float minMagnitude = Float.MAX_VALUE;
+
+        for (float[] acc : accData) {
+            float magnitude = (float) Math.sqrt(acc[0]*acc[0] + acc[1]*acc[1] + acc[2]*acc[2]);
+            maxMagnitude = Math.max(maxMagnitude, magnitude);
+            minMagnitude = Math.min(minMagnitude, magnitude);
+        }
+
+        // Fall characteristics:
+        // 1. Free fall period (low acceleration, < 5 m/s²)
+        // 2. Impact (high acceleration, > 20 m/s²)
+        boolean hasFreeFall = minMagnitude < 5.0f;
+        boolean hasImpact = maxMagnitude > 20.0f;
+
+        return hasFreeFall && hasImpact;
+    }
+
 
     /**
      * Clean up resources
