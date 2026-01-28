@@ -177,6 +177,7 @@ public class SensorDataCollector implements SensorEventListener {
         for (int i = 0; i < 3; i++) {
             gravity[i] = gravityAlpha * prevAcc[i] + (1 - gravityAlpha) * currentAcc[i];
         }
+        //normalizing both vectors
         float[] normPrevAcc = normalize(prevAcc);
         float[] normCurrentAcc = normalize(currentAcc);
 
