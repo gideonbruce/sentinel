@@ -39,6 +39,12 @@ public class SensorDataCollector implements SensorEventListener {
     private float[] lastAccData = null;
     private long lastAccTimestamp = 0;
 
+    private static final float GYRO_ALPHA = 0.3f;
+    private float[] smoothedGyro = new float[]{0.0f, 0.0f, 0.0f};
+
+    // scaling factor to match gyroscope magnitude
+    private static final float GYRO_SCALE_FACTOR = 0.5f;
+
     public interface OnWindowCompleteListener {
         void onWindowComplete(SensorWindow window);
     }
