@@ -166,12 +166,17 @@ public class SensorDataCollector implements SensorEventListener {
      * Estimates angular velocity from accelerometer data using actual time delta
      */
     private float[] estimateGyroFromAccel(float[] prevAcc, float[] currentAcc, float dt) {
-        // Avoid division by zero
+        // Avoiding division by zero
         if (dt <= 0.0001f) {
             return new float[]{0.0f, 0.0f, 0.0f};
         }
 
-        // Normalize both vectors
+        // Apply low-pass filter to acceleration to isolate gravity component
+        float[] gravity = new float[3];
+        float gravityAlpha = 0.8f;
+        for (int i = 0; i < 3; i++) {
+            gravity[i] = gravityAlpha * prevAcc[i] + (1 - gravityAlpha) * currentAcc[i];
+        }
         float[] normPrevAcc = normalize(prevAcc);
         float[] normCurrentAcc = normalize(currentAcc);
 
