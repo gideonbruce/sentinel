@@ -131,7 +131,19 @@ public class SensorDataCollector implements SensorEventListener {
                     smoothedGyro[2] = GYRO_ALPHA * estimatedGyro[2] + (1 - GYRO_ALPHA) * smoothedGyro[2];
 
                     //Apply scaling factor
-                    gyroDataBuffer.add(estimatedGyro);
+                    float[] scaledGyro = new float[] {
+                            smoothedGyro[0] * GYRO_SCALE_FACTOR,
+                            smoothedGyro[1] * GYRO_SCALE_FACTOR,
+                            smoothedGyro[2] * GYRO_SCALE_FACTOR
+                    };
+                    // gyroDataBuffer.add(estimatedGyro);
+                    gyroDataBuffer.add(scaledGyro);
+
+                    //log for debugging
+                    if (gyroDataBuffer.size() % 50 == 0) {
+                        Log.d(TAG, String.format("Estimated gyro: [%.2f, %.2f, %.2f]",
+                                scaledGyro[0], scaledGyro[1], scaledGyro[2]));
+                    }
                 } else {
                     // First sample - add zero gyro data to keep buffers in sync
                     gyroDataBuffer.add(new float[]{0.0f, 0.0f, 0.0f});
