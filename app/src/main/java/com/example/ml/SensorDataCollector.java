@@ -33,6 +33,9 @@ public class SensorDataCollector implements SensorEventListener {
 
     // State
     private boolean isCollecting = false;
+    private boolean hasGyroscope = false;
+    private float[] lastAccData = null;
+
 
     public interface OnWindowCompleteListener {
         void onWindowComplete(SensorWindow window);
@@ -54,11 +57,13 @@ public class SensorDataCollector implements SensorEventListener {
 
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        hasGyroscope = (gyroscope != null);
+
 
         Log.d(TAG, "Accelerometer: " + (accelerometer != null));
-        Log.d(TAG, "Gyroscope: " + (gyroscope != null));
+        Log.d(TAG, "Gyroscope: " + hasGyroscope);
         
-        if (accelerometer == null || gyroscope == null) {
+        if (accelerometer == null) {
             Log.e(TAG, "Required sensors not available!");
         }
     }
@@ -67,7 +72,7 @@ public class SensorDataCollector implements SensorEventListener {
      * Start collecting sensor data
      */
     public void startCollecting() {
-        if (accelerometer == null || gyroscope == null) {
+        if (accelerometer == null) {
             Log.e(TAG, "Cannot start - sensors not available");
             return;
         }
@@ -75,9 +80,12 @@ public class SensorDataCollector implements SensorEventListener {
         isCollecting = true;
         accDataBuffer.clear();
         gyroDataBuffer.clear();
+        lastAccData = null;
 
         sensorManager.registerListener(this, accelerometer, SAMPLING_RATE_US);
-        sensorManager.registerListener(this, gyroscope, SAMPLING_RATE_US);
+        if (hasGyroscope) {
+            sensorManager.registerListener(this, gyroscope, SAMPLING_RATE_US);
+        }
 
         Log.i(TAG, "Started collecting sensor data");
     }
@@ -96,9 +104,18 @@ public class SensorDataCollector implements SensorEventListener {
         if (!isCollecting) return;
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            accDataBuffer.add(new float[]{event.values[0], event.values[1], event.values[2]});
-        } else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
-            gyroDataBuffer.add(new float[]{event.values[0], event.values[1], event.values[2]});
+            float[] currentAcc = event.values.clone();
+            accDataBuffer.add(currentAcc);
+
+            if (!hasGyroscope) {
+                if (lastAccData != null) {
+                    float[] estimatedGyro = estimateGyroFromAccel(lastAccData, currentAcc);
+                    gyroDataBuffer.add(estimatedGyro);
+                }
+                lastAccData = currentAcc;
+            }
+        } else if (event.sensor.getType() == Sensor.TYPE_GYROSCOPE && hasGyroscope) {
+            gyroDataBuffer.add(event.values.clone());
         }
 
         // Check if we have enough data for a window
@@ -108,9 +125,64 @@ public class SensorDataCollector implements SensorEventListener {
     }
 
     /**
+     * Estimates angular velocity from accelerometer data.
+     */
+    private float[] estimateGyroFromAccel(float[] prevAcc, float[] currentAcc) {
+        // Normalize both vectors
+        float[] normPrevAcc = normalize(prevAcc);
+        float[] normCurrentAcc = normalize(currentAcc);
+
+        // Cross product
+        float[] crossProd = new float[3];
+        crossProd[0] = normPrevAcc[1] * normCurrentAcc[2] - normPrevAcc[2] * normCurrentAcc[1];
+        crossProd[1] = normPrevAcc[2] * normCurrentAcc[0] - normPrevAcc[0] * normCurrentAcc[2];
+        crossProd[2] = normPrevAcc[0] * normCurrentAcc[1] - normPrevAcc[1] * normCurrentAcc[0];
+
+        // The magnitude of the cross product is sin(angle)
+        float sinAngle = magnitude(crossProd);
+
+        // Get the angle
+        float angle = (float) Math.asin(sinAngle);
+
+        // dt in seconds
+        float dt = SAMPLING_RATE_US / 1_000_000.0f;
+
+        // Angular velocity = angle / dt
+        float angularVelocity = angle / dt;
+
+        // Normalize the cross product to get the axis
+        if (sinAngle > 0) {
+            crossProd[0] /= sinAngle;
+            crossProd[1] /= sinAngle;
+            crossProd[2] /= sinAngle;
+        }
+
+        // The estimated gyro data is axis * angularVelocity
+        crossProd[0] *= angularVelocity;
+        crossProd[1] *= angularVelocity;
+        crossProd[2] *= angularVelocity;
+
+        return crossProd;
+    }
+
+    private float[] normalize(float[] v) {
+        float mag = magnitude(v);
+        if (mag == 0) return new float[3];
+        return new float[]{v[0] / mag, v[1] / mag, v[2] / mag};
+    }
+
+    private float magnitude(float[] v) {
+        return (float) Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    }
+
+
+    /**
      * Process a complete window of data
      */
     private void processWindow() {
+        if (accDataBuffer.size() < WINDOW_SIZE || gyroDataBuffer.size() < WINDOW_SIZE) {
+            return;
+        }
         // Extract window data
         List<float[]> accWindow = new ArrayList<>(accDataBuffer.subList(0, WINDOW_SIZE));
         List<float[]> gyroWindow = new ArrayList<>(gyroDataBuffer.subList(0, WINDOW_SIZE));
