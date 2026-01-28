@@ -77,17 +77,17 @@ android {
 
 dependencies {
     kapt ("androidx.room:room-compiler:2.8.4")
-    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.8.4")
     annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
     implementation(libs.androidx.swiperefreshlayout)
-    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
     implementation("com.github.bumptech.glide:glide:5.0.5")
     //implementation("com.google.firebase:firebase-vertexai:16.5.0")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-database")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
-    implementation("com.google.android.material:material:1.11.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.gms:play-services-auth:21.5.0")
+    implementation("com.google.android.material:material:1.13.0")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-ai")
     implementation("com.google.guava:guava:33.5.0-android")
@@ -125,17 +125,17 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test:rules:1.7.0")
     androidTestImplementation("androidx.test:core:1.7.0")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.2.0")
-    implementation("org.tensorflow:tensorflow-lite:2.13.0")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    implementation("org.tensorflow:tensorflow-lite:2.17.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
     testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     //test orchestrator
     androidTestUtil("androidx.test:orchestrator:1.6.1")
 
     //mockito for mocking
-    androidTestImplementation("org.mockito:mockito-android:5.20.0")
+    androidTestImplementation("org.mockito:mockito-android:5.21.0")
 
     //hamcrest matchers
     //androidTestImplementation("org.hamcrest:hamcrest:3.0")
