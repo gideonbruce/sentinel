@@ -16,9 +16,9 @@ import java.util.List;
 public class SensorDataCollector implements SensorEventListener {
     private static final String TAG = "SensorDataCollector";
 
-    private final SensorManager sensorManager;
-    private final Sensor accelerometer;
-    private final Sensor gyroscope;
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private Sensor gyroscope;
 
     // Data collection parameters
     private static final int WINDOW_SIZE = 160;
@@ -44,13 +44,17 @@ public class SensorDataCollector implements SensorEventListener {
     public SensorDataCollector(Context context) {
         if (context == null) {
             Log.e(TAG, "Context is null!");
-            return;
+            throw new IllegalArgumentException("Context cannot be null");
         }
 
         sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager == null) {
             Log.e(TAG, "SensorManager is null");
+            throw new IllegalStateException("SensorManager not available");
         }
+        List<Sensor> allSensors = sensorManager.getSensorList(Sensor.TYPE_ALL);
+        Log.d(TAG, "Total sensors available: " + allSensors.size());
+        Log.d(TAG, "Sensors: " + allSensors);
 
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
@@ -60,6 +64,7 @@ public class SensorDataCollector implements SensorEventListener {
         
         if (accelerometer == null || gyroscope == null) {
             Log.e(TAG, "Required sensors not available!");
+            throw new IllegalStateException("Required sensors not available on this device");
         }
     }
 
