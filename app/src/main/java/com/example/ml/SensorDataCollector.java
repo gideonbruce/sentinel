@@ -206,7 +206,7 @@ public class SensorDataCollector implements SensorEventListener {
 
         // Angular velocity = angle / time
         float angularSpeed = angle / dt;
-        
+
         // clamping unrealistic angular velocities    (rad/s)
         float maxAngularSpeed = 10.0f;   //  ~573 degrees/sec
         if (Math.abs(angularSpeed) > maxAngularSpeed) {
@@ -267,7 +267,6 @@ public class SensorDataCollector implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Not used
     }
 
     public void setOnWindowCompleteListener(OnWindowCompleteListener listener) {
