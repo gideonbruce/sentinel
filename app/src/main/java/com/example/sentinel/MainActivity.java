@@ -94,7 +94,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -550,6 +549,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // checking if atleast one method is enabled
+        boolean isFallDetectionEnabled = getSharedPreferences("sentinel_prefs", MODE_PRIVATE).getBoolean("fall_detection_enabled", false);
+
         if (!isShakeDetectionEnabled() && !isVolumeButtonsEnabled()) {
             Toast.makeText(this, "Please enable atleast one gesture method in settings",
                     Toast.LENGTH_LONG).show();
@@ -586,6 +587,8 @@ public class MainActivity extends AppCompatActivity {
             methods = "Shake & Volume gestures started";
         } else if (isShakeDetectionEnabled()) {
             methods = "Shake detection started";
+        } else if (isFallDetectionEnabled) {
+            
         } else {
             methods = "Volume gesture started";
         }
