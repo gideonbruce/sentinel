@@ -113,4 +113,8 @@
     <string name="preparing_intelligent_emergency_message">Preparing intelligent emergency message...</string>
     <string name="send_emergency_alert_now">Send emergency alert now?</string>
     <string name="widget_description">Quick access to emergency protection</string>
+    <string name="use_ai_generated_messages">Use AI-Generated Messages</string>
+    <string name="generate_intelligent_emergency_messages">Generate intelligent emergency messages</string>
+    <string name="automatically_trigger_alert_if_a_fall_is_detected">Automatically trigger alert if a fall is detected</string>
+    <string name="fall_detection">Fall Detection</string>
 </resources>
