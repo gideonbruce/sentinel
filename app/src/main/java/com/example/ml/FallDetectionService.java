@@ -19,11 +19,7 @@ public class FallDetectionService {
     // Thresholds
     private float fallConfidenceThreshold = 0.7f; // 70% confidence
 
-    public interface onFallDetectedCallback {
-        void onFallDetected(FallDetectionResult result);
-    }
-
-    private onFallDetectedCallback fallDetectedCallback;
+    private OnFallDetectedCallback fallDetectedCallback;
 
     public interface OnFallDetectedCallback {
         void onFallDetected(FallDetectionResult result);
