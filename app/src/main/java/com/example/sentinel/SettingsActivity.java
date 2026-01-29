@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
@@ -168,6 +169,27 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(android.text.Editable s) {}
+        });
+    }
+
+    private void setupFallDetectionToggle() {
+        SwitchCompat fallDetectionSwitch = findViewById(R.id.switch_fall_detection);
+        SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+
+        //loading current states
+        boolean isEnabled = prefs.getBoolean("fall_detection_enabled", false);
+        fallDetectionSwitch.setChecked(isEnabled);
+
+        //handling toggle
+        fallDetectionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
+
+            //notifying service of settings change
+            Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+            sendBroadcast(intent);
+            Toast.makeText(this,
+                    isChecked ? "Fall detection enabled" : "Fall detection disabled",
+                    Toast.LENGTH_SHORT).show();
         });
     }
 
