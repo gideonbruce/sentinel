@@ -582,16 +582,23 @@ public class MainActivity extends AppCompatActivity {
         isServiceRunning = true;
 
         // showing active gestures
-        String methods = "";
-        if (isShakeDetectionEnabled() && isVolumeButtonsEnabled()) {
-            methods = "Shake & Volume gestures started";
-        } else if (isShakeDetectionEnabled()) {
-            methods = "Shake detection started";
-        } else if (isFallDetectionEnabled) {
-            
-        } else {
-            methods = "Volume gesture started";
+        StringBuilder methods = new StringBuilder();
+        int count = 0;
+        if (isShakeDetectionEnabled()) {
+            methods.append("Shake");
+            count++;
         }
+        if (isVolumeButtonsEnabled()) {
+            if (count > 0) methods.append(" & ");
+            methods.append("Volume gestures");
+            count++;
+        }
+        if (isFallDetectionEnabled) {
+            if (count > 0) methods.append(" & ");
+            methods.append("Fall detection");
+            count++;
+        }
+        methods.append(" started");
         Toast.makeText(this, methods, Toast.LENGTH_SHORT).show();
         updateUI();
     }
