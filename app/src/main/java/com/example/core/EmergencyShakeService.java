@@ -216,6 +216,29 @@ public class EmergencyShakeService extends Service {
             }
         };
 
+        settingsChangedReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
+                    if (shakeDetector != null) {
+                        shakeDetector.setSensitivity(getShakeSensitivityThreshold());
+                    }
+                    boolean fallDetectionEnabled = prefs.getBoolean("fall_detection_enabled", false);
+                    if (fallDetectionEnabled && !isFallDetectionEnabled) {
+                        initializeFallDetection();
+                    } else if (!fallDetectionEnabled && isFallDetectionEnabled) {
+                        if (fallDetectionService != null) {
+                            fallDetectionService.stop();
+                            fallDetectionService.cleanup();
+                            fallDetectionService = null;
+                        }
+                        isFallDetectionEnabled = false;
+                    }
+                    Log.d("EmergencyService", "Settings updated - shake sensitivity: " + getShakeSensitivityThreshold() + ", fall detection: " + isFallDetectionEnabled);
+                }
+            }
+        }
+
         IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
