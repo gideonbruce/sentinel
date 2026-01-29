@@ -2,19 +2,10 @@ package com.example.ml;
 
 import android.content.Context;
 import android.util.Log;
-
-import com.example.ml.FallDetectionModel;
-import com.example.ml.FallDetectionResult;
-import com.example.ml.DataPreprocessor;
-import com.example.ml.SensorDataCollector;
-import com.example.ml.SensorWindow;
-
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Main service that coordinates fall detection
- */
+
 public class FallDetectionService {
     private static final String TAG = "FallDetectionService";
 
@@ -27,6 +18,12 @@ public class FallDetectionService {
 
     // Thresholds
     private float fallConfidenceThreshold = 0.7f; // 70% confidence
+
+    public interface onFallDetectedCallback {
+        void onFallDetected(FallDetectionResult result);
+    }
+
+    private onFallDetectedCallback fallDetectedCallback;
 
     public interface OnFallDetectedListener {
         void onFallDetected(FallDetectionResult result);
@@ -87,24 +84,18 @@ public class FallDetectionService {
         Log.i(TAG, "Fall detection stopped");
     }
 
-    /**
-     * Process a complete sensor window
-     */
     private void onSensorWindowComplete(SensorWindow window) {
-        // Convert to model input format
         float[][][] rawInput = window.toModelInput();
-
-        // Preprocess (standardize)
         float[][][] preprocessedInput = DataPreprocessor.standardize(rawInput);
 
-        // Run inference
+        //running inference
         FallDetectionResult result = model.predict(preprocessedInput);
 
         //Additional validation for devices without gyroscope
         if (!sensorCollector.hasGyroscope()) {
             boolean isLikelyFall = validateFallWithAccelerometer(window);
 
-            //only trigger if both ML model and heiristics agree
+            //only triggers if both ML model and heiristics agree
             if (result.isFall() && !isLikelyFall) {
                 Log.d(TAG, "ML detected fall but heuristics disagree - likely false positive");
                 result = new FallDetectionResult(
@@ -117,7 +108,6 @@ public class FallDetectionService {
         }
         Log.d(TAG, "Prediction: " + result.toString());
 
-        // Notify prediction listener
         if (predictionListener != null) {
             predictionListener.onPrediction(result);
         }
@@ -128,6 +118,9 @@ public class FallDetectionService {
 
             if (fallDetectedListener != null) {
                 fallDetectedListener.onFallDetected(result);
+            }
+            if (fallDetectedCallback != null) {
+                fallDetectedCallback.onFallDetected(result);
             }
         }
     }
