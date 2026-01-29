@@ -38,6 +38,7 @@ import androidx.core.app.ActivityCompat;
 import com.example.data.AlertEntity;
 import com.example.data.AlertRepository;
 import com.example.data.EmergencyContactManager;
+import com.example.ml.FallDetectionService;
 import com.example.sentinel.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -84,6 +85,9 @@ public class EmergencyShakeService extends Service {
     private Runnable sensorRestartRunnable;
     private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
 
+    private FallDetectionService fallDetectionService;
+    private boolean isFallDetectionEnabled = false;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -129,6 +133,7 @@ public class EmergencyShakeService extends Service {
 
         // Initialize volume gesture detection
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
+            initializeFallDetection();
             @Override
             public void onSilentEmergency() {
                 showEmergencyAlertDialog("SILENT EMERGENCY");
@@ -218,6 +223,27 @@ public class EmergencyShakeService extends Service {
             registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
         }
     }
+
+    private void initializeFallDetection() {
+        isFallDetectionEnabled = prefs.getBoolean("fall_detection_enabled", false);
+        if (isFallDetectionEnabled) {
+            try {
+                fallDetectionService = new FallDetectionService(this);
+                fallDetectionService.initialize();
+                fallDetectionService.setOnFallDetectedCallback(result -> {
+                    log.d("EmergencyService", "Fall detected by ML model   -   confidence: " +
+                            (result.getConfidence() * 100) + "%");
+                    showEmergencyAlertDialog("FALL DETECTED");
+                });
+                fallDetectionService.start();
+                Log.i("EmergencyService", "Fall detection initialized amd started");
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Failed to initialize fall detection", e);
+                isFallDetectionEnabled = false;
+            }
+        }
+    }
+
     private void reregisterSensor() {
         if (sensorManager != null && accelerometer != null && shakeDetector != null && isShakeDetectionEnabled()) {
             sensorManager.unregisterListener(shakeDetector);
@@ -611,6 +637,11 @@ public class EmergencyShakeService extends Service {
             } catch (Exception e) {
                 Log.e("EmergencyService", "Error unregistering settings receiver", e);
             }
+        }
+
+        if (fallDetectionService != null) {
+            fallDetectionService.cleanup();
+            fallDetectionService = null;
         }
 
         if (sensorRestartHandler != null && sensorRestartRunnable != null) {
