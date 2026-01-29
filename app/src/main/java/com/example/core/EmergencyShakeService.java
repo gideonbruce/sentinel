@@ -133,14 +133,12 @@ public class EmergencyShakeService extends Service {
 
         // Initialize volume gesture detection
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
-            initializeFallDetection();
             @Override
             public void onSilentEmergency() {
                 showEmergencyAlertDialog("SILENT EMERGENCY");
             }
             @Override
             public void onPoliceNeeded() {
-
                 showEmergencyAlertDialog("POLICE NEEDED");
             }
             @Override
@@ -152,6 +150,8 @@ public class EmergencyShakeService extends Service {
                 showEmergencyAlertDialog("PANIC ALERT");
             }
         });
+
+        initializeFallDetection();
 
         if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
@@ -254,12 +254,12 @@ public class EmergencyShakeService extends Service {
                 fallDetectionService = new FallDetectionService(this);
                 fallDetectionService.initialize();
                 fallDetectionService.setOnFallDetectedCallback(result -> {
-                    log.d("EmergencyService", "Fall detected by ML model   -   confidence: " +
+                    Log.d("EmergencyService", "Fall detected by ML model   -   confidence: " +
                             (result.getConfidence() * 100) + "%");
                     showEmergencyAlertDialog("FALL DETECTED");
                 });
                 fallDetectionService.start();
-                Log.i("EmergencyService", "Fall detection initialized amd started");
+                Log.i("EmergencyService", "Fall detection initialized and started");
             } catch (Exception e) {
                 Log.e("EmergencyService", "Failed to initialize fall detection", e);
                 isFallDetectionEnabled = false;

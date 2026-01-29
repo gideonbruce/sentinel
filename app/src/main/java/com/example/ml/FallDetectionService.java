@@ -25,8 +25,15 @@ public class FallDetectionService {
 
     private onFallDetectedCallback fallDetectedCallback;
 
+    public interface OnFallDetectedCallback {
+        void onFallDetected(FallDetectionResult result);
+    }
     public interface OnFallDetectedListener {
         void onFallDetected(FallDetectionResult result);
+    }
+
+    public void setOnFallDetectedCallback(OnFallDetectedCallback callback) {
+        this.fallDetectedCallback = callback;
     }
 
     public interface OnPredictionListener {
