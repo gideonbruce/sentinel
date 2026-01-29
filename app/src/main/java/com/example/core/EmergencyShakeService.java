@@ -66,8 +66,6 @@ public class EmergencyShakeService extends Service {
     private BroadcastReceiver volumeButtonReceiver;
     private BroadcastReceiver smsConfirmReceiver;
     private BroadcastReceiver screenReceiver;
-    private BroadcastReceiver smsSentReceiver;
-    private BroadcastReceiver smsDeliveredReceiver;
 
     private VolumeButtonGestureDetector volumeGestureDetector;
     private AlertRepository alertRepository;
@@ -207,19 +205,6 @@ public class EmergencyShakeService extends Service {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
-                    // Update shake sensitivity
-                    if (shakeDetector != null) {
-                        shakeDetector.setSensitivity(getShakeSensitivityThreshold());
-                    }
-                    Log.d("EmergencyService", "Settings updated - new sensitivity: " + getShakeSensitivityThreshold());
-                }
-            }
-        };
-
-        settingsChangedReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if ("com.example.sentinel.SETTINGS_CHANGED".equals(intent.getAction())) {
                     if (shakeDetector != null) {
                         shakeDetector.setSensitivity(getShakeSensitivityThreshold());
                     }
@@ -237,7 +222,7 @@ public class EmergencyShakeService extends Service {
                     Log.d("EmergencyService", "Settings updated - shake sensitivity: " + getShakeSensitivityThreshold() + ", fall detection: " + isFallDetectionEnabled);
                 }
             }
-        }
+        };
 
         IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
