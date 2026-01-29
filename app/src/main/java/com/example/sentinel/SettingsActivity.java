@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.data.EmergencyContactManager;
@@ -63,6 +64,8 @@ public class SettingsActivity extends AppCompatActivity {
 
     private TextView tvCountdownValue;
     private SeekBar seekCountdown;
+
+    private SwitchCompat switchFallDetection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +139,8 @@ public class SettingsActivity extends AppCompatActivity {
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
 
         switchAIMessages = findViewById(R.id.switch_ai_messages);
+
+        switchFallDetection = findViewById(R.id.switch_fall_detection);
         //layoutApiKey = findViewById(R.id.layout_api_key);
         //etApiKey = findViewById(R.id.et_api_key);
         //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
@@ -171,6 +176,27 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    private void setupFallDetectionToggle() {
+        SwitchCompat fallDetectionSwitch = findViewById(R.id.switch_fall_detection);
+        SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+
+        //loading current states
+        boolean isEnabled = prefs.getBoolean("fall_detection_enabled", false);
+        fallDetectionSwitch.setChecked(isEnabled);
+
+        //handling toggle
+        fallDetectionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
+
+            //notifying service of settings change
+            Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+            sendBroadcast(intent);
+            Toast.makeText(this,
+                    isChecked ? "Fall detection enabled" : "Fall detection disabled",
+                    Toast.LENGTH_SHORT).show();
+        });
+    }
+
     private void setupListeners() {
         switchShakeDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("shake_detection_enabled", isChecked).apply();
@@ -190,6 +216,14 @@ public class SettingsActivity extends AppCompatActivity {
 
         switchLocationSharing.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("location_sharing_enabled", isChecked).apply();
+        });
+
+        switchFallDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
+
+            Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+            sendBroadcast(intent);
+            Toast.makeText(this, isChecked ? "Fall detection on" : "Fall detection off", Toast.LENGTH_SHORT).show();
         });
 
         seekShakeSensitivity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -271,6 +305,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchVibration.setChecked(prefs.getBoolean("vibration_enabled", true));
         switchSound.setChecked(prefs.getBoolean("sound_enabled", true));
         switchLocationSharing.setChecked(prefs.getBoolean("location_sharing_enabled", true));
+        switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
 
         // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
