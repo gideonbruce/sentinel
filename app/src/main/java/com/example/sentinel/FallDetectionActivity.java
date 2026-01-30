@@ -196,6 +196,7 @@ public class FallDetectionActivity extends AppCompatActivity {
         stepEntries.clear();
         motionEntries.clear();
         dataPointCounter = 0;
+        lineChart.clear();
         updateChartData();
     }
 
@@ -205,16 +206,55 @@ public class FallDetectionActivity extends AppCompatActivity {
             tvConfidence.setText(String.format("Confidence: %.1f%%", result.getConfidence() * 100));
 
             float[] probs = result.getProbabilities();
-            tvIdleProb.setText(String.format("Idle: %.1f%%", probs[0] * 100));
-            tvFallProb.setText(String.format("Fall: %.1f%%", probs[1] * 100));
-            tvStepProb.setText(String.format("Step: %.1f%%", probs[2] * 100));
-            tvMotionProb.setText(String.format("Motion: %.1f%%", probs[3] * 100));
 
-            highlightPrediction(result.getClassIndex());
+            if (probs.length == 2) {
+                tvIdleProb.setText(String.format("Not Fall: %.1f%%", probs[0] * 100));
+                tvFallProb.setText(String.format("Fall: %.1f%%", probs[1] * 100));
+                tvStepProb.setText("Step: N/A");
+                tvMotionProb.setText("Motion: N/A");
 
-            // Update graph with new data
-            updateGraphData(probs);
+                highlightPrediction(result.getClassIndex());
+                updateGraphDataBinary(probs);
+
+            } else if (probs.length == 4) {
+                // Multi-class: Idle, Fall, Step, Motion
+                tvIdleProb.setText(String.format("Idle: %.1f%%", probs[0] * 100));
+                tvFallProb.setText(String.format("Fall: %.1f%%", probs[1] * 100));
+                tvStepProb.setText(String.format("Step: %.1f%%", probs[2] * 100));
+                tvMotionProb.setText(String.format("Motion: %.1f%%", probs[3] * 100));
+
+                highlightPrediction(result.getClassIndex());
+
+                // Update graph with new data
+                updateGraphData(probs);
+            }
         });
+    }
+
+    private void updateGraphDataBinary(float[] probs) {
+        idleEntries.add(new Entry(dataPointCounter, probs[0] * 100));
+        fallEntries.add(new Entry(dataPointCounter, probs[1] * 100));
+        if (idleEntries.size() > MAX_DATA_POINTS) {
+            idleEntries.remove(0);
+            fallEntries.remove(0);
+            shiftEntriesLeft(idleEntries);
+            shiftEntriesLeft(fallEntries);
+            dataPointCounter--;
+        }
+        dataPointCounter++;
+        updateChartDataBinary();
+    }
+
+    private void updateChartDataBinary() {
+        LineDataSet notFallDataSet = createDataSet(new ArrayList<>(idleEntries), "Not Fall", Color.rgb(76, 175, 80));
+        LineDataSet fallDataSet = createDataSet(new ArrayList<>(fallEntries), "Fall", Color.rgb(244, 67, 54));
+        LineData lineData = new LineData(notFallDataSet, fallDataSet);
+        lineChart.setData(lineData);
+        lineChart.notifyDataSetChanged();
+        lineChart.invalidate();
+        if (dataPointCounter > 10) {
+            lineChart.moveViewToX(dataPointCounter - 10);
+        }
     }
 
     private void updateGraphData(float[] probs) {
@@ -286,6 +326,7 @@ public class FallDetectionActivity extends AppCompatActivity {
         return dataSet;
     }
 
+    {/*
     private void highlightPrediction(int classIndex) {
         tvIdleProb.setTextColor(getColor(android.R.color.black));
         tvFallProb.setTextColor(getColor(android.R.color.black));
@@ -317,6 +358,41 @@ public class FallDetectionActivity extends AppCompatActivity {
                 selectedView = tvMotionProb;
                 color = getColor(android.R.color.holo_orange_dark);
                 break;
+        }
+
+        if (selectedView != null) {
+            selectedView.setTextColor(color);
+            selectedView.setTextSize(16);
+        }
+    } */}
+
+    private void highlightPrediction(int classIndex) {
+        tvIdleProb.setTextColor(getColor(android.R.color.black));
+        tvFallProb.setTextColor(getColor(android.R.color.black));
+        tvStepProb.setTextColor(getColor(android.R.color.black));
+        tvMotionProb.setTextColor(getColor(android.R.color.black));
+
+        tvIdleProb.setTextSize(14);
+        tvFallProb.setTextSize(14);
+        tvStepProb.setTextSize(14);
+        tvMotionProb.setTextSize(14);
+
+        TextView selectedView = null;
+        int color = getColor(android.R.color.holo_blue_dark);
+
+        // For binary classification (0 = Not Fall, 1 = Fall)
+        if (classIndex == 0) {
+            selectedView = tvIdleProb;
+            color = getColor(android.R.color.holo_green_dark);
+        } else if (classIndex == 1) {
+            selectedView = tvFallProb;
+            color = getColor(android.R.color.holo_red_dark);
+        } else if (classIndex == 2) {
+            selectedView = tvStepProb;
+            color = getColor(android.R.color.holo_blue_dark);
+        } else if (classIndex == 3) {
+            selectedView = tvMotionProb;
+            color = getColor(android.R.color.holo_orange_dark);
         }
 
         if (selectedView != null) {
