@@ -488,7 +488,7 @@ public class EmergencyShakeService extends Service {
             //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
         }
 
-        initializeFallDetection();
+        initializeFallDetection();        //if enabled
 
         return START_STICKY;
     }
