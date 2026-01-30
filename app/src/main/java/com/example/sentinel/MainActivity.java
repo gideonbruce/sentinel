@@ -550,21 +550,17 @@ public class MainActivity extends AppCompatActivity {
 
         // checking if atleast one method is enabled
         boolean isFallDetectionEnabled = getSharedPreferences("sentinel_prefs", MODE_PRIVATE).getBoolean("fall_detection_enabled", false);
-
-        if (!isShakeDetectionEnabled() && !isVolumeButtonsEnabled()) {
-            Toast.makeText(this, "Please enable atleast one gesture method in settings",
-                    Toast.LENGTH_LONG).show();
-            //open settings
+        if (!isShakeDetectionEnabled() && !isVolumeButtonsEnabled() && !isFallDetectionEnabled) {
+            Toast.makeText(this, "Please enable atleast one gesture method in settings", Toast.LENGTH_LONG).show();
+            //opening settings
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             return;
         }
 
         //checking location permission first
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "Location permission required for emergency alerts",
-                    Toast.LENGTH_SHORT).show();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Location permission required for emergency alerts", Toast.LENGTH_SHORT).show();
             checkPermissions();
             return;
         }
