@@ -469,7 +469,7 @@ public class EmergencyShakeService extends Service {
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Sentinel Emergency")
-                .setContentText("Shake detection is active")
+                .setContentText("Emergency detection is active")
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
@@ -487,6 +487,8 @@ public class EmergencyShakeService extends Service {
                     SensorManager.SENSOR_DELAY_GAME);
             //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
         }
+
+        initializeFallDetection();
 
         return START_STICKY;
     }
