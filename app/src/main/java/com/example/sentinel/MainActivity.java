@@ -744,8 +744,11 @@ public class MainActivity extends AppCompatActivity {
             //checking if ai is enabled
             SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
             boolean useAI = prefs.getBoolean("use_ai_messages", false);
-            currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
+            Log.d("MainActivity", "AI enabled: " + useAI);
 
+            currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
+            Log.d("MainActivity", "Location from intent: " + (currentEmergencyLocation != null ? "Available (Lat: " + currentEmergencyLocation.getLatitude() + ")" : "NULL"));
+            Log.d("MainActivity", "    Calling EmergencyAlertDialog.show()");
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
                 public void onAlertSent() {
@@ -755,10 +758,12 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onAlertCancelled() {
-                    Toast.makeText(MainActivity.this, "Emergency alert cancelled",
-                            Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Emergency alert cancelled", Toast.LENGTH_SHORT).show();
                 }
             }, currentEmergencyLocation, emergencyType, useAI);
+            Log.d("MainActivity", "EmergencyAlertDialog.show() completed");
+        } else {
+            Log.d("MainActivity", "SHOW_EMERGENCY_DIALOG is false, not showing dialog");
         }
     }
 
