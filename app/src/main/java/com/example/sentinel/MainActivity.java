@@ -728,8 +728,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleEmergencyDialogIntent(Intent intent) {
-        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
+        Log.d("MainActivity", "=== handleEmergencyDialogIntent called ===");
+        if (intent == null) {
+            Log.w("MainActivity", "Intent is NULL");
+            return;
+        }
+
+        boolean shouldShow = intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false);
+        Log.d("MainActivity", "SHOW_EMERGENCY_DIALOG flag: " + shouldShow);
+
+        if (shouldShow) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
+            Log.d("MainActivity", "Emergency Type: " + emergencyType);
 
             //checking if ai is enabled
             SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
