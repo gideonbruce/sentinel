@@ -147,6 +147,16 @@ public class MainActivity extends AppCompatActivity {
         handleEmergencyDialogIntent(getIntent());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = getIntent();
+        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
+            handleEmergencyDialogIntent(intent);
+            intent.removeExtra("SHOW_EMERGENCY_DIALOG");
+        }
+    }
+
     private void initViews() {
         etContactName = findViewById(R.id.et_contact_name);
         etContactPhone = findViewById(R.id.et_contact_phone);
