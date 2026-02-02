@@ -463,8 +463,7 @@ public class EmergencyShakeService extends Service {
         createNotificationChannel();
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Sentinel Emergency")
@@ -479,15 +478,19 @@ public class EmergencyShakeService extends Service {
         if (sensorManager != null && shakeDetector != null) {
             sensorManager.unregisterListener(shakeDetector);
         }
-
-        // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
-            sensorManager.registerListener(shakeDetector, accelerometer,
-                    SensorManager.SENSOR_DELAY_GAME);
-            //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
+            sensorManager.registerListener(shakeDetector, accelerometer, SensorManager.SENSOR_DELAY_GAME);
         }
 
-        initializeFallDetection();        //if enabled
+        if (fallDetectionService == null) {
+            Log.d("EmergencyService", "Fall detection not initialized in onCreate, initializing now...");
+            initializeFallDetection();
+        } else if (isFallDetectionEnabled && !fallDetectionService.isRunning()) {
+            Log.d("EmergencyService", "Fall detection exists but not running, starting now...");
+            fallDetectionService.start();
+        }
+
+        // initializeFallDetection();        //if enabled
 
         return START_STICKY;
     }
