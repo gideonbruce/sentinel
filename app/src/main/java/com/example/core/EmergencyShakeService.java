@@ -111,7 +111,7 @@ public class EmergencyShakeService extends Service {
             if (isShakeDetectionEnabled() && count >= getShakeCountRequired()) {
                 //sendEmergencySMS();
                 //getLocationAndSendSMS();
-                showEmergencyAlertDialog(null);
+                showEmergencyAlertDialog(null, lastKnownLocation);
             }
         });
 
@@ -133,19 +133,19 @@ public class EmergencyShakeService extends Service {
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {
-                showEmergencyAlertDialog("SILENT EMERGENCY");
+                showEmergencyAlertDialog("SILENT EMERGENCY", lastKnownLocation);
             }
             @Override
             public void onPoliceNeeded() {
-                showEmergencyAlertDialog("POLICE NEEDED");
+                showEmergencyAlertDialog("POLICE NEEDED", lastKnownLocation);
             }
             @Override
             public void onMedicalEmergency() {
-                showEmergencyAlertDialog("MEDICAL EMERGENCY");
+                showEmergencyAlertDialog("MEDICAL EMERGENCY", lastKnownLocation);
             }
             @Override
             public void onPanicAlert() {
-                showEmergencyAlertDialog("PANIC ALERT");
+                showEmergencyAlertDialog("PANIC ALERT", lastKnownLocation);
             }
         });
 
@@ -239,9 +239,8 @@ public class EmergencyShakeService extends Service {
                 fallDetectionService = new FallDetectionService(this);
                 fallDetectionService.initialize();
                 fallDetectionService.setOnFallDetectedCallback(result -> {
-                    Log.d("EmergencyService", "Fall detected by ML model   -   confidence: " +
-                            (result.getConfidence() * 100) + "%");
-                    showEmergencyAlertDialog("FALL DETECTED");
+                    Log.d("EmergencyService", "Fall detected by ML model   -   confidence: " + (result.getConfidence() * 100) + "%");
+                    showEmergencyAlertDialog("FALL DETECTED", lastKnownLocation);
                 });
                 fallDetectionService.start();
                 Log.i("EmergencyService", "Fall detection initialized and started");
@@ -508,14 +507,14 @@ public class EmergencyShakeService extends Service {
         super.onTaskRemoved(rootIntent);
     }
 
-    private void showEmergencyAlertDialog(String emergencyType) {
+    private void showEmergencyAlertDialog(String emergencyType, Location location) {
         // Create an Intent to bring MainActivity to foreground or start it
         Intent dialogIntent = new Intent(this, MainActivity.class);
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         dialogIntent.putExtra("SHOW_EMERGENCY_DIALOG", true);
         dialogIntent.putExtra("EMERGENCY_TYPE", emergencyType);
 
-        if (lastKnownLocation != null) {
+        if (location != null) {
             dialogIntent.putExtra("LOCATION", lastKnownLocation);
         }
         startActivity(dialogIntent);
