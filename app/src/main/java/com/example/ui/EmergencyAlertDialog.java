@@ -535,29 +535,37 @@ public class EmergencyAlertDialog {
 
     private static void startCountdown(Context context, String contactPhone, android.location.Location location, OnAlertActionListener listener, Button sendButton, boolean useAI, String emergencyType, EmergencyContactManager contactManager) {
         if (currentCustomView == null) return;
+
+        // checking if auto send is enabled
+        SharedPreferences prefs = context.getSharedPreferences("sentinel_prefs", Context.MODE_PRIVATE);
+        boolean autoSendEnabled = prefs.getBoolean("auto_send_enabled", false);
         TextView countdownText = currentCustomView.findViewById(R.id.dialog_countdown);
         if (countdownText != null) {
             countdownText.setVisibility(View.VISIBLE);
         }
         isCountdownActive = true;
-        countDownTimer = new CountDownTimer(10000, 1000) {
+        int countdownSeconds = prefs.getInt("countdown_seconds", 10);
+        countDownTimer = new android.os.CountDownTimer(countdownSeconds * 1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 if (countdownText != null && isCountdownActive) {
                     int secondsLeft = (int) (millisUntilFinished / 1000);
-                    countdownText.setText("Auto-sending in " + secondsLeft + "s");
+                    if (autoSendEnabled) {
+                        countdownText.setText("Auto-sending in " + secondsLeft + "s");
+                    } else {
+                        countdownText.setText("Countdown: " + secondsLeft + "s");
+                    }
                 }
             }
             @Override
             public void onFinish() {
-                if (isCountdownActive && currentDialog != null && currentDialog.isShowing()) {
+                if (autoSendEnabled && isCountdownActive && currentDialog != null && currentDialog.isShowing()) {
                     Log.i(TAG, "Countdown finished  -  auto-sending emergency alert");
                     if (countdownText != null) {
                         countdownText.setText(R.string.sending);
                     }
                     //sending the message
                     if (useAI && currentCustomView != null) {
-                        // Getting the AI generated message if available
                         TextView previewText = currentCustomView.findViewById(R.id.dialog_preview_text);
                         if (previewText != null && previewText.getVisibility() == View.VISIBLE) {
                             String customMessage = previewText.getText().toString();
@@ -572,6 +580,11 @@ public class EmergencyAlertDialog {
                         listener.onAlertSent();
                     }
                     currentDialog.dismiss();
+                } else {
+                    if (countdownText != null) {
+                        countdownText.setText("Countdown ended");
+                    }
+                    isCountdownActive = false;
                 }
             }
         }.start();
