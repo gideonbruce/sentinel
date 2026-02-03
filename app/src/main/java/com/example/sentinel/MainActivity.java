@@ -61,13 +61,10 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
-
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
-    //private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
-
     private BroadcastReceiver smsSentReceiver;
     private BroadcastReceiver smsDeliveredReceiver;
     private TextInputEditText etContactName;
@@ -84,14 +81,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvUserEmail;
     private ImageView ivUserProfile;
     private FirebaseAuth mAuth;
-    private FallDetectionService detectionService;
-
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private boolean isServiceRunning = false;
-
     private android.location.Location currentEmergencyLocation;
-
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
     @Override
@@ -240,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             //
         }
-
         @Override
         public void onServiceDisconnected(ComponentName name) {
             EmergencyShakeService serviceInstance = null;
@@ -264,8 +256,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public  boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                                 keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
+        if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
             //send broadcast to service
             Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
             intent.putExtra("keyCode", keyCode);
