@@ -38,6 +38,8 @@ public class EmergencyAlertDialog {
     private static AlertDialog currentDialog;
     private static AIMessageGenerator aiGenerator;
     private static View currentCustomView;
+    private static android.os.CountDownTimer countDownTimer;
+    private static boolean isCountdownActive = false;
 
     public interface OnAlertActionListener {
         void onAlertSent();
@@ -130,6 +132,7 @@ public class EmergencyAlertDialog {
         });
 
         currentDialog.show();
+        startCountdown(context, contactPhone, location, listener, sendButton, useAI, emergencyType, contactManager);
 
         if (useAI) {
             generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
@@ -524,6 +527,50 @@ public class EmergencyAlertDialog {
                 currentDialog.dismiss();
             });
         }
+    }
+
+    private static void startCountdown(Context context, String contactPhone, android.location.Location location, OnAlertActionListener listener, Button sendButton, boolean useAI, String emergencyType, EmergencyContactManager contactManager) {
+        if (currentCustomView == null) return;
+        TextView countdownText = currentCustomView.findViewById(R.id.dialog_countdown);
+        if (countdownText != null) {
+            countdownText.setVisibility(View.VISIBLE);
+        }
+        isCountdownActive = true;
+        countDownTimer = new android.os.CountDownTimer(10000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                if (countdownText != null && isCountdownActive) {
+                    int secondsLeft = (int) (millisUntilFinished / 1000);
+                    countdownText.setText("Auto-sending in " + secondsLeft + "s");
+                }
+            }
+            @Override
+            public void onFinish() {
+                if (isCountdownActive && currentDialog != null && currentDialog.isShowing()) {
+                    Log.i(TAG, "Countdown finished  -  auto-sending emergency alert");
+                    if (countdownText != null) {
+                        countdownText.setText("Sending...");
+                    }
+                    //sending the message
+                    if (useAI && currentCustomView != null) {
+                        // Getting the AI generated message if available
+                        TextView preview = currentCustomView.findViewById(R.id.dialog_preview_text);
+                        if (previewText != null && previewText.getVisibility() == View.VISIBLE) {
+                            String customMessage = previewText.getText().toString();
+                            sendEmergencyAlertWithCustomMessage(context, contactPhone, location, emergencyType, customMessage);
+                        } else {
+                            sendEmergencyAlert(context, contactPhone, location);
+                        }
+                    } else {
+                        sendEmergencyAlert(context, contactPhone, location);
+                    }
+                    if (listener != null) {
+                        listener.onAlertSent();
+                    }
+                    currentDialog.dismiss();
+                }
+            }
+        }.start();
     }
 
     private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
