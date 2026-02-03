@@ -122,4 +122,7 @@
     <string name="send_emergency_alert_now_popup">Send emergency alert now?</string>
     <string name="message_preview">Message Preview:</string>
     <string name="cancel">Cancel</string>
+    <string name="sending">Sending...</string>
+    <string name="automatically_send_after_countdown_ends">Automatically send after countdown ends</string>
+    <string name="auto_send_alert">Auto-Send Alert</string>
 </resources>
