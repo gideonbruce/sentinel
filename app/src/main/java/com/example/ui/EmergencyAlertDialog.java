@@ -478,6 +478,12 @@ public class EmergencyAlertDialog {
         SharedPreferences prefs = context.getSharedPreferences("sentinel_prefs", Context.MODE_PRIVATE);
         boolean autoSendEnabled = prefs.getBoolean("auto_send_enabled", false);
         TextView countdownText = currentCustomView.findViewById(R.id.dialog_countdown);
+        if (!autoSendEnabled) {
+            if (countdownText != null) {
+                countdownText.setVisibility(View.GONE);
+            }
+            return;
+        }
         if (countdownText != null) {
             countdownText.setVisibility(View.VISIBLE);
         }
