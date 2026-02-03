@@ -17,7 +17,7 @@ public class FallDetectionService {
     private OnPredictionListener predictionListener;
 
     // Thresholds
-    private float fallConfidenceThreshold = 0.7f; // 70% confidence
+    private float fallConfidenceThreshold = 0.3f;
 
     private OnFallDetectedCallback fallDetectedCallback;
 
@@ -57,10 +57,10 @@ public class FallDetectionService {
         sensorCollector.setOnWindowCompleteListener(this::onSensorWindowComplete);
 
         if (!sensorCollector.hasGyroscope()) {
-            fallConfidenceThreshold = 0.85f; // Higher threshold for estimated gyro
+            fallConfidenceThreshold = 0.3f; // Higher threshold for estimated gyro
             Log.w(TAG, "No hardware gyroscope - using higher confidence threshold: " + fallConfidenceThreshold);
         } else {
-            fallConfidenceThreshold = 0.7f;
+            fallConfidenceThreshold = 0.3f;
         }
 
         Log.i(TAG, "Service initialized successfully");
