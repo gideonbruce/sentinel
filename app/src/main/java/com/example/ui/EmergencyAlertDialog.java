@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -114,6 +115,7 @@ public class EmergencyAlertDialog {
         //setting button click listeners
         sendButton.setOnClickListener(v -> {
             Log.i(TAG, "User confirmed emergency alert");
+            stopCountdown();
             sendEmergencyAlert(context, contactPhone, location);
             if (listener != null) {
                 Log.d(TAG, "Notifying listener: onAlertSent()");
@@ -124,6 +126,7 @@ public class EmergencyAlertDialog {
 
         cancelButton.setOnClickListener(v -> {
             Log.i(TAG, "User cancelled emergency alert");
+            stopCountdown();
             if (listener != null) {
                 Log.d(TAG, "Notifying listeners: onAlertCancelled()");
                 listener.onAlertCancelled();
@@ -520,9 +523,10 @@ public class EmergencyAlertDialog {
 
             sendButton.setOnClickListener(v -> {
                 Log.i(TAG, "User confirmed emergency alert with custom message");
+                //stopCountdown();
                 sendEmergencyAlertWithCustomMessage(context, contactManager.getContactPhone(), location, emergencyType, messageText);
                 if (listener != null) {
-                    listener.onAlertSent(); // This should be onAlertSent(), not onAlertCancelled()
+                    listener.onAlertSent();
                 }
                 currentDialog.dismiss();
             });
@@ -573,6 +577,14 @@ public class EmergencyAlertDialog {
         }.start();
     }
 
+    private static void stopCountdown() {
+        isCountdownActive = false;
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+            countDownTimer = null;
+        }
+    }
+
     private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
         Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
 
@@ -611,6 +623,7 @@ public class EmergencyAlertDialog {
     }
 
     public static void cleanup() {
+        stopCountdown();
         if (aiGenerator != null) {
             aiGenerator.shutdown();
             aiGenerator = null;
