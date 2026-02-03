@@ -540,7 +540,7 @@ public class EmergencyAlertDialog {
             countdownText.setVisibility(View.VISIBLE);
         }
         isCountdownActive = true;
-        countDownTimer = new android.os.CountDownTimer(10000, 1000) {
+        countDownTimer = new CountDownTimer(10000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 if (countdownText != null && isCountdownActive) {
@@ -553,12 +553,12 @@ public class EmergencyAlertDialog {
                 if (isCountdownActive && currentDialog != null && currentDialog.isShowing()) {
                     Log.i(TAG, "Countdown finished  -  auto-sending emergency alert");
                     if (countdownText != null) {
-                        countdownText.setText("Sending...");
+                        countdownText.setText(R.string.sending);
                     }
                     //sending the message
                     if (useAI && currentCustomView != null) {
                         // Getting the AI generated message if available
-                        TextView preview = currentCustomView.findViewById(R.id.dialog_preview_text);
+                        TextView previewText = currentCustomView.findViewById(R.id.dialog_preview_text);
                         if (previewText != null && previewText.getVisibility() == View.VISIBLE) {
                             String customMessage = previewText.getText().toString();
                             sendEmergencyAlertWithCustomMessage(context, contactPhone, location, emergencyType, customMessage);
