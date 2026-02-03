@@ -53,13 +53,11 @@ public class EmergencyAlertDialog {
 
     public static void show(Context context, OnAlertActionListener listener, android.location.Location location, String emergencyType, boolean useAI) {
         Log.d(TAG, "show() called");
-
         if (currentDialog != null && currentDialog.isShowing()) {
             currentDialog.dismiss();
         }
         Log.d(TAG, "show() called - AI enabled: " + useAI);
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
-
         if (!contactManager.hasEmergencyContact()) {
             Log.w(TAG, "No emergency contact configured");
             showSetupContactDialog(context);
@@ -68,11 +66,8 @@ public class EmergencyAlertDialog {
 
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
-
-        //custom dialog view
         View customView = LayoutInflater.from(context).inflate(R.layout.dialog_emergency_alert, null);
-        currentCustomView = customView;   //store reference for later use
-
+        currentCustomView = customView;
         // Get references to custom views
         TextView titleText = customView.findViewById(R.id.dialog_title);
         TextView messageText = customView.findViewById(R.id.dialog_message);
@@ -80,8 +75,6 @@ public class EmergencyAlertDialog {
         ProgressBar loadingProgress = customView.findViewById(R.id.loading_progress);
         Button sendButton = customView.findViewById(R.id.btn_send);
         Button cancelButton = customView.findViewById(R.id.btn_cancel);
-
-        //set content
         String title = emergencyType != null ? emergencyType : "Emergency Alert";
         titleText.setText(title);
 
@@ -104,15 +97,11 @@ public class EmergencyAlertDialog {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setView(customView);
         builder.setCancelable(false);
-
         currentDialog = builder.create();
-
         //making dialog background transparent for rounded corners
         if (currentDialog.getWindow() != null) {
             currentDialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
-
-        //setting button click listeners
         sendButton.setOnClickListener(v -> {
             Log.i(TAG, "User confirmed emergency alert");
             stopCountdown();
@@ -123,7 +112,6 @@ public class EmergencyAlertDialog {
             }
             currentDialog.dismiss();
         });
-
         cancelButton.setOnClickListener(v -> {
             Log.i(TAG, "User cancelled emergency alert");
             stopCountdown();
@@ -133,10 +121,8 @@ public class EmergencyAlertDialog {
             }
             currentDialog.dismiss();
         });
-
         currentDialog.show();
         startCountdown(context, contactPhone, location, listener, sendButton, useAI, emergencyType, contactManager);
-
         if (useAI) {
             generateAndShowAIMessage(context, contactManager, location, emergencyType, listener);
         }
@@ -155,15 +141,11 @@ public class EmergencyAlertDialog {
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
         Log.i(TAG, "sendEmergencyAlert() called");
         Log.d(TAG, "Phone number: [REDACTED], Location: " + (location != null ? "available" : "null"));
-
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
         String customMessage = contactManager.getEmergencyMessage();
         Log.d(TAG, "Custom message retrieved: " + (customMessage != null ? "yes" : "null"));
-
-        //Building complete message
         StringBuilder message = new StringBuilder();
         message.append(customMessage);
-
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
@@ -176,10 +158,8 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable, adding unavailable message");
             message.append("\n\n(Location unavailable)");
         }
-
         String finalMessage = message.toString();
         Log.d(TAG, "Final message length: " + finalMessage.length() + " characters");
-
         try {
             Log.d(TAG, "Attempting to send SMS with dual SIM support");
             sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
@@ -197,22 +177,18 @@ public class EmergencyAlertDialog {
 
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
-
         // Validate phone number format
         phoneNumber = normalizePhoneNumber(phoneNumber);
         if (phoneNumber == null) {
             throw new IllegalArgumentException("Invalid phone number format");
         }
-
         // Double-check SMS permission
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
             throw new SecurityException("SMS permission not granted");
         }
-
         SmsManager smsManager = null;
         boolean usedDualSim = false;
-
         // Try dual SIM first (API 22+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             // Check READ_PHONE_STATE permission (required for SubscriptionManager on API 29+)
@@ -226,26 +202,21 @@ public class EmergencyAlertDialog {
                             "skipping dual SIM detection");
                 }
             }
-
             // Only try dual SIM if we have permission (or don't need it on older Android)
             if (hasPhoneStatePermission) {
                 try {
                     SubscriptionManager subscriptionManager =
                             (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-
                     if (subscriptionManager != null) {
                         List<SubscriptionInfo> subscriptionInfoList =
                                 subscriptionManager.getActiveSubscriptionInfoList();
-
                         if (subscriptionInfoList != null && !subscriptionInfoList.isEmpty()) {
                             int defaultSmsSubscriptionId = SmsManager.getDefaultSmsSubscriptionId();
-
                             if (defaultSmsSubscriptionId != -1) {
                                 Log.d(TAG, "Using default SIM with ID: " + defaultSmsSubscriptionId);
                                 smsManager = SmsManager.getSmsManagerForSubscriptionId(defaultSmsSubscriptionId);
                                 usedDualSim = true;
                             } else if (subscriptionInfoList.size() > 0) {
-                                // Use first available SIM
                                 int subscriptionId = subscriptionInfoList.get(0).getSubscriptionId();
                                 Log.d(TAG, "Using first available SIM with ID: " + subscriptionId);
                                 smsManager = SmsManager.getSmsManagerForSubscriptionId(subscriptionId);
@@ -257,30 +228,24 @@ public class EmergencyAlertDialog {
                     }
                 } catch (SecurityException e) {
                     Log.e(TAG, "SecurityException accessing subscriptions", e);
-                    // Will fall back to default
                 } catch (Exception e) {
                     Log.e(TAG, "Exception in dual SIM setup: " + e.getMessage(), e);
-                    // Will fall back to default
                 }
             }
         }
-
         // Fallback to default SmsManager if dual SIM setup failed
         if (smsManager == null) {
             Log.d(TAG, "Using default SmsManager (fallback)");
             smsManager = SmsManager.getDefault();
         }
-
         // Verify smsManager is not null before proceeding
         if (smsManager == null) {
             throw new IllegalStateException("Failed to get SmsManager instance");
         }
-
         // Create pending intents
         Intent sentIntent = new Intent("SMS_SENT");
         sentIntent.putExtra("phone_number", phoneNumber);
         Intent deliveredIntent = new Intent("SMS_DELIVERED");
-
         PendingIntent sentPI = PendingIntent.getBroadcast(
                 context, 0, sentIntent,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
@@ -289,20 +254,16 @@ public class EmergencyAlertDialog {
                 context, 0, deliveredIntent,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
-
         // Send SMS using multipart
         try {
             ArrayList<String> parts = smsManager.divideMessage(message);
             Log.d(TAG, "Message divided into " + parts.size() + " part(s)");
-
             ArrayList<PendingIntent> sentIntents = new ArrayList<>();
             ArrayList<PendingIntent> deliveryIntents = new ArrayList<>();
-
             for (int i = 0; i < parts.size(); i++) {
                 sentIntents.add(sentPI);
                 deliveryIntents.add(deliveredPI);
             }
-
             smsManager.sendMultipartTextMessage(
                     phoneNumber,
                     null,
@@ -310,10 +271,8 @@ public class EmergencyAlertDialog {
                     sentIntents,
                     deliveryIntents
             );
-
             Log.i(TAG, "SMS queued successfully (" + parts.size() + " parts, " +
                     (usedDualSim ? "dual SIM" : "default") + ")");
-
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "Invalid SMS parameters: " + e.getMessage(), e);
             throw new IllegalArgumentException("Invalid phone number or message: " + e.getMessage());
@@ -327,26 +286,17 @@ public class EmergencyAlertDialog {
         if (phoneNumber == null || phoneNumber.isEmpty()) {
             return null;
         }
-
-        // Remove all spaces, dashes, parentheses
         phoneNumber = phoneNumber.replaceAll("[\\s()\\-]", "");
-
-        // Handle Kenyan numbers
-        // Convert 0712345678 to +254712345678
         if (phoneNumber.startsWith("0") && phoneNumber.length() == 10) {
             phoneNumber = "+254" + phoneNumber.substring(1);
         }
-        // Add + if missing but has country code
         else if (phoneNumber.startsWith("254") && !phoneNumber.startsWith("+")) {
             phoneNumber = "+" + phoneNumber;
         }
-
-        // Validate format
         if (phoneNumber.length() < 10) {
             Log.e(TAG, "Phone number too short: " + phoneNumber);
             return null;
         }
-
         Log.d(TAG, "Normalized phone number format");
         return phoneNumber;
     }
@@ -355,11 +305,9 @@ public class EmergencyAlertDialog {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
             TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             int networkType = TelephonyManager.NETWORK_TYPE_UNKNOWN; // Default value
             int simState = TelephonyManager.SIM_STATE_UNKNOWN;      // Default value
-
             if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
                 try {
                     if (tm != null) {
@@ -424,13 +372,11 @@ public class EmergencyAlertDialog {
 
     private static void openSMSAppAsFallback(Context context, String phoneNumber, String message) {
         Log.d(TAG, "openSMSAppAsFallback() called");
-
         try {
             Uri uri = Uri.parse("smsto:" + phoneNumber);
             Intent smsIntent = new Intent(Intent.ACTION_SENDTO, uri);
             smsIntent.putExtra("sms_body", message);
             smsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
             if (smsIntent.resolveActivity(context.getPackageManager()) != null) {
                 Log.i(TAG, "Opening SMS app with pre-filled message");
                 context.startActivity(smsIntent);
@@ -460,11 +406,9 @@ public class EmergencyAlertDialog {
                 return;
             }
         }
-
         String userName = contactManager.getContactName();
         String customMessage = contactManager.getEmergencyMessage();
-
-        //generate ai message
+        //generating ai message
         aiGenerator.generateEmergencyMessage(
                 emergencyType,
                 location,
@@ -498,20 +442,17 @@ public class EmergencyAlertDialog {
         if (emergencyType != null && !emergencyType.isEmpty()) {
             fallbackMessage = "🚨 " + emergencyType + "! " + fallbackMessage;
         }
-
         Toast.makeText(context, "Using standard message", Toast.LENGTH_SHORT).show();
         updateDialogWithMessage(context, contactManager, location, emergencyType, fallbackMessage, listener, "Message:\n\n");
     }
 
     private static void updateDialogWithMessage(Context context, EmergencyContactManager contactManager, android.location.Location location, String emergencyType, String messageText, OnAlertActionListener listener, String prefix) {
         if (currentDialog != null && currentDialog.isShowing() && currentCustomView != null) {
-            // Use currentCustomView directly instead of finding from dialog
             TextView messageView = currentCustomView.findViewById(R.id.dialog_message);
             TextView previewLabel = currentCustomView.findViewById(R.id.dialog_preview_label);
             TextView previewText = currentCustomView.findViewById(R.id.dialog_preview_text);
             ProgressBar loadingProgress = currentCustomView.findViewById(R.id.loading_progress);
             Button sendButton = currentCustomView.findViewById(R.id.btn_send);
-
             //hide loading/show message
             loadingProgress.setVisibility(View.GONE);
             messageView.setVisibility(View.GONE);
@@ -520,7 +461,6 @@ public class EmergencyAlertDialog {
             previewLabel.setText(prefix.trim());
             previewText.setText(messageText);
             sendButton.setEnabled(true);
-
             sendButton.setOnClickListener(v -> {
                 Log.i(TAG, "User confirmed emergency alert with custom message");
                 //stopCountdown();
@@ -535,8 +475,6 @@ public class EmergencyAlertDialog {
 
     private static void startCountdown(Context context, String contactPhone, android.location.Location location, OnAlertActionListener listener, Button sendButton, boolean useAI, String emergencyType, EmergencyContactManager contactManager) {
         if (currentCustomView == null) return;
-
-        // checking if auto send is enabled
         SharedPreferences prefs = context.getSharedPreferences("sentinel_prefs", Context.MODE_PRIVATE);
         boolean autoSendEnabled = prefs.getBoolean("auto_send_enabled", false);
         TextView countdownText = currentCustomView.findViewById(R.id.dialog_countdown);
@@ -600,11 +538,8 @@ public class EmergencyAlertDialog {
 
     private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
         Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
-
-        // Build complete message with location
         StringBuilder message = new StringBuilder();
         message.append(customMessage);
-
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
@@ -617,9 +552,7 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable");
             message.append("\n\n(Location unavailable)");
         }
-
         String finalMessage = message.toString();
-
         try {
             Log.d(TAG, "Attempting to send SMS with custom AI message");
             sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
