@@ -11,27 +11,22 @@ import android.provider.ContactsContract;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
-
 import com.example.data.EmergencyContactManager;
 import com.google.android.material.textfield.TextInputEditText;
-
 import java.util.Objects;
 
 public class SettingsActivity extends AppCompatActivity {
-
     private EmergencyContactManager contactManager;
     private SharedPreferences prefs;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
@@ -43,11 +38,9 @@ public class SettingsActivity extends AppCompatActivity {
     private LinearLayout contactForm;
     private TextInputEditText etContactName;
     private TextInputEditText etContactPhone;
-
     private TextInputEditText etEmergencyMessage;
     private TextView tvCharCount;
     private Button btnResetMessage;
-
     private Switch switchShakeDetection;
     private Switch switchVolumeButtons;
     private Switch switchVibration;
@@ -55,34 +48,22 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchLocationSharing;
     private Switch switchAIMessages;
     private Switch switchAutoSend;
-    //private LinearLayout layoutApiKey;
-    //private TextInputEditText etApiKey;
-    //private Button btnSaveApiKey;
-    //private SharedPreferences securePrefs;
-
     private SeekBar seekShakeSensitivity;
     private TextView tvSensitivityValue;
-
     private TextView tvCountdownValue;
     private SeekBar seekCountdown;
-
     private SwitchCompat switchFallDetection;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-
-        // Enable back button
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setTitle("Settings");
         }
-
         contactManager = new EmergencyContactManager(this);
         prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
-
-        // Register contact picker
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -107,22 +88,18 @@ public class SettingsActivity extends AppCompatActivity {
         btnResetMessage = findViewById(R.id.btn_reset_message);
         btnResetMessage.setOnClickListener(v -> resetEmergencyMessage());
 
-        //setupListeners();
         setupMessageListener();
 
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
         ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
         Button btnChangeContact = findViewById(R.id.btn_change_contact);
-
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnEditContact.setOnClickListener(v -> editContact());
         if (btnChangeContact != null) {
             btnChangeContact.setOnClickListener(v -> editContact());
         }
-
-        // Detection Settings
         switchShakeDetection = findViewById(R.id.switch_shake_detection);
         switchVolumeButtons = findViewById(R.id.switch_volume_buttons);
         switchVibration = findViewById(R.id.switch_vibration);
@@ -138,7 +115,6 @@ public class SettingsActivity extends AppCompatActivity {
         //layoutApiKey = findViewById(R.id.layout_api_key);
         //etApiKey = findViewById(R.id.et_api_key);
         //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
-
         //securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
         //btnSaveApiKey.setOnClickListener(v -> saveApiKey());
 
@@ -149,12 +125,10 @@ public class SettingsActivity extends AppCompatActivity {
         etEmergencyMessage.addTextChangedListener(new android.text.TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 int length = s.length();
                 tvCharCount.setText(length + "/160");
-
                 // Change color based on SMS length
                 if (length > 160) {
                     tvCharCount.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
@@ -164,7 +138,6 @@ public class SettingsActivity extends AppCompatActivity {
                     tvCharCount.setTextColor(getResources().getColor(android.R.color.darker_gray));
                 }
             }
-
             @Override
             public void afterTextChanged(android.text.Editable s) {}
         });
@@ -173,15 +146,10 @@ public class SettingsActivity extends AppCompatActivity {
     private void setupFallDetectionToggle() {
         SwitchCompat fallDetectionSwitch = findViewById(R.id.switch_fall_detection);
         SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
-
-        //loading current states
         boolean isEnabled = prefs.getBoolean("fall_detection_enabled", false);
         fallDetectionSwitch.setChecked(isEnabled);
-
-        //handling toggle
         fallDetectionSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
-
             //notifying service of settings change
             Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
             sendBroadcast(intent);
@@ -195,65 +163,52 @@ public class SettingsActivity extends AppCompatActivity {
         switchShakeDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("shake_detection_enabled", isChecked).apply();
         });
-
         switchVolumeButtons.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("volume_buttons_enabled", isChecked).apply();
         });
-
         switchVibration.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("vibration_enabled", isChecked).apply();
         });
-
         switchSound.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("sound_enabled", isChecked).apply();
         });
-
         switchLocationSharing.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("location_sharing_enabled", isChecked).apply();
         });
-
         switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("auto_send_enabled", isChecked).apply();
             Toast.makeText(this, isChecked ? "Auto send enabled" : "Auto-send disabled", Toast.LENGTH_SHORT).show();
         });
-
         switchFallDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
-
             Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
             sendBroadcast(intent);
             Toast.makeText(this, isChecked ? "Fall detection on" : "Fall detection off", Toast.LENGTH_SHORT).show();
         });
-
         seekShakeSensitivity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 String[] levels = {"Very Low", "Low", "Medium", "High", "Very High"};
                 tvSensitivityValue.setText(levels[progress]);
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 prefs.edit().putInt("shake_sensitivity", seekBar.getProgress()).apply();
-
                 //broadcasting settings change to service
                 Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
                 sendBroadcast(intent);
-
                 Toast.makeText(SettingsActivity.this, "Sensitivity updated", Toast.LENGTH_SHORT).show();
             }
         });
-
         seekCountdown.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 int seconds = progress + 3; // 3-10 seconds
                 tvCountdownValue.setText(seconds + " seconds");
             }
-
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {}
 
@@ -263,24 +218,23 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.edit().putInt("countdown_seconds", seconds).apply();
             }
         });
-
         switchAIMessages.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
 
             //show/hide api key section
             //layoutApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE);
-            if (isChecked) {
-                Toast.makeText(this, "AI messages enabled", Toast.LENGTH_SHORT).show();
+            //if (isChecked) {
+                //Toast.makeText(this, "AI messages enabled", Toast.LENGTH_SHORT).show();
                 //if (existingKey.isEmpty()) {
                 //    Toast.makeText(this, "Please enter your Gemini API key",
                 //            Toast.LENGTH_LONG).show();
                 //}
-            }
+            //}
         });
     }
 
     private void loadSettings() {
-        // Load emergency contact
+        // Loading emergency contact
         if (contactManager.hasEmergencyContact()) {
             String name = contactManager.getContactName();
             String phone = contactManager.getContactPhone();
@@ -348,9 +302,7 @@ public class SettingsActivity extends AppCompatActivity {
             Toast.makeText(this, "Please grant contacts permission", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,
-                ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
+        Intent contactPickerIntent = new Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         contactPickerLauncher.launch(contactPickerIntent);
     }
 
@@ -370,29 +322,23 @@ public class SettingsActivity extends AppCompatActivity {
     private void handleContactSelection(Intent data) {
         Uri contactUri = data.getData();
         if (contactUri == null) return;
-
         String[] projection = {
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
-
         try (Cursor cursor = getContentResolver().query(
                 contactUri, projection, null, null, null)) {
-
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(
                         ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                 int numberIndex = cursor.getColumnIndex(
                         ContactsContract.CommonDataKinds.Phone.NUMBER);
-
                 if (nameIndex >= 0 && numberIndex >= 0) {
                     String name = cursor.getString(nameIndex);
                     String phoneNumber = cursor.getString(numberIndex);
                     phoneNumber = phoneNumber.replaceAll("[\\s()-]", "");
-
                     etContactName.setText(name);
                     etContactPhone.setText(phoneNumber);
-
                     Toast.makeText(this, "Contact selected: " + name,
                             Toast.LENGTH_SHORT).show();
                 }
@@ -403,54 +349,13 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    {/*private void saveApiKey() {
-        String apiKey = Objects.requireNonNull(etApiKey.getText()).toString().trim();
-
-        if (apiKey.isEmpty()) {
-            Toast.makeText(this, "Please enter an API key", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Don't save if it's the masked version
-        if (apiKey.startsWith("••••")) {
-            Toast.makeText(this, "API key already saved", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Basic validation - Gemini API keys start with "AIza"
-        if (!apiKey.startsWith("AIza")) {
-            new androidx.appcompat.app.AlertDialog.Builder(this)
-                    .setTitle("Invalid API Key")
-                    .setMessage("Gemini API keys typically start with 'AIza'. Are you sure this is correct?")
-                    .setPositiveButton("Save Anyway", (dialog, which) -> {
-                        saveApiKeyToPrefs(apiKey);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        } else {
-            saveApiKeyToPrefs(apiKey);
-        }
-    }*/}
-
-    {/*private void saveApiKeyToPrefs(String apiKey) {
-        securePrefs.edit().putString("gemini_api_key", apiKey).apply();
-
-        // Mask the display
-        String masked = "••••••••" + apiKey.substring(Math.max(0, apiKey.length() - 4));
-        etApiKey.setText(masked);
-
-        Toast.makeText(this, "API key saved securely", Toast.LENGTH_SHORT).show();
-    }*/}
-
     private void saveContact() {
         String name = Objects.requireNonNull(etContactName.getText()).toString().trim();
         String phone = Objects.requireNonNull(etContactPhone.getText()).toString().trim();
-
         if (phone.isEmpty()) {
             Toast.makeText(this, "Phone number is required", Toast.LENGTH_SHORT).show();
             return;
         }
-
         contactManager.saveEmergencyContact(name, phone);
         Toast.makeText(this, "Emergency contact saved", Toast.LENGTH_SHORT).show();
         loadSettings();
