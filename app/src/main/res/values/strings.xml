@@ -117,4 +117,12 @@
     <string name="generate_intelligent_emergency_messages">Generate intelligent emergency messages</string>
     <string name="automatically_trigger_alert_if_a_fall_is_detected">Automatically trigger alert if a fall is detected</string>
     <string name="fall_detection">Fall Detection</string>
+    <string name="to_emergency_contact">To: Emergency Contact</string>
+    <string name="emergency_alerttttttttt">Emergency Alert</string>
+    <string name="send_emergency_alert_now_popup">Send emergency alert now?</string>
+    <string name="message_preview">Message Preview:</string>
+    <string name="cancel">Cancel</string>
+    <string name="sending">Sending...</string>
+    <string name="automatically_send_after_countdown_ends">Automatically send after countdown ends</string>
+    <string name="auto_send_alert">Auto-Send Alert</string>
 </resources>

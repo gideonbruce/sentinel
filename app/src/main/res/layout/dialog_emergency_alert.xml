@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="Emergency Alert"
+        android:text="@string/emergency_alerttttttttt"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#212529"
@@ -34,10 +34,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="To: Emergency Contact"
+        android:text="@string/to_emergency_contact"
         android:textSize="14sp"
         android:textColor="#6C757D"
         android:gravity="center" />
+
+    <TextView
+        android:id="@+id/dialog_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#FF5722"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:layout_marginTop="8dp"/>
 
     <!-- Message/Loading Container -->
     <RelativeLayout
@@ -59,7 +69,7 @@
             android:id="@+id/dialog_message"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Send emergency alert now?"
+            android:text="@string/send_emergency_alert_now_popup"
             android:textSize="16sp"
             android:textColor="#212529"
             android:gravity="center"
@@ -70,7 +80,7 @@
             android:id="@+id/dialog_preview_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Message Preview:"
+            android:text="@string/message_preview"
             android:textSize="12sp"
             android:textStyle="bold"
             android:textColor="#6C757D"
@@ -113,7 +123,7 @@
             android:layout_height="56dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            android:text="Cancel"
+            android:text="@string/cancel"
             android:textSize="16sp"
             android:textColor="#212529"
             android:background="@android:color/transparent"

@@ -54,6 +54,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchSound;
     private Switch switchLocationSharing;
     private Switch switchAIMessages;
+    private Switch switchAutoSend;
     //private LinearLayout layoutApiKey;
     //private TextInputEditText etApiKey;
     //private Button btnSaveApiKey;
@@ -95,19 +96,15 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        // Emergency Contact Section
         contactDisplay = findViewById(R.id.contact_display);
         contactForm = findViewById(R.id.contact_form);
         tvContactNameDisplay = findViewById(R.id.tv_contact_name_display);
         tvContactPhoneDisplay = findViewById(R.id.tv_contact_phone_display);
         etContactName = findViewById(R.id.et_contact_name);
         etContactPhone = findViewById(R.id.et_contact_phone);
-
-        //emergency message section
         etEmergencyMessage = findViewById(R.id.et_emergency_message);
         tvCharCount = findViewById(R.id.tv_char_count);
         btnResetMessage = findViewById(R.id.btn_reset_message);
-
         btnResetMessage.setOnClickListener(v -> resetEmergencyMessage());
 
         //setupListeners();
@@ -131,16 +128,13 @@ public class SettingsActivity extends AppCompatActivity {
         switchVibration = findViewById(R.id.switch_vibration);
         switchSound = findViewById(R.id.switch_sound);
         switchLocationSharing = findViewById(R.id.switch_location_sharing);
-
         seekShakeSensitivity = findViewById(R.id.seek_shake_sensitivity);
         tvSensitivityValue = findViewById(R.id.tv_sensitivity_value);
-
         seekCountdown = findViewById(R.id.seek_countdown);
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
-
         switchAIMessages = findViewById(R.id.switch_ai_messages);
-
         switchFallDetection = findViewById(R.id.switch_fall_detection);
+        switchAutoSend = findViewById(R.id.switch_auto_send);
         //layoutApiKey = findViewById(R.id.layout_api_key);
         //etApiKey = findViewById(R.id.et_api_key);
         //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
@@ -218,6 +212,11 @@ public class SettingsActivity extends AppCompatActivity {
             prefs.edit().putBoolean("location_sharing_enabled", isChecked).apply();
         });
 
+        switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("auto_send_enabled", isChecked).apply();
+            Toast.makeText(this, isChecked ? "Auto send enabled" : "Auto-send disabled", Toast.LENGTH_SHORT).show();
+        });
+
         switchFallDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("fall_detection_enabled", isChecked).apply();
 
@@ -285,13 +284,10 @@ public class SettingsActivity extends AppCompatActivity {
         if (contactManager.hasEmergencyContact()) {
             String name = contactManager.getContactName();
             String phone = contactManager.getContactPhone();
-
             contactDisplay.setVisibility(View.VISIBLE);
             contactForm.setVisibility(View.GONE);
-
             tvContactNameDisplay.setText(name != null && !name.isEmpty() ? name : "Emergency Contact");
             tvContactPhoneDisplay.setText(phone);
-
             etContactName.setText(name);
             etContactPhone.setText(phone);
         } else {
@@ -306,7 +302,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchSound.setChecked(prefs.getBoolean("sound_enabled", true));
         switchLocationSharing.setChecked(prefs.getBoolean("location_sharing_enabled", true));
         switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
-
+        switchAutoSend.setChecked(prefs.getBoolean("auto_send_enabled", false));
         // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
         seekShakeSensitivity.setProgress(sensitivity);
