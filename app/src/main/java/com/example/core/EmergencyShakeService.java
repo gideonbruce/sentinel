@@ -30,11 +30,9 @@ import android.view.WindowManager;
 import android.view.Gravity;
 import android.graphics.PixelFormat;
 import android.content.IntentFilter;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.ActivityCompat;
-
 import com.example.data.AlertEntity;
 import com.example.data.AlertRepository;
 import com.example.data.EmergencyContactManager;
@@ -50,111 +48,75 @@ import com.google.android.gms.location.Priority;
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
     private static final int NOTIFICATION_ID = 1;
-
     private SensorManager sensorManager;
     private Sensor accelerometer;
     private ShakeDetector shakeDetector;
     private EmergencyContactManager contactManager;
     private PowerManager.WakeLock wakeLock;
-
     private FusedLocationProviderClient fusedLocationClient;
     private Location lastKnownLocation;
     private LocationCallback locationCallback;
     private WindowManager windowManager;
     private View overlayView;
-
     private BroadcastReceiver volumeButtonReceiver;
     private BroadcastReceiver smsConfirmReceiver;
     private BroadcastReceiver screenReceiver;
-
     private VolumeButtonGestureDetector volumeGestureDetector;
     private AlertRepository alertRepository;
-
     private String lastPhoneNumber;
     private String lastMessage;
     private String lastEmergencyType;
     private Location lastLocation;
-
     private SharedPreferences prefs;
-
     private BroadcastReceiver settingsChangedReceiver;
-
     private static final long SENSOR_RESTART_DELAY = 5000;
     private Runnable sensorRestartRunnable;
     private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
-
     private FallDetectionService fallDetectionService;
     private boolean isFallDetectionEnabled = false;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
         prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
-
         Log.d("EmergencyService", "=============== Service onCreate ===============");
-
         contactManager = new EmergencyContactManager(this);
         alertRepository = AlertRepository.getInstance(getApplication());
-
-        //registerSMSReceivers();
-
-        // Initialize shake detection
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         shakeDetector = new ShakeDetector();
-
-        //set sensitivity threshold
         shakeDetector.setSensitivity(getShakeSensitivityThreshold());
-
         shakeDetector.setOnShakeListener(count -> {
             if (isShakeDetectionEnabled() && count >= getShakeCountRequired()) {
-                //sendEmergencySMS();
-                //getLocationAndSendSMS();
-                showEmergencyAlertDialog(null, lastKnownLocation);
+                showEmergencyAlertDialog(null);
             }
         });
-
         if (isVolumeButtonsEnabled() && Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
         }
-
-        // Acquire wake lock to keep CPU running
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
                 "Sentinel::ShakeDetectionWakeLock");
         wakeLock.acquire(24 * 60 * 60 * 1000L);
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
 
-        // Initialize volume gesture detection
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
-            public void onSilentEmergency() {
-                showEmergencyAlertDialog("SILENT EMERGENCY", lastKnownLocation);
-            }
+            public void onSilentEmergency() {showEmergencyAlertDialog("SILENT EMERGENCY");}
             @Override
-            public void onPoliceNeeded() {
-                showEmergencyAlertDialog("POLICE NEEDED", lastKnownLocation);
-            }
+            public void onPoliceNeeded() {showEmergencyAlertDialog("POLICE NEEDED");}
             @Override
-            public void onMedicalEmergency() {
-                showEmergencyAlertDialog("MEDICAL EMERGENCY", lastKnownLocation);
-            }
+            public void onMedicalEmergency() {showEmergencyAlertDialog("MEDICAL EMERGENCY");}
             @Override
-            public void onPanicAlert() {
-                showEmergencyAlertDialog("PANIC ALERT", lastKnownLocation);
-            }
+            public void onPanicAlert() {showEmergencyAlertDialog("PANIC ALERT");}
         });
-
         initializeFallDetection();
 
         if (Settings.canDrawOverlays(this)) {
             setupOverlayForVolumeDetection();
         }
-
         if (isShakeDetectionEnabled()) {
             setupSensorReregistration();
         }
@@ -170,7 +132,6 @@ public class EmergencyShakeService extends Service {
                 }
             }
         };
-
         smsConfirmReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -188,18 +149,9 @@ public class EmergencyShakeService extends Service {
         };
 
         IntentFilter smsFilter = new IntentFilter("com.example.sentinel.SEND_EMERGENCY_SMS");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(smsConfirmReceiver, smsFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(smsConfirmReceiver, smsFilter, Context.RECEIVER_NOT_EXPORTED);
-        }
-
+        registerReceiver(smsConfirmReceiver, smsFilter, Context.RECEIVER_NOT_EXPORTED);
         IntentFilter filter = new IntentFilter("com.example.sentinel.VOLUME_BUTTON_EVENT");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        }
+        registerReceiver(volumeButtonReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
 
         settingsChangedReceiver = new BroadcastReceiver() {
             @Override
@@ -225,11 +177,7 @@ public class EmergencyShakeService extends Service {
         };
 
         IntentFilter settingsFilter = new IntentFilter("com.example.sentinel.SETTINGS_CHANGED");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
-        }
+        registerReceiver(settingsChangedReceiver, settingsFilter, Context.RECEIVER_NOT_EXPORTED);
     }
 
     private void initializeFallDetection() {
@@ -239,8 +187,9 @@ public class EmergencyShakeService extends Service {
                 fallDetectionService = new FallDetectionService(this);
                 fallDetectionService.initialize();
                 fallDetectionService.setOnFallDetectedCallback(result -> {
-                    Log.d("EmergencyService", "Fall detected by ML model   -   confidence: " + (result.getConfidence() * 100) + "%");
-                    showEmergencyAlertDialog("FALL DETECTED", lastKnownLocation);
+                    Log.d("EmergencyService", "Fall detected by ML model   -   confidence: " +
+                            (result.getConfidence() * 100) + "%");
+                    showEmergencyAlertDialog("FALL DETECTED");
                 });
                 fallDetectionService.start();
                 Log.i("EmergencyService", "Fall detection initialized and started");
@@ -404,7 +353,6 @@ public class EmergencyShakeService extends Service {
 
     private void setupOverlayForVolumeDetection() {
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-
         overlayView = new View(this) {
             @Override
             public boolean dispatchKeyEvent(KeyEvent event) {
@@ -428,9 +376,7 @@ public class EmergencyShakeService extends Service {
                         WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT
         );
-
         params.gravity = Gravity.TOP | Gravity.START;
-
         try {
             windowManager.addView(overlayView, params);
         } catch (Exception e) {
@@ -442,7 +388,6 @@ public class EmergencyShakeService extends Service {
         if (volumeGestureDetector == null || !isVolumeButtonsEnabled()) {
             return;
         }
-
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             if (isKeyDown) {
                 volumeGestureDetector.onVolumeDown();
@@ -461,10 +406,8 @@ public class EmergencyShakeService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         createNotificationChannel();
-
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
-
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Sentinel Emergency")
                 .setContentText("Emergency detection is active")
@@ -472,25 +415,17 @@ public class EmergencyShakeService extends Service {
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
                 .build();
-
         startForeground(NOTIFICATION_ID, notification);
-
         if (sensorManager != null && shakeDetector != null) {
             sensorManager.unregisterListener(shakeDetector);
         }
+        // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
-            sensorManager.registerListener(shakeDetector, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+            sensorManager.registerListener(shakeDetector, accelerometer,
+                    SensorManager.SENSOR_DELAY_GAME);
+            //Log.d("EmergencyService", "Sensor registration " + (registered ? "successful" : "failed"));
         }
-
-        if (fallDetectionService == null) {
-            Log.d("EmergencyService", "Fall detection not initialized in onCreate, initializing now...");
-            initializeFallDetection();
-        } else if (isFallDetectionEnabled && !fallDetectionService.isRunning()) {
-            Log.d("EmergencyService", "Fall detection exists but not running, starting now...");
-            fallDetectionService.start();
-        }
-
-        // initializeFallDetection();        //if enabled
+        initializeFallDetection();
 
         return START_STICKY;
     }
@@ -502,25 +437,19 @@ public class EmergencyShakeService extends Service {
         PendingIntent restartPendingIntent = PendingIntent.getService(
                 getApplicationContext(), 1, restartServiceIntent,
                 PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
-
         AlarmManager alarmService = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         alarmService.set(AlarmManager.ELAPSED_REALTIME,
                 SystemClock.elapsedRealtime() + 1000, restartPendingIntent);
-
         super.onTaskRemoved(rootIntent);
     }
 
-    private void showEmergencyAlertDialog(String emergencyType, Location location) {
+    private void showEmergencyAlertDialog(String emergencyType) {
         // Create an Intent to bring MainActivity to foreground or start it
         Intent dialogIntent = new Intent(this, MainActivity.class);
-        dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_SINGLE_TOP |
-                Intent.FLAG_ACTIVITY_CLEAR_TOP
-                );
+        dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         dialogIntent.putExtra("SHOW_EMERGENCY_DIALOG", true);
         dialogIntent.putExtra("EMERGENCY_TYPE", emergencyType);
-
-        if (location != null) {
+        if (lastKnownLocation != null) {
             dialogIntent.putExtra("LOCATION", lastKnownLocation);
         }
         startActivity(dialogIntent);
@@ -533,14 +462,12 @@ public class EmergencyShakeService extends Service {
                         != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-
         LocationRequest locationRequest = new LocationRequest.Builder(
                 Priority.PRIORITY_HIGH_ACCURACY, 60000) // Update every 60 seconds
                 .setMinUpdateIntervalMillis(30000) // minimum 30 seconds
                 .setMaxUpdateDelayMillis(120000)  // batch updates for better battery
                 .setWaitForAccurateLocation(false) // dont wait for perfect accuracy
                 .build();
-
         locationCallback = new LocationCallback() {
             @Override
             public void onLocationResult(@NonNull LocationResult locationResult) {
@@ -553,7 +480,6 @@ public class EmergencyShakeService extends Service {
 
         fusedLocationClient.requestLocationUpdates(locationRequest,
                 locationCallback, Looper.getMainLooper());
-
         // Also get last known location immediately
         fusedLocationClient.getLastLocation()
                 .addOnSuccessListener(location -> {
@@ -571,7 +497,6 @@ public class EmergencyShakeService extends Service {
             sendEmergencySMS(null, emergencyType);
             return;
         }
-
         //get current location with timeout
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(location -> {
@@ -591,7 +516,6 @@ public class EmergencyShakeService extends Service {
                 == PackageManager.PERMISSION_GRANTED ||
                 ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                         == PackageManager.PERMISSION_GRANTED) {
-
             fusedLocationClient.getLastLocation()
                     .addOnSuccessListener(location -> {
                         if (location != null) {
@@ -631,7 +555,6 @@ public class EmergencyShakeService extends Service {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         filter.addAction(Intent.ACTION_SCREEN_ON);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(screenReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
@@ -642,9 +565,7 @@ public class EmergencyShakeService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         Log.d("EmergencyService", "=== Service onDestroy ===");
-
         // unregisters settings receiver
         if (settingsChangedReceiver != null) {
             try {
@@ -653,16 +574,13 @@ public class EmergencyShakeService extends Service {
                 Log.e("EmergencyService", "Error unregistering settings receiver", e);
             }
         }
-
         if (fallDetectionService != null) {
             fallDetectionService.cleanup();
             fallDetectionService = null;
         }
-
         if (sensorRestartHandler != null && sensorRestartRunnable != null) {
             sensorRestartHandler.removeCallbacks(sensorRestartRunnable);
         }
-
         if (screenReceiver != null) {
             try {
                 unregisterReceiver(screenReceiver);
@@ -670,36 +588,24 @@ public class EmergencyShakeService extends Service {
                 Log.e("EmergencyService", "Error unregistering screen receiver", e);
             }
         }
-
         if (volumeGestureDetector != null) {
             volumeGestureDetector.cleanup();
         }
-
-        // Unregister sensor listener
         if (sensorManager != null && shakeDetector != null) {
             sensorManager.unregisterListener(shakeDetector);
         }
-
-        // stop location updates
         if (fusedLocationClient != null && locationCallback != null) {
             fusedLocationClient.removeLocationUpdates(locationCallback);
         }
-
-        // Release wake lock
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release();
         }
-
-        //unregister broadcast reciever
         if (volumeButtonReceiver != null) {
             unregisterReceiver(volumeButtonReceiver);
         }
-
         if (smsConfirmReceiver != null) {
             unregisterReceiver(smsConfirmReceiver);
         }
-
-        //removes overlay
         if (overlayView != null && windowManager != null) {
             try {
                 windowManager.removeView(overlayView);
@@ -722,7 +628,6 @@ public class EmergencyShakeService extends Service {
                 NotificationManager.IMPORTANCE_HIGH
         );
         channel.setDescription("Monitors shake gestures for emergency alerts");
-
         NotificationManager manager = getSystemService(NotificationManager.class);
         if (manager != null) {
             manager.createNotificationChannel(channel);
@@ -740,19 +645,14 @@ public class EmergencyShakeService extends Service {
         //String message = emergencyType != null ?
         //        emergencyType + "! This is an automated alert. Please check on me immediately." :
         //        "EMERGENCY! This is an automated alert. Please check on me immediately.";
-
         //gets custom message from contact manager
         String customMessage = contactManager.getEmergencyMessage();
-
         //builds complete message
         StringBuilder message = new StringBuilder();
-
         if (emergencyType != null) {
             message.append("🚨 ").append(emergencyType).append("!\n\n");
         }
-
         message.append(customMessage);
-
         if (location != null) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
@@ -774,7 +674,6 @@ public class EmergencyShakeService extends Service {
                 .setSmallIcon(android.R.drawable.ic_dialog_alert)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
-
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
             manager.notify(3, builder.build());
@@ -785,14 +684,12 @@ public class EmergencyShakeService extends Service {
         String contentText = withLocation ?
                 "Alert with location sent to emergency contact" :
                 "Alert sent to emergency contact (location unavailable)";
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Emergency SMS Sent")
                 .setContentText(contentText)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
-
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
             manager.notify(2, builder.build());

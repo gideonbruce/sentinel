@@ -3,9 +3,7 @@ package com.example.ai;
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
-
 import com.example.core.LocationGeocoder;
 import com.google.firebase.ai.FirebaseAI;
 import com.google.firebase.ai.GenerativeModel;
@@ -15,7 +13,6 @@ import com.google.firebase.ai.type.GenerateContentResponse;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -24,9 +21,7 @@ import java.util.concurrent.Executors;
 
 public class AIMessageGenerator {
     private static final String TAG = "AIMessageGenerator";
-
     private static final String MODEL_NAME = "gemini-2.5-flash";
-
     private final ExecutorService executor;
     private final GenerativeModelFutures model;
     private final LocationGeocoder locationGeocoder;
@@ -41,10 +36,8 @@ public class AIMessageGenerator {
         this.locationGeocoder = new LocationGeocoder(context);
 
         try {
-            // Initialize Firebase AI
             GenerativeModel ai = FirebaseAI.getInstance().generativeModel(MODEL_NAME);
 
-            // Use the GenerativeModelFutures Java compatibility layer
             this.model = GenerativeModelFutures.from(ai);
 
             Log.d(TAG, "Firebase AI with Gemini Developer API ('" + MODEL_NAME + "') initialized successfully");
@@ -78,7 +71,6 @@ public class AIMessageGenerator {
                     generateMessageWithLocationInfo(emergencyType, location, locationInfo,
                             userName, customMessage, callback);
                 }
-
                 @Override
                 public void onGeocoderError(String error) {
                     Log.w(TAG, "Geocoding failed, generating message without location name: " + error);

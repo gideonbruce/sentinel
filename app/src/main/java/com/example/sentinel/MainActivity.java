@@ -61,13 +61,10 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.FirebaseDatabase;
-
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
-    //private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
-
     private BroadcastReceiver smsSentReceiver;
     private BroadcastReceiver smsDeliveredReceiver;
     private TextInputEditText etContactName;
@@ -84,22 +81,16 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvUserEmail;
     private ImageView ivUserProfile;
     private FirebaseAuth mAuth;
-    private FallDetectionService detectionService;
-
     private EmergencyContactManager contactManager;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
     private boolean isServiceRunning = false;
-
     private android.location.Location currentEmergencyLocation;
-
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // firebase
         FirebaseApp.initializeApp(this);
 
         //offline persistence
@@ -108,29 +99,12 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             //persistence already enabled
         }
-
         //FirebaseDatabase database = FirebaseDatabase.getInstance();
 
         String databaseUrl = "https://sentinel-####-default-rtdb.asia-southeast1.firebasedatabase.app";
         FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
-
         contactManager = new EmergencyContactManager(this);
-
-        // Load contact from firebase when app starts
-        //contactManager.loadFromFirebase((name, phone) -> {
-        //    updateUI();
-        //    if (name != null && phone != null) {
-        //        Log.d("MainActivity", "Contact loaded: " + name);
-        //    }
-        //});
-
-        //loading emergency message
-        // contactManager.loadEmergencyMessageFromFirebase(message -> {
-        //    Log.d("Main Activity", "Emergency message loaded: " + message);
-        //});
-
         registerSmsReceivers();
-
         contactPickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -143,18 +117,7 @@ public class MainActivity extends AppCompatActivity {
         loadUserProfile();
         checkPermissions();
         //updateUI();
-
         handleEmergencyDialogIntent(getIntent());
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent intent = getIntent();
-        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
-            handleEmergencyDialogIntent(intent);
-            intent.removeExtra("SHOW_EMERGENCY_DIALOG");
-        }
     }
 
     private void initViews() {
@@ -171,36 +134,29 @@ public class MainActivity extends AppCompatActivity {
         tvContactNameDisplay = findViewById(R.id.tv_contact_name_display);
         tvContactPhoneDisplay = findViewById(R.id.tv_contact_phone_display);
         ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
-
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnStartService.setOnClickListener(v -> startShakeService());
         //btnStopService.setOnClickListener(v -> stopShakeService());
         btnEditContact.setOnClickListener(v -> editContact());
-
-        //initializing drawer
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
 
         mAuth = FirebaseAuth.getInstance();
 
-        // Get nav header views for user profile
         View headerView = navigationView.getHeaderView(0);
         tvUserName = headerView.findViewById(R.id.tv_user_name);
         tvUserEmail = headerView.findViewById(R.id.tv_user_email);
         ivUserProfile = headerView.findViewById(R.id.iv_user_profile);
 
-        //setup action bar toggle
         toggle = new ActionBarDrawerToggle(
                 this, drawerLayout, R.string.drawer_open, R.string.drawer_close
         );
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
-        //handle nav item clicks
         navigationView.setNavigationItemSelectedListener(item -> {
             handleNavigationItemSelected(item);
             drawerLayout.closeDrawers();
@@ -221,25 +177,19 @@ public class MainActivity extends AppCompatActivity {
     @SuppressLint("SetTextI18n")
     private void loadUserProfile() {
         com.google.firebase.auth.FirebaseUser currentUser = mAuth.getCurrentUser();
-
         if (currentUser != null) {
-            // Get user name
             String displayName = currentUser.getDisplayName();
             if (displayName != null && !displayName.isEmpty()) {
                 tvUserName.setText(displayName);
             } else {
                 tvUserName.setText("User");
             }
-
-            // Get user email
             String email = currentUser.getEmail();
             if (email != null && !email.isEmpty()) {
                 tvUserEmail.setText(email);
             } else {
                 tvUserEmail.setText("No email");
             }
-
-            // Load profile picture if available
             Uri photoUrl = currentUser.getPhotoUrl();
             if (photoUrl != null) {
                 // loading google profile picture using Glide
@@ -250,12 +200,10 @@ public class MainActivity extends AppCompatActivity {
                         .circleCrop()
                         .into(ivUserProfile);
             } else {
-                //default
                 ivUserProfile.setImageResource(R.drawable.ic_user_placeholder);
             }
             // Reinitialize Firebase reference for emergency contact when user changes
             contactManager.reinitializeFirebase();
-
             // load local contact immediately
             updateUI();
 
@@ -271,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
             contactManager.loadEmergencyMessageFromFirebase(message -> {
                 Log.d("MainActivity", "Emergency message loaded: " + message);
             });
-
         } else {
             // No user logged in, redirect to login
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
@@ -286,7 +233,6 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName name, IBinder service) {
             //
         }
-
         @Override
         public void onServiceDisconnected(ComponentName name) {
             EmergencyShakeService serviceInstance = null;
@@ -310,8 +256,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public  boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-                                 keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
+        if (isServiceRunning && isVolumeButtonsEnabled() &&(keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)) {
             //send broadcast to service
             Intent intent = new Intent("com.example.sentinel.VOLUME_BUTTON_EVENT");
             intent.putExtra("keyCode", keyCode);
@@ -332,7 +277,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void handleNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
-
         if (id == R.id.nav_home) {
             //already on home
             //Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
@@ -359,9 +303,9 @@ public class MainActivity extends AppCompatActivity {
             //} else if (id == R.id.nav_aiSettings){
             //Intent intent = new Intent(this, AISettingsActivity.class);
             //startActivity(intent);
-        } else if (id == R.id.nav_fall_detection) {
-            Intent intent = new Intent(this, FallDetectionActivity.class);
-            startActivity(intent);
+        //} else if (id == R.id.nav_fall_detection) {
+            //Intent intent = new Intent(this, FallDetectionActivity.class);
+            //startActivity(intent);
         } else if (id == R.id.nav_sign_out) {
             signOut();
         }
@@ -369,7 +313,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkPermissions() {
         String[] permissions;
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions = new String[]{
                     Manifest.permission.SEND_SMS,
@@ -398,7 +341,6 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_FINE_LOCATION
             };
         }
-
         boolean allGranted = true;
         for (String permission : permissions) {
             if (ContextCompat.checkSelfPermission(this, permission)
@@ -407,7 +349,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
         }
-
         if (!allGranted) {
             ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -436,24 +377,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void checkLocationSettings() {
-        LocationRequest locationRequest = new LocationRequest.Builder(
-                Priority.PRIORITY_HIGH_ACCURACY, 10000)
+        LocationRequest locationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000)
                 .build();
-
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
-
         Task<LocationSettingsResponse> task = LocationServices.getSettingsClient(this)
                 .checkLocationSettings(builder.build());
-
         task.addOnSuccessListener(this, locationSettingsResponse -> {
             // Location settings are satisfied, start service
         });
-
         task.addOnFailureListener(this, e -> {
             if (e instanceof ResolvableApiException) {
                 try {
-                    // Show dialog to enable location
+                    // Showing dialog to enable location
                     ResolvableApiException resolvable = (ResolvableApiException) e;
                     resolvable.startResolutionForResult(this, 1001);
                 } catch (Exception sendEx) {
@@ -467,7 +403,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == 1234) {
             if (Settings.canDrawOverlays(this)) {
                 Toast.makeText(this, "Overlay permission granted - Volume gestures enabled",
@@ -486,7 +421,6 @@ public class MainActivity extends AppCompatActivity {
             checkPermissions();
             return;
         }
-
         Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,
                 ContactsContract.CommonDataKinds.Phone.CONTENT_URI);
         contactPickerLauncher.launch(contactPickerIntent);
@@ -497,30 +431,23 @@ public class MainActivity extends AppCompatActivity {
         if (contactUri == null) {
             return;
         }
-
         String[] projection = {
                 ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
-
         try (Cursor cursor = getContentResolver().query(
                 contactUri, projection, null, null, null)) {
-
             if (cursor != null && cursor.moveToFirst()) {
                 int nameIndex = cursor.getColumnIndex(
                         ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
                 int numberIndex = cursor.getColumnIndex(
                         ContactsContract.CommonDataKinds.Phone.NUMBER);
-
                 if (nameIndex >= 0 && numberIndex >= 0) {
                     String name = cursor.getString(nameIndex);
                     String phoneNumber = cursor.getString(numberIndex);
-
                     phoneNumber = phoneNumber.replaceAll("[\\s()-]", "");
-
                     etContactName.setText(name);
                     etContactPhone.setText(phoneNumber);
-
                     Toast.makeText(this, "Contact selected: " + name,
                             Toast.LENGTH_SHORT).show();
                 }
@@ -535,12 +462,10 @@ public class MainActivity extends AppCompatActivity {
     private void saveContact() {
         String name = Objects.requireNonNull(etContactName.getText()).toString().trim();
         String phone = Objects.requireNonNull(etContactPhone.getText()).toString().trim();
-
         if (phone.isEmpty()) {
             Toast.makeText(this, "Phone number is required", Toast.LENGTH_SHORT).show();
             return;
         }
-
         contactManager.saveEmergencyContact(name, phone);
         Toast.makeText(this, "Emergency contact saved", Toast.LENGTH_SHORT).show();
         updateUI();
@@ -557,7 +482,6 @@ public class MainActivity extends AppCompatActivity {
                     Toast.LENGTH_SHORT).show();
             return;
         }
-
         // checking if atleast one method is enabled
         boolean isFallDetectionEnabled = getSharedPreferences("sentinel_prefs", MODE_PRIVATE).getBoolean("fall_detection_enabled", false);
         if (!isShakeDetectionEnabled() && !isVolumeButtonsEnabled() && !isFallDetectionEnabled) {
@@ -567,7 +491,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
             return;
         }
-
         //checking location permission first
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "Location permission required for emergency alerts", Toast.LENGTH_SHORT).show();
@@ -621,30 +544,22 @@ public class MainActivity extends AppCompatActivity {
         if (contactManager.hasEmergencyContact()) {
             String name = contactManager.getContactName();
             String phone = contactManager.getContactPhone();
-
-            // Show contact display, hide form
             contactDisplay.setVisibility(View.VISIBLE);
             contactForm.setVisibility(View.GONE);
-
             tvContactNameDisplay.setText(name != null && !name.isEmpty() ? name : "Emergency Contact");
             tvContactPhoneDisplay.setText(phone);
-
-            // Populate form fields (hidden)
             etContactName.setText(name);
             etContactPhone.setText(phone);
         } else {
-            // Show form, hide display
             contactDisplay.setVisibility(View.GONE);
             contactForm.setVisibility(View.VISIBLE);
         }
-
         // Update status
         updateStatusIndicator();
     }
 
     private void updateStatusIndicator() {
         GradientDrawable drawable = (GradientDrawable) statusIndicator.getBackground();
-
         if (isServiceRunning && contactManager.hasEmergencyContact()) {
             drawable.setColor(Color.parseColor("#4CAF50"));
             tvStatus.setText(R.string.running);
@@ -658,10 +573,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
         if (requestCode == PERMISSION_REQUEST_CODE) {
             boolean allGranted = true;
             for (int result : grantResults) {
@@ -670,7 +583,6 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 }
             }
-
             if (allGranted) {
                 Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show();
                 // Now request background location if needed
@@ -698,8 +610,6 @@ public class MainActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this,
                     Manifest.permission.ACCESS_BACKGROUND_LOCATION)
                     != PackageManager.PERMISSION_GRANTED) {
-
-                // Show explanation dialog first
                 new androidx.appcompat.app.AlertDialog.Builder(this)
                         .setTitle("Background Location Permission")
                         .setMessage("For emergency alerts to work properly when the app is in the background, " +
@@ -723,59 +633,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected  void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        setIntent(intent);
         handleEmergencyDialogIntent(intent);
     }
 
     private void handleEmergencyDialogIntent(Intent intent) {
-        Log.d("MainActivity", "=== handleEmergencyDialogIntent called ===");
-        if (intent == null) {
-            Log.w("MainActivity", "Intent is NULL");
-            return;
-        }
-
-        boolean shouldShow = intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false);
-        Log.d("MainActivity", "SHOW_EMERGENCY_DIALOG flag: " + shouldShow);
-
-        if (shouldShow) {
+        if (intent != null && intent.getBooleanExtra("SHOW_EMERGENCY_DIALOG", false)) {
             String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
-            Log.d("MainActivity", "Emergency Type: " + emergencyType);
-
-            //checking if ai is enabled
             SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
             boolean useAI = prefs.getBoolean("use_ai_messages", false);
-            Log.d("MainActivity", "AI enabled: " + useAI);
-
             currentEmergencyLocation = intent.getParcelableExtra("LOCATION");
-            Log.d("MainActivity", "Location from intent: " + (currentEmergencyLocation != null ? "Available (Lat: " + currentEmergencyLocation.getLatitude() + ")" : "NULL"));
-            Log.d("MainActivity", "    Calling EmergencyAlertDialog.show()");
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
                 public void onAlertSent() {
                     // User confirmed - send the SMS
                     sendEmergencyAlertToService(emergencyType, currentEmergencyLocation);
                 }
-
                 @Override
                 public void onAlertCancelled() {
-                    Toast.makeText(MainActivity.this, "Emergency alert cancelled", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Emergency alert cancelled",
+                            Toast.LENGTH_SHORT).show();
                 }
             }, currentEmergencyLocation, emergencyType, useAI);
-            Log.d("MainActivity", "EmergencyAlertDialog.show() completed");
-        } else {
-            Log.d("MainActivity", "SHOW_EMERGENCY_DIALOG is false, not showing dialog");
         }
     }
 
     private void registerSmsReceivers() {
-        // SMS Sent receiver
         smsSentReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 int resultCode = getResultCode();
                 Log.d("MainActivity", "SMS Sent result code: " + resultCode);
                 Log.d("MainActivity", "Result code: " + resultCode);
-
                 switch (resultCode) {
                     case android.app.Activity.RESULT_OK:
                         Log.d("MainActivity", "SMS sent successfully!");
@@ -799,24 +687,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-
-        // SMS Delivered receiver
         smsDeliveredReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 int resultCode = getResultCode();
                 Log.d("MainActivity", "SMS Delivery result code: " + resultCode);
-
                 if (resultCode == android.app.Activity.RESULT_OK) {
                     Log.d("MainActivity", "SMS delivered successfully!");
                 }
             }
         };
-
         // Register receivers
         IntentFilter sentFilter = new IntentFilter("SMS_SENT");
         IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -824,14 +707,12 @@ public class MainActivity extends AppCompatActivity {
             registerReceiver(smsSentReceiver, sentFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(smsDeliveredReceiver, deliveredFilter, Context.RECEIVER_NOT_EXPORTED);
         }
-
         Log.d("MainActivity", "SMS broadcast receivers registered");
     }
 
     private void sendEmergencyAlertToService(String emergencyType, android.location.Location location) {
         Log.d("MainActivity", "Alert confirmed by user, SMS already sent by dialog");
         // SMS is already sent by EmergencyAlertDialog.sendEmergencyAlert()
-
         // Send broadcast to service to actually send the SMS
         //Intent intent = new Intent("com.example.sentinel.SEND_EMERGENCY_SMS");
         //intent.putExtra("EMERGENCY_TYPE", emergencyType);
@@ -842,9 +723,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void saveAlertToDatabase(String emergencyType, android.location.Location location) {
         // Get AlertRepository instance
-        com.example.data.AlertRepository alertRepository =
-                com.example.data.AlertRepository.getInstance(getApplication());
-
+        com.example.data.AlertRepository alertRepository = com.example.data.AlertRepository.getInstance(getApplication());
         String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
         long timestamp = System.currentTimeMillis();
         Double latitude = (location != null) ? location.getLatitude() : null;
@@ -852,7 +731,6 @@ public class MainActivity extends AppCompatActivity {
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
         boolean locationAvailable = (location != null);
-
         com.example.data.AlertEntity alert = new com.example.data.AlertEntity(
                 alertType,
                 timestamp,
@@ -862,7 +740,6 @@ public class MainActivity extends AppCompatActivity {
                 contactPhone,
                 locationAvailable
         );
-
         alertRepository.insert(alert, firebaseKey -> {
             if (firebaseKey != null) {
                 Log.d("MainActivity", "Alert saved to database with key: " + firebaseKey);
@@ -883,10 +760,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         EmergencyAlertDialog.cleanup();
-
-        // Unregister SMS receivers
         if (smsSentReceiver != null) {
             try {
                 unregisterReceiver(smsSentReceiver);
@@ -894,7 +768,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MainActivity", "Error unregistering smsSentReceiver", e);
             }
         }
-
         if (smsDeliveredReceiver != null) {
             try {
                 unregisterReceiver(smsDeliveredReceiver);
@@ -905,18 +778,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void signOut() {
-        // Clear local emergency contact data
         contactManager.clearEmergencyContactLocal();
-
-        //FIREBASE signout
         FirebaseAuth.getInstance().signOut();
-
-        //google signout
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
-
         GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
         googleSignInClient.signOut().addOnCompleteListener(this, task -> {
             //navigate back to login

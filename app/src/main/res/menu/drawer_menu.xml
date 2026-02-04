@@ -4,42 +4,38 @@
         <item
             android:id="@+id/nav_home"
             android:icon="@android:drawable/ic_menu_info_details"
-            android:title="Home" />
+            android:title="@string/home" />
 
         <item
             android:id="@+id/nav_settings"
             android:icon="@android:drawable/ic_menu_preferences"
-            android:title="Settings" />
-        <item
-            android:id="@+id/nav_fall_detection"
-            android:icon="@drawable/ic_fall_detection"
-            android:title="Fall Detection" />
+            android:title="@string/settings" />
 
         <item
             android:id="@+id/nav_history"
             android:icon="@android:drawable/ic_menu_recent_history"
-            android:title="Alert History" />
+            android:title="@string/alert_history" />
     </group>
 
-    <item android:title="Support">
+    <item android:title="@string/support">
         <menu>
             <item
                 android:id="@+id/nav_help"
                 android:icon="@android:drawable/ic_menu_help"
-                android:title="Help" />
+                android:title="@string/help" />
 
             <item
                 android:id="@+id/nav_about"
                 android:icon="@android:drawable/ic_menu_info_details"
-                android:title="About" />
+                android:title="@string/about" />
         </menu>
     </item>
-    <item android:title="Account">
+    <item android:title="@string/account">
         <menu>
             <item
                 android:id="@+id/nav_sign_out"
                 android:icon="@android:drawable/ic_lock_power_off"
-                android:title="Sign Out" />
+                android:title="@string/sign_out" />
         </menu>
     </item>
 </menu>

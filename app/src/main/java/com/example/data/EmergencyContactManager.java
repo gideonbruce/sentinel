@@ -21,7 +21,6 @@ public class EmergencyContactManager {
     private static final String KEY_CONTACT_PHONE = "emergency_contact_phone";
     private static final String KEY_EMERGENCY_MESSAGE = "emergency_message";
     private static final String DEFAULT_MESSAGE = "🚨 EMERGENCY! I need help! Please check on me immediately.";
-
     private final SharedPreferences prefs;
     private final FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
@@ -35,11 +34,9 @@ public class EmergencyContactManager {
 
     private void initializeFirebaseReference() {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-
         if (currentUser != null) {
             String userId = currentUser.getUid();
             String databaseUrl = "https://sentinel-####-default-rtdb.asia-southeast1.firebasedatabase.app";
-
             try {
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
                 databaseReference = database.getReference("users")
@@ -59,13 +56,11 @@ public class EmergencyContactManager {
 
     public void saveEmergencyContact(String name, String phoneNumber) {
         Log.d(TAG, "saveEmergencyContact() called");
-
         // Validate inputs
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
             Log.e(TAG, "Cannot save - phone number is null or empty");
             return;
         }
-
         // Save to SharedPreferences first
         prefs.edit()
                 .putString(KEY_CONTACT_NAME, name != null ? name : "")
@@ -81,7 +76,6 @@ public class EmergencyContactManager {
     private void syncContactToFirebase(String name, String phoneNumber) {
         if (databaseReference != null) {
             EmergencyContact contact = new EmergencyContact(name, phoneNumber);
-
             databaseReference.setValue(contact)
                     .addOnSuccessListener(aVoid ->
                             Log.d(TAG, "✓ Contact synced to Firebase"))

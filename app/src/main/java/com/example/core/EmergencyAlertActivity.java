@@ -2,7 +2,6 @@ package com.example.core;
 
 import android.app.Activity;
 import android.os.Bundle;
-
 import com.example.ui.EmergencyAlertDialog;
 
 public class EmergencyAlertActivity extends Activity {
@@ -18,7 +17,6 @@ public class EmergencyAlertActivity extends Activity {
             public void onAlertSent() {
                 finish();
             }
-
             @Override
             public void onAlertCancelled() {
                 finish();
