@@ -9,15 +9,12 @@ public class ShakeDetector implements SensorEventListener {
     private static final float SHAKE_THRESHOLD = 15.0f;
     private static final int SHAKE_TIME_WINDOW = 3000; // 3 seconds
     private static final int REQUIRED_SHAKES = 3;
-
     private static final int SHAKE_SLOP_TIME_MS = 500;
     private static final int SHAKE_COUNT_RESET_TIME_MS = 3000;
-
     private OnShakeListener listener;
     private long lastShakeTime = 0;
     private int shakeCount = 0;
     private long firstShakeTime = 0;
-
     private float shakeThreshold = SHAKE_THRESHOLD;
 
     public interface OnShakeListener {
@@ -39,33 +36,24 @@ public class ShakeDetector implements SensorEventListener {
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
-
             double acceleration = Math.sqrt(x * x + y * y + z * z) - SensorManager.GRAVITY_EARTH;
-
             if (acceleration > shakeThreshold) {
                 long currentTime = System.currentTimeMillis();
-
-                // Reset if too much time has passed
                 if (currentTime - firstShakeTime > SHAKE_TIME_WINDOW) {
                     shakeCount = 0;
                     firstShakeTime = currentTime;
                 }
-
                 // Debounce: ignore shakes too close together
                 if (currentTime - lastShakeTime > 500) {
                     lastShakeTime = currentTime;
-
                     if (shakeCount == 0) {
                         firstShakeTime = currentTime;
                     }
-
                     shakeCount++;
-
                     if (listener != null) {
                         listener.onShake(shakeCount);
                     }
-
-                    // Reset after reaching required shakes
+                    // Resets after reaching required shakes
                     if (shakeCount >= REQUIRED_SHAKES) {
                         shakeCount = 0;
                     }

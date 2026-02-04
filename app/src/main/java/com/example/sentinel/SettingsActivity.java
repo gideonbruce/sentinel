@@ -221,8 +221,6 @@ public class SettingsActivity extends AppCompatActivity {
         switchAIMessages.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
 
-            //show/hide api key section
-            //layoutApiKey.setVisibility(isChecked ? View.VISIBLE : View.GONE);
             //if (isChecked) {
                 //Toast.makeText(this, "AI messages enabled", Toast.LENGTH_SHORT).show();
                 //if (existingKey.isEmpty()) {

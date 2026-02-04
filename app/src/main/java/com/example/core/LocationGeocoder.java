@@ -7,7 +7,6 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -24,7 +23,6 @@ public class LocationGeocoder {
     private final Geocoder geocoder;
     private final ExecutorService executorService;
     private final Handler mainHandler;
-
 
     public interface GeocoderCallback {
         void onLocationResolved(LocationInfo locationInfo);
