@@ -8,28 +8,27 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FAFAFA">
+        android:background="@android:color/white">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Hero Header Section with Gradient -->
+            <!-- Simple Header Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/gradient_header_bg"
+                android:background="@android:color/white"
                 android:padding="24dp"
-                android:paddingBottom="32dp"
                 android:gravity="center">
 
                 <ImageView
                     android:id="@+id/iv_shield_icon"
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
-                    android:layout_marginBottom="16dp"
+                    android:layout_width="64dp"
+                    android:layout_height="64dp"
+                    android:layout_marginBottom="12dp"
                     android:src="@drawable/sentinel_main_icon"
                     android:contentDescription="@string/shield_icon"
                     android:adjustViewBounds="true"
@@ -39,35 +38,33 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/sentinelll"
-                    android:textSize="36sp"
+                    android:textSize="28sp"
                     android:textStyle="bold"
-                    android:textColor="@android:color/white"
-                    android:letterSpacing="0.05" />
+                    android:textColor="#212121" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/your_personal_safety_companion"
                     android:textSize="14sp"
-                    android:textColor="#E3F2FD"
-                    android:layout_marginTop="4dp"
-                    android:alpha="0.9" />
+                    android:textColor="#757575"
+                    android:layout_marginTop="4dp" />
 
-                <!-- Status Indicator in Header -->
+                <!-- Simple Status Indicator -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:background="@drawable/status_chip_bg"
+                    android:background="#F5F5F5"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="8dp"
-                    android:layout_marginTop="20dp">
+                    android:layout_marginTop="16dp">
 
                     <View
                         android:id="@+id/status_indicator"
-                        android:layout_width="10dp"
-                        android:layout_height="10dp"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
                         android:background="@drawable/status_indicator"
                         android:layout_marginEnd="8dp" />
 
@@ -76,462 +73,465 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/set_emergency"
-                        android:textSize="14sp"
-                        android:textColor="@android:color/white"
+                        android:textSize="13sp"
+                        android:textColor="#424242"
                         android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E0E0E0"
+                android:layout_marginTop="8dp" />
 
             <!-- Main Content Container -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:layout_marginTop="-20dp">
+                android:padding="20dp">
 
-                <!-- Emergency Contact Card with Modern Design -->
-                <androidx.cardview.widget.CardView
+                <!-- Emergency Contact Section -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="6dp">
+                    android:orientation="vertical"
+                    android:background="@android:color/white"
+                    android:paddingBottom="20dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="16dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/emergency_contact"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#212121" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="👤"
+                            android:textSize="24sp" />
+                    </LinearLayout>
+
+                    <!-- Contact Display -->
+                    <LinearLayout
+                        android:id="@+id/contact_display"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:padding="20dp">
+                        android:visibility="gone">
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginBottom="16dp">
+                            android:background="#FAFAFA"
+                            android:padding="16dp"
+                            android:layout_marginBottom="12dp"
+                            android:gravity="center_vertical">
 
-                            <TextView
+                            <LinearLayout
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="@string/emergency_contact"
-                                android:textSize="20sp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tv_contact_name_display"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/john_doe"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    android:textColor="#212121" />
+
+                                <TextView
+                                    android:id="@+id/tv_contact_phone_display"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="+1234567890"
+                                    android:textSize="14sp"
+                                    android:textColor="#1976D2"
+                                    android:layout_marginTop="4dp" />
+                            </LinearLayout>
+
+                            <ImageButton
+                                android:id="@+id/btn_edit_contact"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:src="@android:drawable/ic_menu_edit"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="@string/edit_contact"
+                                app:tint="#1976D2" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Contact Form -->
+                    <LinearLayout
+                        android:id="@+id/contact_form"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="visible">
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="12dp"
+                            app:boxBackgroundMode="outline"
+                            app:boxCornerRadiusTopStart="8dp"
+                            app:boxCornerRadiusTopEnd="8dp"
+                            app:boxCornerRadiusBottomStart="8dp"
+                            app:boxCornerRadiusBottomEnd="8dp"
+                            app:boxStrokeColor="#1976D2">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_contact_name"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/contact_name_optional"
+                                android:inputType="textPersonName"
+                                android:drawableStart="@android:drawable/ic_menu_myplaces"
+                                android:drawablePadding="12dp"
+                                android:paddingVertical="14dp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            app:boxBackgroundMode="outline"
+                            app:boxCornerRadiusTopStart="8dp"
+                            app:boxCornerRadiusTopEnd="8dp"
+                            app:boxCornerRadiusBottomStart="8dp"
+                            app:boxCornerRadiusBottomEnd="8dp"
+                            app:boxStrokeColor="#1976D2">
+
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/et_contact_phone"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="@string/phone_number"
+                                android:inputType="phone"
+                                android:drawableStart="@android:drawable/stat_sys_phone_call"
+                                android:drawablePadding="12dp"
+                                android:paddingVertical="14dp" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:weightSum="2">
+
+                            <Button
+                                android:id="@+id/btn_pick_contact"
+                                android:layout_width="0dp"
+                                android:layout_height="52dp"
+                                android:layout_weight="1"
+                                android:layout_marginEnd="8dp"
+                                android:text="@string/pick_contact"
+                                android:textAllCaps="false"
+                                android:drawableStart="@android:drawable/ic_menu_search"
+                                android:drawablePadding="8dp"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                app:strokeColor="#1976D2"
+                                android:textColor="#1976D2" />
+
+                            <Button
+                                android:id="@+id/btn_save_contact"
+                                android:layout_width="0dp"
+                                android:layout_height="52dp"
+                                android:layout_weight="1"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/save"
+                                android:textAllCaps="false"
+                                android:drawableStart="@android:drawable/ic_menu_save"
+                                android:drawablePadding="8dp"
+                                android:backgroundTint="#1976D2" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginVertical="8dp" />
+
+                <!-- Protection Status Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@android:color/white"
+                    android:paddingVertical="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/protection_status"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="16dp" />
+
+                    <Button
+                        android:id="@+id/btn_start_service"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:text="@string/activate_protection"
+                        android:textAllCaps="false"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:drawableStart="@android:drawable/ic_media_play"
+                        android:drawablePadding="12dp"
+                        android:backgroundTint="#4CAF50"
+                        android:textColor="@android:color/white" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/detection_will_run_in_background_until_app_is_closed"
+                        android:textSize="12sp"
+                        android:textColor="#757575"
+                        android:layout_marginTop="8dp" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginVertical="8dp" />
+
+                <!-- Emergency Triggers Section -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="@android:color/white"
+                    android:paddingVertical="20dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/emergency_triggers"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:layout_marginBottom="16dp" />
+
+                    <!-- Shake Gesture -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@android:color/white"
+                        android:paddingVertical="12dp"
+                        android:layout_marginBottom="4dp"
+                        android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="🤝"
+                            android:textSize="28sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/shake_detection1"
+                                android:textSize="15sp"
                                 android:textStyle="bold"
                                 android:textColor="#212121" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="👤"
-                                android:textSize="28sp" />
+                                android:text="@string/shake_phone_3_times_rapidly"
+                                android:textSize="13sp"
+                                android:textColor="#757575"
+                                android:layout_marginTop="2dp" />
                         </LinearLayout>
 
-                        <!-- Contact Display -->
-                        <LinearLayout
-                            android:id="@+id/contact_display"
-                            android:layout_width="match_parent"
+                        <TextView
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:visibility="gone">
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:background="@drawable/contact_display_bg"
-                                android:padding="16dp"
-                                android:layout_marginBottom="12dp"
-                                android:gravity="center_vertical">
-
-                                <LinearLayout
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:id="@+id/tv_contact_name_display"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="@string/john_doe"
-                                        android:textSize="18sp"
-                                        android:textStyle="bold"
-                                        android:textColor="#212121" />
-
-                                    <TextView
-                                        android:id="@+id/tv_contact_phone_display"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="+1234567890"
-                                        android:textSize="15sp"
-                                        android:textColor="#1976D2"
-                                        android:layout_marginTop="4dp" />
-                                </LinearLayout>
-
-                                <ImageButton
-                                    android:id="@+id/btn_edit_contact"
-                                    android:layout_width="44dp"
-                                    android:layout_height="44dp"
-                                    android:src="@android:drawable/ic_menu_edit"
-                                    android:background="@drawable/icon_button_bg"
-                                    android:contentDescription="@string/edit_contact"
-                                    app:tint="#1976D2" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <!-- Contact Form -->
-                        <LinearLayout
-                            android:id="@+id/contact_form"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:visibility="visible">
-
-                            <com.google.android.material.textfield.TextInputLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="12dp"
-                                app:boxBackgroundMode="outline"
-                                app:boxCornerRadiusTopStart="12dp"
-                                app:boxCornerRadiusTopEnd="12dp"
-                                app:boxCornerRadiusBottomStart="12dp"
-                                app:boxCornerRadiusBottomEnd="12dp"
-                                app:boxStrokeColor="#1976D2">
-
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/et_contact_name"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:hint="@string/contact_name_optional"
-                                    android:inputType="textPersonName"
-                                    android:drawableStart="@android:drawable/ic_menu_myplaces"
-                                    android:drawablePadding="12dp"
-                                    android:paddingVertical="16dp" />
-                            </com.google.android.material.textfield.TextInputLayout>
-
-                            <com.google.android.material.textfield.TextInputLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginBottom="16dp"
-                                app:boxBackgroundMode="outline"
-                                app:boxCornerRadiusTopStart="12dp"
-                                app:boxCornerRadiusTopEnd="12dp"
-                                app:boxCornerRadiusBottomStart="12dp"
-                                app:boxCornerRadiusBottomEnd="12dp"
-                                app:boxStrokeColor="#1976D2">
-
-                                <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/et_contact_phone"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:hint="@string/phone_number"
-                                    android:inputType="phone"
-                                    android:drawableStart="@android:drawable/stat_sys_phone_call"
-                                    android:drawablePadding="12dp"
-                                    android:paddingVertical="16dp" />
-                            </com.google.android.material.textfield.TextInputLayout>
-
-                            <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="horizontal"
-                                android:weightSum="2">
-
-                                <Button
-                                    android:id="@+id/btn_pick_contact"
-                                    android:layout_width="0dp"
-                                    android:layout_height="56dp"
-                                    android:layout_weight="1"
-                                    android:layout_marginEnd="8dp"
-                                    android:text="@string/pick_contact"
-                                    android:textAllCaps="false"
-                                    android:drawableStart="@android:drawable/ic_menu_search"
-                                    android:drawablePadding="8dp"
-                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                    app:strokeColor="#1976D2"
-                                    android:textColor="#1976D2" />
-
-                                <Button
-                                    android:id="@+id/btn_save_contact"
-                                    android:layout_width="0dp"
-                                    android:layout_height="56dp"
-                                    android:layout_weight="1"
-                                    android:layout_marginStart="8dp"
-                                    android:text="@string/save"
-                                    android:textAllCaps="false"
-                                    android:drawableStart="@android:drawable/ic_menu_save"
-                                    android:drawablePadding="8dp"
-                                    android:backgroundTint="#1976D2" />
-                            </LinearLayout>
-                        </LinearLayout>
+                            android:text="3×"
+                            android:textSize="16sp"
+                            android:textColor="#1976D2"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
 
-                <!-- Start Detection Button - Prominent -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="8dp"
-                    app:cardBackgroundColor="#4CAF50">
-
-                    <LinearLayout
+                    <!-- Thin divider between items -->
+                    <View
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
+                        android:layout_height="1dp"
+                        android:background="#F5F5F5"
+                        android:layout_marginVertical="4dp"
+                        android:layout_marginStart="56dp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/protection_status"
-                            android:textSize="14sp"
-                            android:textColor="#E8F5E9"
-                            android:textStyle="bold"
-                            android:layout_marginBottom="12dp" />
-
-                        <Button
-                            android:id="@+id/btn_start_service"
-                            android:layout_width="match_parent"
-                            android:layout_height="64dp"
-                            android:text="@string/activate_protection"
-                            android:textAllCaps="false"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:drawableStart="@android:drawable/ic_media_play"
-                            android:drawablePadding="12dp"
-                            android:backgroundTint="@android:color/white"
-                            android:textColor="#4CAF50" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/detection_will_run_in_background_until_app_is_closed"
-                            android:textSize="12sp"
-                            android:textColor="#E8F5E9"
-                            android:layout_marginTop="8dp"
-                            android:alpha="0.9" />
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Detection Methods Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="4dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/emergency_triggers"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="#212121"
-                            android:layout_marginBottom="16dp" />
-
-                        <!-- Shake Gesture -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:background="@drawable/trigger_item_bg"
-                            android:padding="16dp"
-                            android:layout_marginBottom="12dp"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:text="🤝"
-                                android:textSize="32sp"
-                                android:gravity="center"
-                                android:layout_marginEnd="16dp" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/shake_detection1"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#212121" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/shake_phone_3_times_rapidly"
-                                    android:textSize="13sp"
-                                    android:textColor="#757575"
-                                    android:layout_marginTop="2dp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="3×"
-                                android:textSize="18sp"
-                                android:textColor="#1976D2"
-                                android:textStyle="bold"
-                                android:background="@drawable/count_badge_bg"
-                                android:paddingHorizontal="12dp"
-                                android:paddingVertical="4dp" />
-                        </LinearLayout>
-
-                        <!-- Silent Alert -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:background="@drawable/trigger_item_bg"
-                            android:padding="16dp"
-                            android:layout_marginBottom="12dp"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:text="🔇"
-                                android:textSize="32sp"
-                                android:gravity="center"
-                                android:layout_marginEnd="16dp" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/silent_alert"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#212121" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/press_volume_down_5_times"
-                                    android:textSize="13sp"
-                                    android:textColor="#757575"
-                                    android:layout_marginTop="2dp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Vol ↓"
-                                android:textSize="16sp"
-                                android:textColor="#FF5722"
-                                android:textStyle="bold"
-                                android:background="@drawable/count_badge_bg"
-                                android:paddingHorizontal="12dp"
-                                android:paddingVertical="4dp" />
-                        </LinearLayout>
-
-                        <!-- Police Alert -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:background="@drawable/trigger_item_bg"
-                            android:padding="16dp"
-                            android:gravity="center_vertical">
-
-                            <TextView
-                                android:layout_width="48dp"
-                                android:layout_height="48dp"
-                                android:text="🚓"
-                                android:textSize="32sp"
-                                android:gravity="center"
-                                android:layout_marginEnd="16dp" />
-
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical">
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/police_alert"
-                                    android:textSize="16sp"
-                                    android:textStyle="bold"
-                                    android:textColor="#212121" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="@string/press_volume_up_3_times"
-                                    android:textSize="13sp"
-                                    android:textColor="#757575"
-                                    android:layout_marginTop="2dp" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Vol ↑"
-                                android:textSize="16sp"
-                                android:textColor="#2196F3"
-                                android:textStyle="bold"
-                                android:background="@drawable/count_badge_bg"
-                                android:paddingHorizontal="12dp"
-                                android:paddingVertical="4dp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Info Banner -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="2dp"
-                    app:cardBackgroundColor="#FFF3E0">
-
+                    <!-- Silent Alert -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:padding="16dp"
+                        android:background="@android:color/white"
+                        android:paddingVertical="12dp"
+                        android:layout_marginBottom="4dp"
                         android:gravity="center_vertical">
+
+                        <TextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="🔇"
+                            android:textSize="28sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/silent_alert"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="#212121" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/press_volume_down_5_times"
+                                android:textSize="13sp"
+                                android:textColor="#757575"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="💡"
-                            android:textSize="24sp"
-                            android:layout_marginEnd="12dp" />
+                            android:text="Vol ↓"
+                            android:textSize="14sp"
+                            android:textColor="#FF5722"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Thin divider between items -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#F5F5F5"
+                        android:layout_marginVertical="4dp"
+                        android:layout_marginStart="56dp" />
+
+                    <!-- Police Alert -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:background="@android:color/white"
+                        android:paddingVertical="12dp"
+                        android:gravity="center_vertical">
 
                         <TextView
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:text="🚓"
+                            android:textSize="28sp"
+                            android:gravity="center"
+                            android:layout_marginEnd="16dp" />
+
+                        <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/protection_runs_continuously_in_the_background_ensure_all_permissions_are_enabled_for_optimal_performance"
-                            android:textSize="13sp"
-                            android:textColor="#E65100"
-                            android:lineSpacingExtra="2dp" />
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/police_alert"
+                                android:textSize="15sp"
+                                android:textStyle="bold"
+                                android:textColor="#212121" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/press_volume_up_3_times"
+                                android:textSize="13sp"
+                                android:textColor="#757575"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Vol ↑"
+                            android:textSize="14sp"
+                            android:textColor="#2196F3"
+                            android:textStyle="bold" />
                     </LinearLayout>
-                </androidx.cardview.widget.CardView>
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#E0E0E0"
+                    android:layout_marginVertical="8dp" />
+
+                <!-- Info Banner -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="#FFFDE7"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💡"
+                        android:textSize="20sp"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/protection_runs_continuously_in_the_background_ensure_all_permissions_are_enabled_for_optimal_performance"
+                        android:textSize="12sp"
+                        android:textColor="#F57F17"
+                        android:lineSpacingExtra="2dp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
