@@ -79,7 +79,7 @@ public class AlertRepository {
                 }
             });
 
-            String databaseUrl = "https://sentinel-####-default-rtdb.asia-southeast1.firebasedatabase.app";
+            String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
 
             try {
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
