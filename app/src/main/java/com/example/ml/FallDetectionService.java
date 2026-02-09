@@ -5,20 +5,14 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.List;
 
-
 public class FallDetectionService {
     private static final String TAG = "FallDetectionService";
-
     private final Context context;
     private FallDetectionModel model;
     private SensorDataCollector sensorCollector;
-
     private OnFallDetectedListener fallDetectedListener;
     private OnPredictionListener predictionListener;
-
-    // Thresholds
     private float fallConfidenceThreshold = 0.3f;
-
     private OnFallDetectedCallback fallDetectedCallback;
 
     public interface OnFallDetectedCallback {
@@ -43,15 +37,11 @@ public class FallDetectionService {
         this.context = context;
     }
 
-    /**
-     * Initialize the service
-     */
+
+     // Initialize the service
     public void initialize() throws IOException {
         Log.i(TAG, "Initializing Fall Detection Service...");
-
-        // Load model
         model = new FallDetectionModel(context);
-
         // Setup sensor collector
         sensorCollector = new SensorDataCollector(context);
         sensorCollector.setOnWindowCompleteListener(this::onSensorWindowComplete);
@@ -66,22 +56,20 @@ public class FallDetectionService {
         Log.i(TAG, "Service initialized successfully");
     }
 
-    /**
-     * Start fall detection
-     */
+
+     //Start fall detection
     public void start() {
         if (model == null) {
             Log.e(TAG, "Service not initialized!");
             return;
         }
-
         sensorCollector.startCollecting();
         Log.i(TAG, "Fall detection started");
     }
 
-    /**
-     * Stop fall detection
-     */
+
+     // Stop fall detection
+
     public void stop() {
         sensorCollector.stopCollecting();
         Log.i(TAG, "Fall detection stopped");
@@ -155,9 +143,9 @@ public class FallDetectionService {
     }
 
 
-    /**
-     * Clean up resources
-     */
+
+     // Clean up resources
+
     public void cleanup() {
         stop();
         if (model != null) {
