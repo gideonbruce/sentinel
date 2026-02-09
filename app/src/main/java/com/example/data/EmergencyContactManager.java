@@ -11,7 +11,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 import androidx.annotation.NonNull;
 
 public class EmergencyContactManager {
@@ -36,7 +35,8 @@ public class EmergencyContactManager {
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
         if (currentUser != null) {
             String userId = currentUser.getUid();
-            String databaseUrl = "https://sentinel-####-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+            String databaseUrl = "https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app";
             try {
                 FirebaseDatabase database = FirebaseDatabase.getInstance(databaseUrl);
                 databaseReference = database.getReference("users")
