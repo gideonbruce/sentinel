@@ -15,9 +15,8 @@ android {
         noCompress += "tflite"
     }
     namespace = "com.example.sentinel"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
+
 
     defaultConfig {
         applicationId = "com.example.sentinel"
@@ -28,6 +27,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments["clearPackageData"] = "true"
+
+        buildConfigField("String", "FIREBASE_DATABASE_URL", "\"https://sentinel-7b6b4-default-rtdb.asia-southeast1.firebasedatabase.app\"")
     }
 
     testOptions {
@@ -71,6 +72,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
