@@ -200,6 +200,23 @@ public class EmergencyAlertDialog {
         }
     }
 
+    private static void startAckTimeout(Context context, String phoneNumber) {
+        retryCount = 0;
+        scheduleAckCheck(context, phoneNumber);
+
+        // Register a one-time receiver to cancel retry when ACK arrives
+        context.registerReceiver(new BroadcastReceiver() {
+                                     @Override
+                                     public void onReceive(Context ctx, Intent intent) {
+                                         Log.i(TAG, "ACK received — cancelling retry timer");
+                                         ackHandler.removeCallbacksAndMessages(null);
+                                         retryCount = 0;
+                                         ctx.unregisterReceiver(this);
+                                     }
+                                 }, new android.content.IntentFilter("com.example.sentinel.ALERT_ACKNOWLEDGED"),
+                Context.RECEIVER_NOT_EXPORTED);
+    }
+
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
         // Validate phone number format
