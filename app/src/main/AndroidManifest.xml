@@ -124,6 +124,21 @@
                 android:value="Emergency shake detection for safety alerts" />
         </service>
 
+        <receiver android:name="com.example.core.SilentSmsReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".AckBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.sentinel.ALERT_ACKNOWLEDGED" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".SentinelWidgetProvider"
             android:exported="true">
