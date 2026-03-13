@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import androidx.core.content.ContextCompat;
 
+import com.example.core.SilentSmsReceiver;
 import com.example.data.EmergencyContactManager;
 import com.example.ai.AIMessageGenerator;
 import com.example.sentinel.R;
@@ -138,6 +139,7 @@ public class EmergencyAlertDialog {
         Log.d(TAG, "Setup contact dialog displayed");
     }
 
+    /*
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
         Log.i(TAG, "sendEmergencyAlert() called");
         Log.d(TAG, "Phone number: [REDACTED], Location: " + (location != null ? "available" : "null"));
@@ -172,6 +174,29 @@ public class EmergencyAlertDialog {
             Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
                     Toast.LENGTH_LONG).show();
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        }
+    }*/
+
+    private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
+        EmergencyContactManager contactManager = new EmergencyContactManager(context);
+        //build the SNTL_SOS silent trigger payload
+        String lat = location != null ? String.valueOf(location.getLatitude()) : "0";
+        String lng = location != null ? String.valueOf(location.getLongitude()) : "0";
+        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
+        // Silent trigger SMS — intercepted by SilentSmsReceiver on recipient's phone
+        String silentPayload = SilentSmsReceiver.SOS_PREFIX
+                + lat + "," + lng
+                + ":" + senderName;
+
+        try {
+            sendSMSWithDualSIMSupport(context, phoneNumber, silentPayload);
+            startAckTimeout(context, phoneNumber); // start 30s wait for ACK
+        } catch (SecurityException e) {
+            Toast.makeText(context, "SMS permission denied", Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, silentPayload);
+        } catch (Exception e) {
+            Toast.makeText(context, "Failed to send: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            openSMSAppAsFallback(context, phoneNumber, silentPayload);
         }
     }
 
