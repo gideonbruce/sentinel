@@ -42,6 +42,9 @@ public class EmergencyAlertDialog {
     private static View currentCustomView;
     private static android.os.CountDownTimer countDownTimer;
     private static boolean isCountdownActive = false;
+    private static android.os.Handler ackHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static int retryCount = 0;
+    private static final int MAX_RETRIES = 3;
 
     public interface OnAlertActionListener {
         void onAlertSent();
