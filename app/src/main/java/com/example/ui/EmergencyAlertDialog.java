@@ -217,6 +217,30 @@ public class EmergencyAlertDialog {
                 Context.RECEIVER_NOT_EXPORTED);
     }
 
+    private static void scheduleAckCheck(Context context, String phoneNumber) {
+        ackHandler.postDelayed(() -> {
+            if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                Log.w(TAG, "No ACK received — retry " + retryCount + " of " + MAX_RETRIES);
+                Toast.makeText(context, "No response — resending alert (" + retryCount + "/" + MAX_RETRIES + ")",
+                        Toast.LENGTH_SHORT).show();
+                try {
+                    EmergencyContactManager cm = new EmergencyContactManager(context);
+                    // Re-send with last known location — use cached value
+                    sendSMSWithDualSIMSupport(context, phoneNumber,
+                            com.example.core.SilentSmsReceiver.SOS_PREFIX + "resend:" + retryCount);
+                } catch (Exception e) {
+                    Log.e(TAG, "Retry send failed: " + e.getMessage());
+                }
+                scheduleAckCheck(context, phoneNumber); // schedule next retry
+            } else {
+                Log.e(TAG, "Max retries reached — contact did not acknowledge");
+                Toast.makeText(context, "⚠️ Contact has not responded to your alert",
+                        Toast.LENGTH_LONG).show();
+            }
+        }, 30_000); // wait 30 seconds
+    }
+
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
         // Validate phone number format
