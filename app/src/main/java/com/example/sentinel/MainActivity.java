@@ -44,8 +44,6 @@ import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
 import com.example.ui.EmergencyAlertDialog;
-import com.example.ml.FallDetectionResult;
-import com.example.ml.FallDetectionService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;

@@ -117,28 +117,11 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    //androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     annotationProcessor(libs.androidx.room.compiler)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
-    androidTestImplementation("androidx.test:runner:1.7.0")
-    androidTestImplementation("androidx.test:rules:1.7.0")
-    androidTestImplementation("androidx.test:core:1.7.0")
-    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+
     implementation("org.tensorflow:tensorflow-lite:2.17.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.5.0")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    //test orchestrator
-    androidTestUtil("androidx.test:orchestrator:1.6.1")
-
-    //mockito for mocking
-    androidTestImplementation("org.mockito:mockito-android:5.21.0")
-
-    //hamcrest matchers
-    //androidTestImplementation("org.hamcrest:hamcrest:3.0")
 }
