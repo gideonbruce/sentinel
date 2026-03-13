@@ -111,6 +111,8 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- SHAKE DETECTION SERVICE -->
@@ -131,13 +133,13 @@
             </intent-filter>
         </receiver>
 
-        <receiver
+        <!--<receiver
             android:name=".AckBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.example.sentinel.ALERT_ACKNOWLEDGED" />
             </intent-filter>
-        </receiver>
+        </receiver> -->
 
         <receiver
             android:name=".SentinelWidgetProvider"
