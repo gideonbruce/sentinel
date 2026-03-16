@@ -45,6 +45,8 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
+import ai.picovoice.porcupine.Porcupine;
+
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
     private static final int NOTIFICATION_ID = 1;
@@ -102,6 +104,14 @@ public class EmergencyShakeService extends Service {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
 
+        PorcupineManager porcupineManager = new PorcupineManager.Builder()
+                .setKeyword(Porcupine.BuiltInKeyword.ALEXA)
+                .setSensitivity(0.7f)
+                .build(context, keywordIndex -> {
+                    startFullSpeechConfirmation();
+                });
+        porcupineManager.start();
+        
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {showEmergencyAlertDialog("SILENT EMERGENCY");}
