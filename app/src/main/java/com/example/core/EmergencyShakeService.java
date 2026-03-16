@@ -46,6 +46,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
 import ai.picovoice.porcupine.Porcupine;
+import ai.picovoice.porcupine.PorcupineManager;
 
 public class EmergencyShakeService extends Service {
     private static final String CHANNEL_ID = "EmergencyShakeChannel";
@@ -111,7 +112,7 @@ public class EmergencyShakeService extends Service {
                     startFullSpeechConfirmation();
                 });
         porcupineManager.start();
-        
+
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {showEmergencyAlertDialog("SILENT EMERGENCY");}
@@ -122,6 +123,7 @@ public class EmergencyShakeService extends Service {
             @Override
             public void onPanicAlert() {showEmergencyAlertDialog("PANIC ALERT");}
         });
+
         initializeFallDetection();
 
         if (Settings.canDrawOverlays(this)) {
