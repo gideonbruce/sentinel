@@ -55,10 +55,17 @@ public class VoiceDetector {
             return;
         }
 
+        String keywordPath = copyAssetToInternalStorage(KEYWORD_FILE_NAME);
+        if (keywordPath == null) {
+            Log.e(TAG, "Failed to load keyword file '" + KEYWORD_FILE_NAME);
+            return;
+        }
+
         try {
             porcupineManager = new PorcupineManager.Builder()
-                    .setKeyword(Porcupine.BuiltInKeyword.ALEXA) // swap for custom .ppn file if available
-                    .setSensitivity(0.7f)
+                    .setAccessKey(ACCESS_KEY)
+                    .setKeywordPath(keywordPath) // swap for custom .ppn file if available
+                    .setSensitivity(SENSITIVITY)
                     .build(context, keywordIndex -> {
                         // Called on a background thread by Porcupine
                         Log.i(TAG, "Keyword detected — index: " + keywordIndex);
@@ -67,7 +74,7 @@ public class VoiceDetector {
 
             porcupineManager.start();
             isListening = true;
-            Log.i(TAG, "VoiceDetector started");
+            Log.i(TAG, "VoiceDetector started - keyword: " + KEYWORD_FILE_NAME);
 
         } catch (PorcupineActivationException e) {
             Log.e(TAG, "Porcupine activation error (invalid/expired key): " + e.getMessage());
@@ -96,11 +103,7 @@ public class VoiceDetector {
             porcupineManager = null;
         }
 
-        if (speechRecognizer != null) {
-            speechRecognizer.destroy();
-            speechRecognizer = null;
-        }
-
+        destroySpeechRecognizer();
         Log.i(TAG, "VoiceDetector stopped");
     }
 
