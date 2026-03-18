@@ -21,11 +21,11 @@ import ai.picovoice.porcupine.PorcupineManager;
 import ai.picovoice.porcupine.PorcupineManagerErrorCallback;
 
 public class VoiceDetector {
-
     private static final String TAG = "VoiceDetector";
-
-    // Cooldown prevents rapid re-triggering after one detection
+    private static final String KEYWORD_FILE_NAME = "sentinel_en_android_v4_0_0.ppn";
+    private static final String ACCESS_KEY = "9elovMoeXn7uDPPKwSQX3Ns2U9hMir1teWB5C7E9Y/YWrh0hkHd/Xw==";
     private static final long TRIGGER_COOLDOWN_MS = 10_000;
+    private static final float SENSITIVITY = 0.6F;
 
     public interface OnVoiceEmergencyListener {
         void onEmergencyDetected(String emergencyType);
@@ -34,7 +34,6 @@ public class VoiceDetector {
     private final Context context;
     private final OnVoiceEmergencyListener listener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-
     private PorcupineManager porcupineManager;
     private SpeechRecognizer speechRecognizer;
     private boolean isListening = false;
