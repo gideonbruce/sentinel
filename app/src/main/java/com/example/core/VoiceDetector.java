@@ -9,6 +9,11 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import ai.picovoice.porcupine.Porcupine;
@@ -64,13 +69,13 @@ public class VoiceDetector {
         try {
             porcupineManager = new PorcupineManager.Builder()
                     .setAccessKey(ACCESS_KEY)
-                    .setKeywordPath(keywordPath) // swap for custom .ppn file if available
+                    .setKeywordPath(keywordPath)
                     .setSensitivity(SENSITIVITY)
+                    .setErrorCallback(error -> Log.e(TAG, "Porcupine runtime error: " + error.getMessage()))
                     .build(context, keywordIndex -> {
-                        // Called on a background thread by Porcupine
                         Log.i(TAG, "Keyword detected — index: " + keywordIndex);
                         mainHandler.post(this::onKeywordDetected);
-                    }, errorCallback);
+                    });
 
             porcupineManager.start();
             isListening = true;
@@ -138,10 +143,9 @@ public class VoiceDetector {
             @Override
             public void onResults(Bundle results) {
                 isConfirming = false;
-                ArrayList<String> matches = results
-                        .getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
-                    Log.d(TAG, "Speech results: " + matches);
+                    Log.d(TAG, "Heard: " + matches);
                     String emergencyType = classifyPhrase(matches);
                     if (emergencyType != null) {
                         lastTriggerTime = System.currentTimeMillis();
@@ -170,19 +174,13 @@ public class VoiceDetector {
             @Override public void onEvent(int eventType, Bundle params) {}
         });
 
-        Intent recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
-        // Keep listening window short — this is confirmation, not dictation
-        recognizerIntent.putExtra(
-                RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L);
-        recognizerIntent.putExtra(
-                RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L);
-        // Prefer on-device recognition — no internet needed
-        recognizerIntent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
-
-        speechRecognizer.startListening(recognizerIntent);
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L);
+        intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+        speechRecognizer.startListening(intent);
     }
 
     // ─── Phrase classification ────────────────────────────────────────────────
@@ -223,6 +221,29 @@ public class VoiceDetector {
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
+
+    // asset helper
+    private String copyAssetToInternalStorage(String fileName) {
+        File outFile = new File(context.getFilesDir(), fileName);
+        if (outFile.exists()) {
+            Log.d(TAG, "Using cached keyword file: " + outFile.getAbsolutePath());
+            return outFile.getAbsolutePath();
+        }
+        try (InputStream in = context.getAssets().open(fileName);
+             FileOutputStream out = new FileOutputStream(outFile)) {
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+            Log.d(TAG, "Keyword file copied to: " + outFile.getAbsolutePath());
+            return outFile.getAbsolutePath();
+        } catch (IOException e) {
+            Log.e(TAG, "Could not copy '" + fileName + "' from assets: " + e.getMessage());
+            return null;
+        }
+
+    }
 
     private void destroySpeechRecognizer() {
         if (speechRecognizer != null) {
