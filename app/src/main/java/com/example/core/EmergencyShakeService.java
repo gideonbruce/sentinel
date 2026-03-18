@@ -182,6 +182,14 @@ public class EmergencyShakeService extends Service {
                         isFallDetectionEnabled = false;
                     }
                     Log.d("EmergencyService", "Settings updated - shake sensitivity: " + getShakeSensitivityThreshold() + ", fall detection: " + isFallDetectionEnabled);
+
+                    boolean voiceDetectionEnabled = prefs.getBoolean("voice_detection_enabled", false);
+                    if (voiceDetectionEnabled && voiceDetector == null) {
+                        initializeVoiceDetector();
+                    } else if (!voiceDetectionEnabled && voiceDetector != null) {
+                        voiceDetector.stop();
+                        voiceDetector = null;
+                    }
                 }
             }
         };
@@ -632,6 +640,10 @@ public class EmergencyShakeService extends Service {
         }
         if (smsConfirmReceiver != null) {
             unregisterReceiver(smsConfirmReceiver);
+        }
+        if (voiceDetector != null) {
+            voiceDetector.stop();
+            voiceDetector = null;
         }
         if (overlayView != null && windowManager != null) {
             try {
