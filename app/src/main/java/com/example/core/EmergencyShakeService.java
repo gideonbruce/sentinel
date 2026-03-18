@@ -77,6 +77,7 @@ public class EmergencyShakeService extends Service {
     private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
     private FallDetectionService fallDetectionService;
     private boolean isFallDetectionEnabled = false;
+    private VoiceDetector voiceDetector;
 
     @Override
     public void onCreate() {
@@ -105,13 +106,10 @@ public class EmergencyShakeService extends Service {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
 
-        PorcupineManager porcupineManager = new PorcupineManager.Builder()
-                .setKeyword(Porcupine.BuiltInKeyword.ALEXA)
-                .setSensitivity(0.7f)
-                .build(context, keywordIndex -> {
-                    startFullSpeechConfirmation();
-                });
-        porcupineManager.start();
+        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
+        if (voiceEnabled) {
+            initializeVoiceDetector();
+        }
 
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
