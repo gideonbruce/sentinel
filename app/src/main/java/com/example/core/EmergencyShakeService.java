@@ -210,6 +210,23 @@ public class EmergencyShakeService extends Service {
         }
     }
 
+    private void initializeVoiceDetector() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("EmergencyService", "RECORD_AUDIO permission not granted — voice detection skipped");
+            return;
+        }
+        try {
+            voiceDetector = new VoiceDetector(this, emergencyType -> {
+                Log.i("EmergencyService", "Voice emergency detected: " + emergencyType);
+                showEmergencyAlertDialog(emergencyType);
+            });
+            voiceDetector.start();
+            Log.i("EmergencyService", "Voice detector started");
+        } catch (Exception e) {
+            Log.e("EmergencyService", "Failed to start voice detector: " + e.getMessage());
+        }
+    }
+
     private void reregisterSensor() {
         if (sensorManager != null && accelerometer != null && shakeDetector != null && isShakeDetectionEnabled()) {
             sensorManager.unregisterListener(shakeDetector);
