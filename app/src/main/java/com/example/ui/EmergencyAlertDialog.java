@@ -142,7 +142,6 @@ public class EmergencyAlertDialog {
         Log.d(TAG, "Setup contact dialog displayed");
     }
 
-    /*
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
         Log.i(TAG, "sendEmergencyAlert() called");
         Log.d(TAG, "Phone number: [REDACTED], Location: " + (location != null ? "available" : "null"));
@@ -178,8 +177,9 @@ public class EmergencyAlertDialog {
                     Toast.LENGTH_LONG).show();
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
         }
-    }*/
+    }
 
+    /*
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
         //build the SNTL_SOS silent trigger payload
@@ -202,6 +202,7 @@ public class EmergencyAlertDialog {
             openSMSAppAsFallback(context, phoneNumber, silentPayload);
         }
     }
+    */
 
     private static void startAckTimeout(Context context, String phoneNumber) {
         retryCount = 0;
