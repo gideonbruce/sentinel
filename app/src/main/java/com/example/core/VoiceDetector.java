@@ -9,14 +9,12 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import ai.picovoice.porcupine.Porcupine;
 import ai.picovoice.porcupine.PorcupineActivationException;
 import ai.picovoice.porcupine.PorcupineActivationLimitException;
 import ai.picovoice.porcupine.PorcupineActivationRefusedException;
@@ -50,22 +48,17 @@ public class VoiceDetector {
         this.listener = listener;
     }
 
-    // ─── Start / Stop ────────────────────────────────────────────────────────
-
     public void start() {
         if (isListening) return;
-
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             Log.w(TAG, "Speech recognition not available on this device");
             return;
         }
-
         String keywordPath = copyAssetToInternalStorage(KEYWORD_FILE_NAME);
         if (keywordPath == null) {
             Log.e(TAG, "Failed to load keyword file '" + KEYWORD_FILE_NAME);
             return;
         }
-
         try {
             porcupineManager = new PorcupineManager.Builder()
                     .setAccessKey(ACCESS_KEY)
@@ -76,7 +69,6 @@ public class VoiceDetector {
                         Log.i(TAG, "Keyword detected — index: " + keywordIndex);
                         mainHandler.post(this::onKeywordDetected);
                     });
-
             porcupineManager.start();
             isListening = true;
             Log.i(TAG, "VoiceDetector started - keyword: " + KEYWORD_FILE_NAME);
@@ -97,7 +89,6 @@ public class VoiceDetector {
     public void stop() {
         isListening = false;
         isConfirming = false;
-
         if (porcupineManager != null) {
             try {
                 porcupineManager.stop();
@@ -107,39 +98,28 @@ public class VoiceDetector {
             }
             porcupineManager = null;
         }
-
         destroySpeechRecognizer();
         Log.i(TAG, "VoiceDetector stopped");
     }
 
-    // ─── Stage 1: Keyword detected ───────────────────────────────────────────
-
     private void onKeywordDetected() {
         long now = System.currentTimeMillis();
-
-        // Ignore if still in cooldown from a previous trigger
         if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
             Log.d(TAG, "Keyword detected but in cooldown — ignoring");
             return;
         }
-
-        // Ignore if already in the middle of confirming a phrase
         if (isConfirming) {
             Log.d(TAG, "Keyword detected but already confirming — ignoring");
             return;
         }
-
         Log.i(TAG, "Keyword confirmed — starting phrase confirmation");
         isConfirming = true;
         startPhraseConfirmation();
     }
 
-    // ─── Stage 2: Full phrase confirmation ───────────────────────────────────
-
     private void startPhraseConfirmation() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
-
             @Override
             public void onResults(Bundle results) {
                 isConfirming = false;
@@ -157,14 +137,12 @@ public class VoiceDetector {
                 }
                 destroySpeechRecognizer();
             }
-
             @Override
             public void onError(int error) {
                 isConfirming = false;
                 Log.w(TAG, "Speech recognition error: " + speechErrorString(error));
                 destroySpeechRecognizer();
             }
-
             @Override public void onReadyForSpeech(Bundle params) { Log.d(TAG, "Ready for speech"); }
             @Override public void onBeginningOfSpeech() {}
             @Override public void onRmsChanged(float rmsdB) {}
@@ -173,7 +151,6 @@ public class VoiceDetector {
             @Override public void onPartialResults(Bundle partialResults) {}
             @Override public void onEvent(int eventType, Bundle params) {}
         });
-
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
@@ -182,8 +159,6 @@ public class VoiceDetector {
         intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
         speechRecognizer.startListening(intent);
     }
-
-    // ─── Phrase classification ────────────────────────────────────────────────
 
     /**
      * Maps spoken phrases to emergency types.
@@ -210,7 +185,7 @@ public class VoiceDetector {
                 return "EMERGENCY";
             }
         }
-        return null; // No match — don't trigger
+        return null;
     }
 
     private boolean containsAny(String phrase, String... keywords) {
@@ -219,8 +194,6 @@ public class VoiceDetector {
         }
         return false;
     }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     // asset helper
     private String copyAssetToInternalStorage(String fileName) {
@@ -242,7 +215,6 @@ public class VoiceDetector {
             Log.e(TAG, "Could not copy '" + fileName + "' from assets: " + e.getMessage());
             return null;
         }
-
     }
 
     private void destroySpeechRecognizer() {
