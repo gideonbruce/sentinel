@@ -133,4 +133,6 @@
     <string name="account">Account</string>
     <string name="about">About</string>
     <string name="help">Help</string>
+    <string name="voice_activation">Voice activation</string>
+    <string name="say_sentinel_to_trigger_an_alert">Say \'Sentinel\' to trigger an alert</string>
 </resources>

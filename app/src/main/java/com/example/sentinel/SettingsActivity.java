@@ -48,6 +48,7 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchLocationSharing;
     private Switch switchAIMessages;
     private Switch switchAutoSend;
+    private Switch switchVoiceDetection;
     private SeekBar seekShakeSensitivity;
     private TextView tvSensitivityValue;
     private TextView tvCountdownValue;
@@ -111,12 +112,8 @@ public class SettingsActivity extends AppCompatActivity {
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
         switchAIMessages = findViewById(R.id.switch_ai_messages);
         switchFallDetection = findViewById(R.id.switch_fall_detection);
+        switchVoiceDetection = findViewById(R.id.switch_voice_detection);
         switchAutoSend = findViewById(R.id.switch_auto_send);
-        //layoutApiKey = findViewById(R.id.layout_api_key);
-        //etApiKey = findViewById(R.id.et_api_key);
-        //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
-        //securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
-        //btnSaveApiKey.setOnClickListener(v -> saveApiKey());
 
         setupListeners();
     }
