@@ -108,13 +108,18 @@ public class VoiceDetector {
             Log.d(TAG, "Keyword detected but in cooldown — ignoring");
             return;
         }
-        if (isConfirming) {
+        lastTriggerTime = now;
+        Log.i(TAG, "'sentinel' confirmed - triggering emergency alert");
+
+        //firing directly
+        listener.onEmergencyDetected("EMERGENCY");
+        /*if (isConfirming) {
             Log.d(TAG, "Keyword detected but already confirming — ignoring");
             return;
         }
         Log.i(TAG, "Keyword confirmed — starting phrase confirmation");
         isConfirming = true;
-        startPhraseConfirmation();
+        startPhraseConfirmation();*/
     }
 
     private void startPhraseConfirmation() {
