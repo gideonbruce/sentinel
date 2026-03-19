@@ -150,9 +150,7 @@ public class SettingsActivity extends AppCompatActivity {
             //notifying service of settings change
             Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
             sendBroadcast(intent);
-            Toast.makeText(this,
-                    isChecked ? "Fall detection enabled" : "Fall detection disabled",
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, isChecked ? "Fall detection enabled" : "Fall detection disabled", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -257,7 +255,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchSound.setChecked(prefs.getBoolean("sound_enabled", true));
         switchLocationSharing.setChecked(prefs.getBoolean("location_sharing_enabled", true));
         switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
-        switchVoiceDetection.setChecked(prefs.getBoolean("voice_detection_enabled", false));
+        switchVoiceDetection.setChecked(prefs.getBoolean("voice_detection_enabled", true));
         switchAutoSend.setChecked(prefs.getBoolean("auto_send_enabled", false));
         // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
@@ -289,13 +287,6 @@ public class SettingsActivity extends AppCompatActivity {
         //loading ai settings
         boolean useAI = prefs.getBoolean("use_ai_messages", false);
         switchAIMessages.setChecked(useAI);
-        //layoutApiKey.setVisibility(useAI ? View.VISIBLE : View.GONE);
-        //String existingKey = securePrefs.getString("gemini_api_key", "");
-        //if (!existingKey.isEmpty()) {
-        //    // Show masked version
-        //    String masked = "••••••••" + existingKey.substring(Math.max(0, existingKey.length() - 4));
-        //    etApiKey.setText(masked);
-        //}
     }
 
     private void pickContact() {
