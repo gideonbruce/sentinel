@@ -182,6 +182,12 @@ public class SettingsActivity extends AppCompatActivity {
             sendBroadcast(intent);
             Toast.makeText(this, isChecked ? "Fall detection on" : "Fall detection off", Toast.LENGTH_SHORT).show();
         });
+        switchVoiceDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("voice_detection_enabled", isChecked).apply();
+            Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+            sendBroadcast(intent);
+            Toast.makeText(this, isChecked ? "Voice detection enabled" : "Voice detection disabled", Toast.LENGTH_SHORT).show();
+        });
         seekShakeSensitivity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -251,6 +257,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchSound.setChecked(prefs.getBoolean("sound_enabled", true));
         switchLocationSharing.setChecked(prefs.getBoolean("location_sharing_enabled", true));
         switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
+        switchVoiceDetection.setChecked(prefs.getBoolean("voice_detection_enabled", false));
         switchAutoSend.setChecked(prefs.getBoolean("auto_send_enabled", false));
         // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
