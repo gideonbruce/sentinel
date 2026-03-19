@@ -319,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION
+                    Manifest.permission.RECORD_AUDIO
                     //Manifest.permission.ACCESS_BACKGROUND_LOCATION
             };
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -337,6 +338,7 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION
+                    Manifest.permission.RECORD_AUDIO
             };
         }
         boolean allGranted = true;
@@ -583,6 +585,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (allGranted) {
                 Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show();
+                sendBroadcast(new Intent("com.example.sentinel.SETTINGS_CHANGED"));
                 // Now request background location if needed
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     checkBackgroundLocationPermission();
