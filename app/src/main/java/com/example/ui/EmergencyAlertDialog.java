@@ -171,9 +171,20 @@ public class EmergencyAlertDialog {
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
         } catch (Exception e) {
             Log.e(TAG, "Exception while sending SMS: " + e.getMessage(), e);
-            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(), Toast.LENGTH_LONG).show();
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
+        }
+        //sending to secondary contact
+        if (contactManager.hasSecondaryContact()) {
+            String secondaryPhone = contactManager.getSecondaryContactPhone();
+            Log.d(TAG, "Sending alert to secondary contact");
+            try {
+                sendSMSWithDualSIMSupport(context, secondaryPhone, finalMessage);
+                Log.i(TAG, "Alert sent to secondary contact");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to send to secondary contact: " + e.getMessage(), e);
+                // No fallback dialog for secondary — primary already handled it
+            }
         }
     }
 
