@@ -220,10 +220,11 @@ public class EmergencyContactManager {
      * Use this when signing out - keeps Firebase data intact for next login.
      */
     public void clearEmergencyContactLocal() {
-        // Clear from SharedPreferences only
         prefs.edit()
                 .remove(KEY_CONTACT_NAME)
                 .remove(KEY_CONTACT_PHONE)
+                .remove(KEY_CONTACT2_NAME)
+                .remove(KEY_CONTACT2_PHONE)
                 .remove(KEY_EMERGENCY_MESSAGE)
                 .apply();
 
