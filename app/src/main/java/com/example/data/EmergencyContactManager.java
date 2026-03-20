@@ -56,6 +56,19 @@ public class EmergencyContactManager {
         }
     }
 
+    public void saveSecondaryContact(String name, String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            Log.e(TAG, "Cannot save secondary contact — phone number is empty");
+            return;
+        }
+        prefs.edit()
+                .putString(KEY_CONTACT2_NAME, name != null ? name : "")
+                .putString(KEY_CONTACT2_PHONE, phoneNumber)
+                .apply();
+        Log.d(TAG, "Secondary contact saved locally: " + name);
+        syncSecondaryContactToFirebase(name, phoneNumber);
+    }
+
     public void saveEmergencyContact(String name, String phoneNumber) {
         Log.d(TAG, "saveEmergencyContact() called");
         // Validate inputs
@@ -382,9 +395,99 @@ public class EmergencyContactManager {
         }
     }
 
+    public String getSecondaryContactName() {
+        String name = prefs.getString(KEY_CONTACT2_NAME, "");
+        return name.isEmpty() ? null : name;
+    }
+
+    public String getSecondaryContactPhone() {
+        String phone = prefs.getString(KEY_CONTACT2_PHONE, "");
+        return phone.isEmpty() ? null : phone;
+    }
+
+    public boolean hasSecondaryContact() {
+        String phone = getSecondaryContactPhone();
+        return phone != null && !phone.isEmpty();
+    }
+
     public void resetEmergencyMessage() {
         Log.d(TAG, "resetEmergencyMessage() - resetting to default");
         saveEmergencyMessage(DEFAULT_MESSAGE);
+    }
+
+    public void removeSecondaryContact() {
+        prefs.edit()
+                .remove(KEY_CONTACT2_NAME)
+                .remove(KEY_CONTACT2_PHONE)
+                .apply();
+        Log.d(TAG, "Secondary contact removed locally");
+        if (databaseReference != null) {
+            DatabaseReference userRef = databaseReference.getParent();
+            if (userRef != null) {
+                userRef.child("emergency_contact2").removeValue()
+                        .addOnSuccessListener(v -> Log.d(TAG, "Secondary contact removed from Firebase"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to remove from Firebase: " + e.getMessage()));
+            }
+        }
+    }
+
+    private void syncSecondaryContactToFirebase(String name, String phoneNumber) {
+        if (databaseReference != null) {
+            DatabaseReference userRef = databaseReference.getParent();
+            if (userRef != null) {
+                EmergencyContact contact = new EmergencyContact(name, phoneNumber);
+                userRef.child("emergency_contact2").setValue(contact)
+                        .addOnSuccessListener(v -> Log.d(TAG, "Secondary contact synced to Firebase"))
+                        .addOnFailureListener(e -> Log.e(TAG, "Failed to sync secondary contact: " + e.getMessage()));
+            }
+        }
+    }
+
+    public void loadSecondaryContactFromFirebase(ContactLoadCallback callback) {
+        String localName  = getSecondaryContactName();
+        String localPhone = getSecondaryContactPhone();
+
+        if (databaseReference == null) {
+            if (callback != null) callback.onLoaded(localName, localPhone);
+            return;
+        }
+
+        DatabaseReference userRef = databaseReference.getParent();
+        if (userRef == null) {
+            if (callback != null) callback.onLoaded(localName, localPhone);
+            return;
+        }
+
+        userRef.child("emergency_contact2").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    EmergencyContact contact = snapshot.getValue(EmergencyContact.class);
+                    if (contact != null && contact.phoneNumber != null && !contact.phoneNumber.isEmpty()) {
+                        prefs.edit()
+                                .putString(KEY_CONTACT2_NAME, contact.name != null ? contact.name : "")
+                                .putString(KEY_CONTACT2_PHONE, contact.phoneNumber)
+                                .apply();
+                        Log.d(TAG, "Secondary contact loaded from Firebase: " + contact.name);
+                        if (callback != null) callback.onLoaded(contact.name, contact.phoneNumber);
+                    } else {
+                        if (callback != null) callback.onLoaded(localName, localPhone);
+                    }
+                } else {
+                    // No secondary contact in Firebase — sync local if exists
+                    if (localPhone != null && !localPhone.isEmpty()) {
+                        syncSecondaryContactToFirebase(localName, localPhone);
+                    }
+                    if (callback != null) callback.onLoaded(localName, localPhone);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Failed to load secondary contact: " + error.getMessage());
+                if (callback != null) callback.onLoaded(localName, localPhone);
+            }
+        });
     }
 
     // Callback interface
