@@ -20,6 +20,8 @@ public class EmergencyContactManager {
     private static final String KEY_CONTACT_PHONE = "emergency_contact_phone";
     private static final String KEY_EMERGENCY_MESSAGE = "emergency_message";
     private static final String DEFAULT_MESSAGE = "🚨 EMERGENCY! I need help! Please check on me immediately.";
+    private static final String KEY_CONTACT2_NAME  = "emergency_contact2_name";
+    private static final String KEY_CONTACT2_PHONE = "emergency_contact2_phone";
     private final SharedPreferences prefs;
     private final FirebaseAuth firebaseAuth;
     private DatabaseReference databaseReference;
