@@ -143,8 +143,6 @@ public class EmergencyAlertDialog {
     }
 
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
-        Log.i(TAG, "sendEmergencyAlert() called");
-        Log.d(TAG, "Phone number: [REDACTED], Location: " + (location != null ? "available" : "null"));
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
         String customMessage = contactManager.getEmergencyMessage();
         Log.d(TAG, "Custom message retrieved: " + (customMessage != null ? "yes" : "null"));
