@@ -160,7 +160,9 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable, adding unavailable message");
             message.append("\n\n(Location unavailable)");
         }
-        String finalMessage = message.toString();
+        String plainMessage = message.toString();
+        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
+        String finalMessage = SilentSmsReceiver.SOS_PREFIX + senderName + "\n" + plainMessage;
         Log.d(TAG, "Final message length: " + finalMessage.length() + " characters");
         try {
             Log.d(TAG, "Attempting to send SMS with dual SIM support");
@@ -187,31 +189,6 @@ public class EmergencyAlertDialog {
             }
         }
     }
-
-    /*
-    private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
-        EmergencyContactManager contactManager = new EmergencyContactManager(context);
-        //build the SNTL_SOS silent trigger payload
-        String lat = location != null ? String.valueOf(location.getLatitude()) : "0";
-        String lng = location != null ? String.valueOf(location.getLongitude()) : "0";
-        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
-        // Silent trigger SMS — intercepted by SilentSmsReceiver on recipient's phone
-        String silentPayload = SilentSmsReceiver.SOS_PREFIX
-                + lat + "," + lng
-                + ":" + senderName;
-
-        try {
-            sendSMSWithDualSIMSupport(context, phoneNumber, silentPayload);
-            startAckTimeout(context, phoneNumber); // start 30s wait for ACK
-        } catch (SecurityException e) {
-            Toast.makeText(context, "SMS permission denied", Toast.LENGTH_LONG).show();
-            openSMSAppAsFallback(context, phoneNumber, silentPayload);
-        } catch (Exception e) {
-            Toast.makeText(context, "Failed to send: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            openSMSAppAsFallback(context, phoneNumber, silentPayload);
-        }
-    }
-    */
 
     private static void startAckTimeout(Context context, String phoneNumber) {
         retryCount = 0;
@@ -622,7 +599,6 @@ public class EmergencyAlertDialog {
     }
 
     private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
-        Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
         StringBuilder message = new StringBuilder();
         message.append(customMessage);
         if (location != null) {
@@ -637,7 +613,10 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable");
             message.append("\n\n(Location unavailable)");
         }
-        String finalMessage = message.toString();
+        String plainMessage = message.toString();
+        EmergencyContactManager contactManager = new EmergencyContactManager(context);
+        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
+        String finalMessage = SilentSmsReceiver.SOS_PREFIX + senderName + "\n" + plainMessage;
         try {
             Log.d(TAG, "Attempting to send SMS with custom AI message");
             sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
