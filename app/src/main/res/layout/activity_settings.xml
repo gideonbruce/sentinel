@@ -179,6 +179,176 @@
             android:layout_height="1dp"
             android:background="#E0E0E0" />
 
+        <!-- Secondary Emergency Contact Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Secondary Contact"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Optional"
+                    android:textSize="12sp"
+                    android:textColor="#FFFFFF"
+                    android:background="#9E9E9E"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="2dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alert will also be sent to this contact"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Secondary Contact Display (shown when contact exists) -->
+            <LinearLayout
+                android:id="@+id/contact2_display"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="#FAFAFA"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:text="👤"
+                        android:textSize="24sp"
+                        android:gravity="center"
+                        android:layout_marginEnd="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tv_contact2_name_display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Secondary Contact"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#212121" />
+
+                        <TextView
+                            android:id="@+id/tv_contact2_phone_display"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+1234567890"
+                            android:textSize="14sp"
+                            android:textColor="#757575" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btn_edit_contact2"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_edit"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Edit secondary contact" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_remove_contact2"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Remove Secondary Contact"
+                    android:textAllCaps="false"
+                    android:textColor="#F44336"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="#F44336" />
+            </LinearLayout>
+
+            <!-- Secondary Contact Form (shown when no contact set) -->
+            <LinearLayout
+                android:id="@+id/contact2_form"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusBottomEnd="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_contact2_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Contact name (optional)"
+                        android:inputType="textPersonName"
+                        android:drawableStart="@android:drawable/ic_menu_myplaces"
+                        android:drawablePadding="12dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:boxBackgroundMode="outline"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusBottomEnd="8dp">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_contact2_phone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Phone number"
+                        android:inputType="phone"
+                        android:drawableStart="@android:drawable/stat_sys_phone_call"
+                        android:drawablePadding="12dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Button
+                    android:id="@+id/btn_save_contact2"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="Save Secondary Contact"
+                    android:textAllCaps="false"
+                    android:drawableStart="@android:drawable/ic_menu_save"
+                    android:drawablePadding="8dp"
+                    android:backgroundTint="#1976D2" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Emergency Message Section -->
         <LinearLayout
             android:layout_width="match_parent"
