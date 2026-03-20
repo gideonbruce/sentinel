@@ -22,6 +22,11 @@
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="true" />
     <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="true" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <application
         android:allowBackup="true"
@@ -107,6 +112,8 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <!-- SHAKE DETECTION SERVICE -->
@@ -119,6 +126,21 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Emergency shake detection for safety alerts" />
         </service>
+
+        <receiver android:name="com.example.core.SilentSmsReceiver"
+            android:exported="true">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!--<receiver
+            android:name=".AckBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.sentinel.ALERT_ACKNOWLEDGED" />
+            </intent-filter>
+        </receiver> -->
 
         <receiver
             android:name=".SentinelWidgetProvider"

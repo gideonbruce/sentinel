@@ -74,6 +74,7 @@ public class EmergencyShakeService extends Service {
     private final Handler sensorRestartHandler = new Handler(Looper.getMainLooper());
     private FallDetectionService fallDetectionService;
     private boolean isFallDetectionEnabled = false;
+    private VoiceDetector voiceDetector;
 
     @Override
     public void onCreate() {
@@ -102,6 +103,11 @@ public class EmergencyShakeService extends Service {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
 
+        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
+        if (voiceEnabled) {
+            initializeVoiceDetector();
+        }
+
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {showEmergencyAlertDialog("SILENT EMERGENCY");}
@@ -112,6 +118,7 @@ public class EmergencyShakeService extends Service {
             @Override
             public void onPanicAlert() {showEmergencyAlertDialog("PANIC ALERT");}
         });
+
         initializeFallDetection();
 
         if (Settings.canDrawOverlays(this)) {
@@ -172,6 +179,14 @@ public class EmergencyShakeService extends Service {
                         isFallDetectionEnabled = false;
                     }
                     Log.d("EmergencyService", "Settings updated - shake sensitivity: " + getShakeSensitivityThreshold() + ", fall detection: " + isFallDetectionEnabled);
+
+                    boolean voiceDetectionEnabled = prefs.getBoolean("voice_detection_enabled", false);
+                    if (voiceDetectionEnabled && voiceDetector == null) {
+                        initializeVoiceDetector();
+                    } else if (!voiceDetectionEnabled && voiceDetector != null) {
+                        voiceDetector.stop();
+                        voiceDetector = null;
+                    }
                 }
             }
         };
@@ -198,6 +213,92 @@ public class EmergencyShakeService extends Service {
                 isFallDetectionEnabled = false;
             }
         }
+    }
+
+    /*
+    private void initializeVoiceDetector() {
+        Log.d("EmergencyService", "initializeVoiceDetector() called");
+        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
+        Log.d("EmergencyService", "voice_detection_enabled = " + voiceEnabled);
+
+        if (!voiceEnabled) {
+            Log.d("EmergencyService", "Voice detection is disabled — skipping");
+            return;
+        }
+
+        boolean hasAudioPermission = ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        Log.d("EmergencyService", "RECORD_AUDIO granted = " + hasAudioPermission);
+
+        if (!hasAudioPermission) {
+            Log.w("EmergencyService", "RECORD_AUDIO not granted — voice detection skipped");
+            return;
+        }
+
+        try {
+            // List all files in assets to confirm .ppn is there
+            String[] assetFiles = getAssets().list("");
+            Log.d("EmergencyService", "Assets contents: " + java.util.Arrays.toString(assetFiles));
+
+            voiceDetector = new VoiceDetector(this, emergencyType -> {
+                Log.i("EmergencyService", "Voice emergency: " + emergencyType);
+                showEmergencyAlertDialog(emergencyType);
+            });
+            voiceDetector.start();
+            Log.i("EmergencyService", "VoiceDetector started successfully");
+        } catch (Exception e) {
+            Log.e("EmergencyService", "Failed to start voice detector: " + e.getMessage(), e);
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("EmergencyService", "RECORD_AUDIO permission not granted — voice detection skipped");
+            return;
+        }
+        try {
+            voiceDetector = new VoiceDetector(this, emergencyType -> {
+                Log.i("EmergencyService", "Voice emergency detected: " + emergencyType);
+                showEmergencyAlertDialog(emergencyType);
+            });
+            voiceDetector.start();
+            Log.i("EmergencyService", "Voice detector started");
+        } catch (Exception e) {
+            Log.e("EmergencyService", "Failed to start voice detector: " + e.getMessage());
+        }
+    }
+    */
+
+    private void initializeVoiceDetector() {
+        Log.d("EmergencyService", "initializeVoiceDetector() called");
+
+        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
+        Log.d("EmergencyService", "voice_detection_enabled = " + voiceEnabled);
+        if (!voiceEnabled) {
+            Log.d("EmergencyService", "Voice detection disabled — skipping");
+            return;
+        }
+
+        boolean hasAudioPermission = ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+        Log.d("EmergencyService", "RECORD_AUDIO granted = " + hasAudioPermission);
+        if (!hasAudioPermission) {
+            Log.w("EmergencyService", "RECORD_AUDIO not granted — voice detection skipped");
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                String[] assetFiles = getAssets().list("");
+                Log.d("EmergencyService", "Assets: " + java.util.Arrays.toString(assetFiles));
+
+                voiceDetector = new VoiceDetector(this, emergencyType -> {
+                    Log.i("EmergencyService", "Voice emergency: " + emergencyType);
+                    showEmergencyAlertDialog(emergencyType);
+                });
+                voiceDetector.start();
+                Log.i("EmergencyService", "VoiceDetector started successfully");
+            } catch (Exception e) {
+                Log.e("EmergencyService", "Failed to start VoiceDetector: " + e.getMessage(), e);
+            }
+        }, "VoiceDetectorInit").start();
     }
 
     private void reregisterSensor() {
@@ -605,6 +706,10 @@ public class EmergencyShakeService extends Service {
         }
         if (smsConfirmReceiver != null) {
             unregisterReceiver(smsConfirmReceiver);
+        }
+        if (voiceDetector != null) {
+            voiceDetector.stop();
+            voiceDetector = null;
         }
         if (overlayView != null && windowManager != null) {
             try {

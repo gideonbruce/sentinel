@@ -48,11 +48,18 @@ public class SettingsActivity extends AppCompatActivity {
     private Switch switchLocationSharing;
     private Switch switchAIMessages;
     private Switch switchAutoSend;
+    private Switch switchVoiceDetection;
     private SeekBar seekShakeSensitivity;
     private TextView tvSensitivityValue;
     private TextView tvCountdownValue;
     private SeekBar seekCountdown;
     private SwitchCompat switchFallDetection;
+    private LinearLayout contact2Display;
+    private LinearLayout contact2Form;
+    private TextView tvContact2NameDisplay;
+    private TextView tvContact2PhoneDisplay;
+    private TextInputEditText etContact2Name;
+    private TextInputEditText etContact2Phone;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +90,12 @@ public class SettingsActivity extends AppCompatActivity {
         tvContactPhoneDisplay = findViewById(R.id.tv_contact_phone_display);
         etContactName = findViewById(R.id.et_contact_name);
         etContactPhone = findViewById(R.id.et_contact_phone);
+        contact2Display  = findViewById(R.id.contact2_display);
+        contact2Form     = findViewById(R.id.contact2_form);
+        tvContact2NameDisplay = findViewById(R.id.tv_contact2_name_display);
+        tvContact2PhoneDisplay = findViewById(R.id.tv_contact2_phone_display);
+        etContact2Name   = findViewById(R.id.et_contact2_name);
+        etContact2Phone  = findViewById(R.id.et_contact2_phone);
         etEmergencyMessage = findViewById(R.id.et_emergency_message);
         tvCharCount = findViewById(R.id.tv_char_count);
         btnResetMessage = findViewById(R.id.btn_reset_message);
@@ -111,12 +124,17 @@ public class SettingsActivity extends AppCompatActivity {
         tvCountdownValue = findViewById(R.id.tv_countdown_value);
         switchAIMessages = findViewById(R.id.switch_ai_messages);
         switchFallDetection = findViewById(R.id.switch_fall_detection);
+        switchVoiceDetection = findViewById(R.id.switch_voice_detection);
         switchAutoSend = findViewById(R.id.switch_auto_send);
-        //layoutApiKey = findViewById(R.id.layout_api_key);
-        //etApiKey = findViewById(R.id.et_api_key);
-        //btnSaveApiKey = findViewById(R.id.btn_save_api_key);
-        //securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
-        //btnSaveApiKey.setOnClickListener(v -> saveApiKey());
+        Button btnSaveContact2   = findViewById(R.id.btn_save_contact2);
+        Button btnRemoveContact2 = findViewById(R.id.btn_remove_contact2);
+        ImageButton btnEditContact2 = findViewById(R.id.btn_edit_contact2);
+        btnSaveContact2.setOnClickListener(v -> saveSecondaryContact());
+        btnRemoveContact2.setOnClickListener(v -> removeSecondaryContact());
+        btnEditContact2.setOnClickListener(v -> {
+            contact2Display.setVisibility(View.GONE);
+            contact2Form.setVisibility(View.VISIBLE);
+        });
 
         setupListeners();
     }
@@ -153,9 +171,7 @@ public class SettingsActivity extends AppCompatActivity {
             //notifying service of settings change
             Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
             sendBroadcast(intent);
-            Toast.makeText(this,
-                    isChecked ? "Fall detection enabled" : "Fall detection disabled",
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, isChecked ? "Fall detection enabled" : "Fall detection disabled", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -184,6 +200,12 @@ public class SettingsActivity extends AppCompatActivity {
             Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
             sendBroadcast(intent);
             Toast.makeText(this, isChecked ? "Fall detection on" : "Fall detection off", Toast.LENGTH_SHORT).show();
+        });
+        switchVoiceDetection.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("voice_detection_enabled", isChecked).apply();
+            Intent intent = new Intent("com.example.sentinel.SETTINGS_CHANGED");
+            sendBroadcast(intent);
+            Toast.makeText(this, isChecked ? "Voice detection enabled" : "Voice detection disabled", Toast.LENGTH_SHORT).show();
         });
         seekShakeSensitivity.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -254,6 +276,7 @@ public class SettingsActivity extends AppCompatActivity {
         switchSound.setChecked(prefs.getBoolean("sound_enabled", true));
         switchLocationSharing.setChecked(prefs.getBoolean("location_sharing_enabled", true));
         switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
+        switchVoiceDetection.setChecked(prefs.getBoolean("voice_detection_enabled", true));
         switchAutoSend.setChecked(prefs.getBoolean("auto_send_enabled", false));
         // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
@@ -285,13 +308,11 @@ public class SettingsActivity extends AppCompatActivity {
         //loading ai settings
         boolean useAI = prefs.getBoolean("use_ai_messages", false);
         switchAIMessages.setChecked(useAI);
-        //layoutApiKey.setVisibility(useAI ? View.VISIBLE : View.GONE);
-        //String existingKey = securePrefs.getString("gemini_api_key", "");
-        //if (!existingKey.isEmpty()) {
-        //    // Show masked version
-        //    String masked = "••••••••" + existingKey.substring(Math.max(0, existingKey.length() - 4));
-        //    etApiKey.setText(masked);
-        //}
+
+        loadSecondaryContact();
+        contactManager.loadSecondaryContactFromFirebase((name, phone) -> {
+            runOnUiThread(this::loadSecondaryContact);
+        });
     }
 
     private void pickContact() {
@@ -345,6 +366,50 @@ public class SettingsActivity extends AppCompatActivity {
             Toast.makeText(this, "Error reading contact: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void saveSecondaryContact() {
+        String name  = Objects.requireNonNull(etContact2Name.getText()).toString().trim();
+        String phone = Objects.requireNonNull(etContact2Phone.getText()).toString().trim();
+        if (phone.isEmpty()) {
+            Toast.makeText(this, "Phone number required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        contactManager.saveSecondaryContact(name, phone);
+        Toast.makeText(this, "Secondary contact saved", Toast.LENGTH_SHORT).show();
+        loadSecondaryContact();
+    }
+
+    private void loadSecondaryContact() {
+        if (contactManager.hasSecondaryContact()) {
+            contact2Display.setVisibility(View.VISIBLE);
+            contact2Form.setVisibility(View.GONE);
+            String name  = contactManager.getSecondaryContactName();
+            String phone = contactManager.getSecondaryContactPhone();
+            tvContact2NameDisplay.setText(name != null ? name : "Secondary Contact");
+            tvContact2PhoneDisplay.setText(phone);
+            etContact2Name.setText(name);
+            etContact2Phone.setText(phone);
+        } else {
+            contact2Display.setVisibility(View.GONE);
+            contact2Form.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void removeSecondaryContact() {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Remove contact")
+                .setMessage("Remove secondary emergency contact?")
+                .setPositiveButton("Remove", (d, w) -> {
+                    contactManager.removeSecondaryContact();
+                    contact2Display.setVisibility(View.GONE);
+                    contact2Form.setVisibility(View.VISIBLE);
+                    etContact2Name.setText("");
+                    etContact2Phone.setText("");
+                    Toast.makeText(this, "Secondary contact removed", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void saveContact() {

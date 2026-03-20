@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import androidx.core.content.ContextCompat;
 
+import com.example.core.SilentSmsReceiver;
 import com.example.data.EmergencyContactManager;
 import com.example.ai.AIMessageGenerator;
 import com.example.sentinel.R;
@@ -41,6 +42,9 @@ public class EmergencyAlertDialog {
     private static View currentCustomView;
     private static android.os.CountDownTimer countDownTimer;
     private static boolean isCountdownActive = false;
+    private static android.os.Handler ackHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static int retryCount = 0;
+    private static final int MAX_RETRIES = 3;
 
     public interface OnAlertActionListener {
         void onAlertSent();
@@ -139,8 +143,6 @@ public class EmergencyAlertDialog {
     }
 
     private static void sendEmergencyAlert(Context context, String phoneNumber, android.location.Location location) {
-        Log.i(TAG, "sendEmergencyAlert() called");
-        Log.d(TAG, "Phone number: [REDACTED], Location: " + (location != null ? "available" : "null"));
         EmergencyContactManager contactManager = new EmergencyContactManager(context);
         String customMessage = contactManager.getEmergencyMessage();
         Log.d(TAG, "Custom message retrieved: " + (customMessage != null ? "yes" : "null"));
@@ -158,7 +160,9 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable, adding unavailable message");
             message.append("\n\n(Location unavailable)");
         }
-        String finalMessage = message.toString();
+        String plainMessage = message.toString();
+        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
+        String finalMessage = SilentSmsReceiver.SOS_PREFIX + senderName + "\n" + plainMessage;
         Log.d(TAG, "Final message length: " + finalMessage.length() + " characters");
         try {
             Log.d(TAG, "Attempting to send SMS with dual SIM support");
@@ -169,10 +173,62 @@ public class EmergencyAlertDialog {
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
         } catch (Exception e) {
             Log.e(TAG, "Exception while sending SMS: " + e.getMessage(), e);
-            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(),
-                    Toast.LENGTH_LONG).show();
+            Toast.makeText(context, "Failed to send SMS: " + e.getMessage(), Toast.LENGTH_LONG).show();
             openSMSAppAsFallback(context, phoneNumber, finalMessage);
         }
+        //sending to secondary contact
+        if (contactManager.hasSecondaryContact()) {
+            String secondaryPhone = contactManager.getSecondaryContactPhone();
+            Log.d(TAG, "Sending alert to secondary contact");
+            try {
+                sendSMSWithDualSIMSupport(context, secondaryPhone, finalMessage);
+                Log.i(TAG, "Alert sent to secondary contact");
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to send to secondary contact: " + e.getMessage(), e);
+                // No fallback dialog for secondary — primary already handled it
+            }
+        }
+    }
+
+    private static void startAckTimeout(Context context, String phoneNumber) {
+        retryCount = 0;
+        scheduleAckCheck(context, phoneNumber);
+
+        // Register a one-time receiver to cancel retry when ACK arrives
+        context.registerReceiver(new BroadcastReceiver() {
+                                     @Override
+                                     public void onReceive(Context ctx, Intent intent) {
+                                         Log.i(TAG, "ACK received — cancelling retry timer");
+                                         ackHandler.removeCallbacksAndMessages(null);
+                                         retryCount = 0;
+                                         ctx.unregisterReceiver(this);
+                                     }
+                                 }, new android.content.IntentFilter("com.example.sentinel.ALERT_ACKNOWLEDGED"),
+                Context.RECEIVER_NOT_EXPORTED);
+    }
+
+    private static void scheduleAckCheck(Context context, String phoneNumber) {
+        ackHandler.postDelayed(() -> {
+            if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                Log.w(TAG, "No ACK received — retry " + retryCount + " of " + MAX_RETRIES);
+                Toast.makeText(context, "No response — resending alert (" + retryCount + "/" + MAX_RETRIES + ")",
+                        Toast.LENGTH_SHORT).show();
+                try {
+                    EmergencyContactManager cm = new EmergencyContactManager(context);
+                    // Re-send with last known location — use cached value
+                    sendSMSWithDualSIMSupport(context, phoneNumber,
+                            com.example.core.SilentSmsReceiver.SOS_PREFIX + "resend:" + retryCount);
+                } catch (Exception e) {
+                    Log.e(TAG, "Retry send failed: " + e.getMessage());
+                }
+                scheduleAckCheck(context, phoneNumber); // schedule next retry
+            } else {
+                Log.e(TAG, "Max retries reached — contact did not acknowledge");
+                Toast.makeText(context, "⚠️ Contact has not responded to your alert",
+                        Toast.LENGTH_LONG).show();
+            }
+        }, 30_000); // wait 30 seconds
     }
 
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
@@ -543,7 +599,6 @@ public class EmergencyAlertDialog {
     }
 
     private static void sendEmergencyAlertWithCustomMessage(Context context, String phoneNumber, android.location.Location location, String emergencyType, String customMessage) {
-        Log.i(TAG, "sendEmergencyAlertWithCustomMessage() called");
         StringBuilder message = new StringBuilder();
         message.append(customMessage);
         if (location != null) {
@@ -558,7 +613,10 @@ public class EmergencyAlertDialog {
             Log.w(TAG, "Location unavailable");
             message.append("\n\n(Location unavailable)");
         }
-        String finalMessage = message.toString();
+        String plainMessage = message.toString();
+        EmergencyContactManager contactManager = new EmergencyContactManager(context);
+        String senderName = contactManager.getContactName() != null ? contactManager.getContactName() : "Someone";
+        String finalMessage = SilentSmsReceiver.SOS_PREFIX + senderName + "\n" + plainMessage;
         try {
             Log.d(TAG, "Attempting to send SMS with custom AI message");
             sendSMSWithDualSIMSupport(context, phoneNumber, finalMessage);
