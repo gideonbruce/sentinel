@@ -8,6 +8,8 @@ import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
@@ -18,20 +20,33 @@ public class SilentSmsReceiver extends BroadcastReceiver {
     public static final String SOS_PREFIX = "SNTL_SOS:";
     public static final String ACK_PREFIX = "SNTL_ACK:";
 
+    // Static so it survives after onReceive() returns
+    private static MediaPlayer alarmPlayer;
+    private static PowerManager.WakeLock wakeLock;
+
     @Override
     public void onReceive(Context context, Intent intent) {
+
         if (!"android.provider.Telephony.SMS_RECEIVED".equals(intent.getAction())) return;
         Bundle bundle = intent.getExtras();
-        if (bundle == null) return;
+        if (bundle == null) {
+            Log.e(TAG, "Bundle is null");
+            return;
+        }
         Object[] pdus = (Object[]) bundle.get("pdus");
         String format = bundle.getString("format");
-        if (pdus == null) return;
+        if (pdus == null) {
+            Log.e(TAG, "PDUs are null");
+            return;
+        }
 
         for (Object pdu : pdus) {
             SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdu, format);
             if (msg == null) continue;
             String body   = msg.getMessageBody();
             String sender = msg.getOriginatingAddress();
+            Log.d(TAG, "SMS from: " + sender);
+            Log.d(TAG, "SMS body prefix check — starts with SOS: " + (body != null && body.startsWith(SOS_PREFIX)));
             if (body == null) continue;
 
             if (body.startsWith(SOS_PREFIX)) {
@@ -39,11 +54,36 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                 //prevents it from showing in the default SMS app
                 abortBroadcast();
                 // Parse: "SNTL_SOS:<lat>,<lng>:<senderName>"
-                String payload     = body.substring(SOS_PREFIX.length());
-                String[] parts     = payload.split(":", 2);
-                String location    = parts.length > 0 ? parts[0] : "Unknown";
-                String senderName  = parts.length > 1 ? parts[1] : sender;
+                String payload = body.substring(SOS_PREFIX.length());
+                String senderName = sender;
+                if (payload.contains("\n")) {
+                    senderName = payload.substring(0, payload.indexOf("\n")).trim();
+                } else if (payload.contains(":")) {
+                    String[] parts = payload.split(":", 2);
+                    senderName = parts.length > 1 ? parts[1] : sender;
+                }
+                //String[] parts     = payload.split(":", 2);
+                //String location    = parts.length > 0 ? parts[0] : "Unknown";
+                //String senderName  = parts.length > 1 ? parts[1] : sender;
 
+                final Context appContext = context.getApplicationContext();
+                final String finalSenderName = senderName;
+
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    wakeScreen(appContext);
+                    setMaxVolume(appContext);
+                    playAlarm(appContext);
+                    Intent alertIntent = new Intent(appContext, EmergencyAlertActivity.class);
+                    alertIntent.putExtra("sender_name", finalSenderName);
+                    alertIntent.putExtra("sender_number", sender);
+                    alertIntent.addFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    );
+                    appContext.startActivity(alertIntent);
+                });
+                sendAck(context, sender);
+            }
+            /*
                 wakeScreen(context);
 
                 //overrides volume to max
@@ -59,7 +99,7 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                 context.startActivity(alertIntent);
                 //auto-send ACK back to sender
                 sendAck(context, sender);
-            }
+            }*/
             if (body.startsWith(ACK_PREFIX)) {
                 Log.i(TAG, "SNTL_ACK received from " + sender);
 
@@ -77,6 +117,19 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         try {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             if (pm == null) return;
+            //releasing any existing wakelock
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+            wakeLock = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
+                            PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                            PowerManager.ON_AFTER_RELEASE,
+                    "sentinel:sos_wake"
+            );
+            wakeLock.acquire(10 * 60 * 1000L);
+            Log.d(TAG, "Wake lock acquired");
+            /*
             PowerManager.WakeLock wl = pm.newWakeLock(
                     PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
                             PowerManager.ACQUIRE_CAUSES_WAKEUP |
@@ -84,7 +137,7 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                     "sentinel:sos_wake"
             );
             wl.acquire(10 * 60 * 1000L); // hold for 10 minutes max
-            Log.d(TAG, "Screen wake lock acquired");
+            Log.d(TAG, "Screen wake lock acquired");*/
         } catch (Exception e) {
             Log.e(TAG, "Failed to acquire wake lock: " + e.getMessage());
         }
@@ -108,6 +161,7 @@ public class SilentSmsReceiver extends BroadcastReceiver {
 
     private void playAlarm(Context context) {
         try {
+            stopAlarm();
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
             if (alarmUri == null) {
                 alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
@@ -125,6 +179,21 @@ public class SilentSmsReceiver extends BroadcastReceiver {
             Log.d(TAG, "Alarm sound started");
         } catch (Exception e) {
             Log.e(TAG, "Failed to play alarm: " + e.getMessage());
+        }
+    }
+
+    public static void stopAlarm() {
+        if (alarmPlayer != null) {
+            try {
+                if (alarmPlayer.isPlaying()) {
+                    alarmPlayer.stop();
+                }
+                alarmPlayer.release();
+                Log.i(TAG, "Alarm stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "Error stopping alarm: " + e.getMessage());
+            }
+            alarmPlayer = null;
         }
     }
 
