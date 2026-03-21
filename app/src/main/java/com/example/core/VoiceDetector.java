@@ -28,7 +28,7 @@ public class VoiceDetector {
     private static final String KEYWORD_FILE_NAME = "sentinel_en_android_v4_0_0.ppn";
     private static final String ACCESS_KEY = "9elovMoeXn7uDPPKwSQX3Ns2U9hMir1teWB5C7E9Y/YWrh0hkHd/Xw==";
     private static final long TRIGGER_COOLDOWN_MS = 10_000;
-    private static final float SENSITIVITY = 0.6F;
+    private static final float SENSITIVITY = 0.8F;
 
     public interface OnVoiceEmergencyListener {
         void onEmergencyDetected(String emergencyType);
