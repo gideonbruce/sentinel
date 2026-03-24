@@ -47,7 +47,7 @@ public class FallDetectionModel {
         // Configure interpreter options
         Interpreter.Options options = new Interpreter.Options();
         options.setNumThreads(4); // 4 threads for better performance
-        options.setUseNNAPI(true); //using Android Neural Networks API if available
+        options.setUseNNAPI(false); //using Android Neural Networks API if available
 
         tflite = new Interpreter(modelBuffer, options);
 
