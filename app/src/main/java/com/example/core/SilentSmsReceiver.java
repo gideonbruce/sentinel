@@ -3,6 +3,7 @@ package com.example.core;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
@@ -16,7 +17,6 @@ import android.telephony.SmsMessage;
 import android.util.Log;
 
 public class SilentSmsReceiver extends BroadcastReceiver {
-
     private static final String TAG = "SilentSmsReceiver";
     public static final String SOS_PREFIX = "SNTL_SOS:";
     public static final String ACK_PREFIX = "SNTL_ACK:";
@@ -28,9 +28,7 @@ public class SilentSmsReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.e(TAG, "=== onReceive FIRED === action: " + intent.getAction());
-
         if (!"android.provider.Telephony.SMS_RECEIVED".equals(intent.getAction())) return;
-
         Bundle bundle = intent.getExtras();
         if (bundle == null) {
             Log.e(TAG, "Bundle is null");
@@ -38,24 +36,19 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         }
 
         Object[] pdus = (Object[]) bundle.get("pdus");
-        String format = bundle.getString("format");
+        String format = bundle.getString("format", "3gpp");
         if (pdus == null) {
             Log.e(TAG, "PDUs are null");
             return;
         }
-
         for (Object pdu : pdus) {
             SmsMessage msg = SmsMessage.createFromPdu((byte[]) pdu, format);
             if (msg == null) continue;
-
             String body   = msg.getMessageBody();
             String sender = msg.getOriginatingAddress();
-
             Log.d(TAG, "SMS from: " + sender);
             Log.d(TAG, "Body starts with SOS: " + (body != null && body.startsWith(SOS_PREFIX)));
-
             if (body == null) continue;
-
             if (body.startsWith(SOS_PREFIX)) {
                 Log.i(TAG, "SNTL_SOS received from " + sender);
                 abortBroadcast();
@@ -69,16 +62,13 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                     String[] parts = payload.split(":", 2);
                     senderName = parts.length > 1 ? parts[1] : sender;
                 }
-
                 final Context appContext    = context.getApplicationContext();
                 final String finalSenderName = senderName;
                 final String finalSender     = sender;
-
                 new Handler(Looper.getMainLooper()).post(() -> {
                     wakeScreen(appContext);
                     setMaxVolume(appContext);
-                    playAlarm(appContext);          // fixed — uses static alarmPlayer
-
+                    playAlarm(appContext);
                     Intent alertIntent = new Intent(appContext, EmergencyAlertActivity.class);
                     alertIntent.putExtra("sender_name", finalSenderName);
                     alertIntent.putExtra("sender_number", finalSender);
@@ -88,9 +78,7 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                     );
                     appContext.startActivity(alertIntent);
                 });
-
                 sendAck(context, sender);
-
             } else if (body.startsWith(ACK_PREFIX)) {
                 Log.i(TAG, "SNTL_ACK received from " + sender);
                 abortBroadcast();
@@ -111,11 +99,9 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         try {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             if (pm == null) return;
-
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
             }
-
             wakeLock = pm.newWakeLock(
                     PowerManager.SCREEN_BRIGHT_WAKE_LOCK |
                             PowerManager.ACQUIRE_CAUSES_WAKEUP |
@@ -165,7 +151,12 @@ public class SilentSmsReceiver extends BroadcastReceiver {
             // Assign to static field — NOT a local variable
             alarmPlayer = new MediaPlayer();
             alarmPlayer.setDataSource(context, alarmUri);
-            alarmPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
+            alarmPlayer.setAudioAttributes(
+                    new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+            );
             alarmPlayer.setLooping(true);
 
             // prepareAsync — non-blocking, safe on main thread
