@@ -82,7 +82,7 @@ public class EmergencyContactManager {
                 .putString(KEY_CONTACT_PHONE, phoneNumber)
                 .apply();
 
-        Log.d(TAG, "Contact saved locally: " + name + " - [REDACTED]");
+        Log.d(TAG, "Contact saved locally");
 
         // Sync to Firebase
         syncContactToFirebase(name, phoneNumber);
@@ -93,9 +93,9 @@ public class EmergencyContactManager {
             EmergencyContact contact = new EmergencyContact(name, phoneNumber);
             databaseReference.setValue(contact)
                     .addOnSuccessListener(aVoid ->
-                            Log.d(TAG, "✓ Contact synced to Firebase"))
+                            Log.d(TAG, "Contact synced to Firebase"))
                     .addOnFailureListener(e ->
-                            Log.e(TAG, "✗ Failed to sync contact to Firebase: " + e.getMessage(), e));
+                            Log.e(TAG, "Failed to sync contact to Firebase: " + e.getMessage(), e));
         } else {
             Log.w(TAG, "Firebase not initialized, contact saved locally only");
         }
@@ -194,7 +194,6 @@ public class EmergencyContactManager {
      */
     public String getContactPhone() {
         String phone = prefs.getString(KEY_CONTACT_PHONE, "");
-        Log.d(TAG, "getContactPhone() returned: " + (phone.isEmpty() ? "empty" : "[REDACTED]"));
         return phone.isEmpty() ? null : phone;
     }
 
