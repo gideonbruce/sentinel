@@ -109,7 +109,7 @@
         <!--  EMERGENCY ALERT ACTIVITY -->
         <activity
             android:name="com.example.core.EmergencyAlertActivity"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleInstance"
             android:excludeFromRecents="true"
             android:showOnLockScreen="true"
