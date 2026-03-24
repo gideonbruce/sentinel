@@ -270,25 +270,26 @@ public class EmergencyShakeService extends Service {
     */
 
     private void initializeVoiceDetector() {
-        Log.d("EmergencyService", "initializeVoiceDetector() called");
         Log.e("EmergencyService", "=== initializeVoiceDetector() entered ===");
         boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
-        Log.d("EmergencyService", "voice_detection_enabled = " + voiceEnabled);
+        Log.e("EmergencyService", "voice_detection_enabled inside method = " + voiceEnabled);
         if (!voiceEnabled) {
-            Log.d("EmergencyService", "Voice detection disabled — skipping");
+            Log.e("EmergencyService", "SKIPPING — voice detection disabled");
             return;
         }
 
-        boolean hasAudioPermission = ActivityCompat.checkSelfPermission(this,
+        boolean hasAudio = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-        Log.d("EmergencyService", "RECORD_AUDIO granted = " + hasAudioPermission);
-        if (!hasAudioPermission) {
-            Log.w("EmergencyService", "RECORD_AUDIO not granted — voice detection skipped");
+        Log.e("EmergencyService", "RECORD_AUDIO granted = " + hasAudio);
+        if (!hasAudio) {
+            Log.e("EmergencyService", "SKIPPING — no audio permission");
             return;
         }
+        Log.e("EmergencyService", "Starting VoiceDetector on background thread");
 
         new Thread(() -> {
             try {
+                Log.e("EmergencyService", "Background thread started");
                 String[] assetFiles = getAssets().list("");
                 Log.d("EmergencyService", "Assets: " + java.util.Arrays.toString(assetFiles));
 
@@ -297,9 +298,9 @@ public class EmergencyShakeService extends Service {
                     showEmergencyAlertDialog(emergencyType);
                 });
                 voiceDetector.start();
-                Log.i("EmergencyService", "VoiceDetector started successfully");
+                Log.e("EmergencyService", "VoiceDetector.start() returned");
             } catch (Exception e) {
-                Log.e("EmergencyService", "Failed to start VoiceDetector: " + e.getMessage(), e);
+                Log.e("EmergencyService", "Exception: " + e.getMessage(), e);
             }
         }, "VoiceDetectorInit").start();
     }
