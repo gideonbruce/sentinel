@@ -107,10 +107,6 @@ public class EmergencyShakeService extends Service {
         if (voiceEnabled) {
             initializeVoiceDetector();
         }
-        Log.e("EmergencyService", "=== About to call initializeVoiceDetector ===");
-        Log.e("EmergencyService", "voice_detection_enabled pref = " + voiceEnabled);
-        initializeVoiceDetector();
-        Log.e("EmergencyService", "=== initializeVoiceDetector returned ===");
         volumeGestureDetector = new VolumeButtonGestureDetector(new VolumeButtonGestureDetector.OnVolumeGestureListener() {
             @Override
             public void onSilentEmergency() {showEmergencyAlertDialog("SILENT EMERGENCY");}
