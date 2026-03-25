@@ -30,8 +30,6 @@ public class SettingsActivity extends AppCompatActivity {
     private EmergencyContactManager contactManager;
     private SharedPreferences prefs;
     private ActivityResultLauncher<Intent> contactPickerLauncher;
-
-    // Views
     private TextView tvContactNameDisplay;
     private TextView tvContactPhoneDisplay;
     private LinearLayout contactDisplay;
@@ -100,9 +98,7 @@ public class SettingsActivity extends AppCompatActivity {
         tvCharCount = findViewById(R.id.tv_char_count);
         btnResetMessage = findViewById(R.id.btn_reset_message);
         btnResetMessage.setOnClickListener(v -> resetEmergencyMessage());
-
         setupMessageListener();
-
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
         ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
@@ -110,9 +106,7 @@ public class SettingsActivity extends AppCompatActivity {
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnEditContact.setOnClickListener(v -> editContact());
-        if (btnChangeContact != null) {
-            btnChangeContact.setOnClickListener(v -> editContact());
-        }
+        if (btnChangeContact != null) {btnChangeContact.setOnClickListener(v -> editContact());}
         switchShakeDetection = findViewById(R.id.switch_shake_detection);
         switchVolumeButtons = findViewById(R.id.switch_volume_buttons);
         switchVibration = findViewById(R.id.switch_vibration);
@@ -191,6 +185,9 @@ public class SettingsActivity extends AppCompatActivity {
         switchLocationSharing.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("location_sharing_enabled", isChecked).apply();
         });
+        switchAIMessages.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
+        });
         switchAutoSend.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("auto_send_enabled", isChecked).apply();
             Toast.makeText(this, isChecked ? "Auto send enabled" : "Auto-send disabled", Toast.LENGTH_SHORT).show();
@@ -240,21 +237,9 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.edit().putInt("countdown_seconds", seconds).apply();
             }
         });
-        switchAIMessages.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            prefs.edit().putBoolean("use_ai_messages", isChecked).apply();
-
-            //if (isChecked) {
-                //Toast.makeText(this, "AI messages enabled", Toast.LENGTH_SHORT).show();
-                //if (existingKey.isEmpty()) {
-                //    Toast.makeText(this, "Please enter your Gemini API key",
-                //            Toast.LENGTH_LONG).show();
-                //}
-            //}
-        });
     }
 
     private void loadSettings() {
-        // Loading emergency contact
         if (contactManager.hasEmergencyContact()) {
             String name = contactManager.getContactName();
             String phone = contactManager.getContactPhone();
@@ -268,8 +253,6 @@ public class SettingsActivity extends AppCompatActivity {
             contactDisplay.setVisibility(View.GONE);
             contactForm.setVisibility(View.VISIBLE);
         }
-
-        // Load detection settings
         switchShakeDetection.setChecked(prefs.getBoolean("shake_detection_enabled", true));
         switchVolumeButtons.setChecked(prefs.getBoolean("volume_buttons_enabled", true));
         switchVibration.setChecked(prefs.getBoolean("vibration_enabled", true));
@@ -278,25 +261,17 @@ public class SettingsActivity extends AppCompatActivity {
         switchFallDetection.setChecked(prefs.getBoolean("fall_detection_enabled", false));
         switchVoiceDetection.setChecked(prefs.getBoolean("voice_detection_enabled", true));
         switchAutoSend.setChecked(prefs.getBoolean("auto_send_enabled", false));
-        // Load sensitivity (0-4, default 2 = Medium)
         int sensitivity = prefs.getInt("shake_sensitivity", 2);
         seekShakeSensitivity.setProgress(sensitivity);
         String[] levels = {"Very Low", "Low", "Medium", "High", "Very High"};
         tvSensitivityValue.setText(levels[sensitivity]);
-
-        // Load countdown (3-10 seconds, default 5)
         int countdown = prefs.getInt("countdown_seconds", 5);
         seekCountdown.setProgress(countdown - 3);
         tvCountdownValue.setText(countdown + " seconds");
-
-        //loading emergency message, local first
         String localMessage = contactManager.getEmergencyMessage();
         etEmergencyMessage.setText(localMessage);
         tvCharCount.setText(localMessage.length() + "/160");
-
-        //load emergency message from firebase after local
         contactManager.loadEmergencyMessageFromFirebase(message -> {
-            //only update ui if message is different from what is loaded
             if (message != null && !message.equals(localMessage)) {
                 runOnUiThread(() -> {
                     etEmergencyMessage.setText(message);
@@ -304,11 +279,8 @@ public class SettingsActivity extends AppCompatActivity {
                 });
             }
         });
-
-        //loading ai settings
         boolean useAI = prefs.getBoolean("use_ai_messages", false);
         switchAIMessages.setChecked(useAI);
-
         loadSecondaryContact();
         contactManager.loadSecondaryContactFromFirebase((name, phone) -> {
             runOnUiThread(this::loadSecondaryContact);
