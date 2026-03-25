@@ -12,7 +12,7 @@ plugins {
 
 android {
     aaptOptions {
-        noCompress += "tflite"
+        noCompress.addAll(listOf("tflite", "mdl", "fst", "int", "conf"))
     }
     namespace = "com.example.sentinel"
     compileSdk = 36
