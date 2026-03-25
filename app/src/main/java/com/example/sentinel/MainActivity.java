@@ -319,7 +319,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.RECORD_AUDIO
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_SMS
                     //Manifest.permission.ACCESS_BACKGROUND_LOCATION
             };
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -329,7 +330,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.RECORD_AUDIO
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_SMS
                     //Manifest.permission.ACCESS_BACKGROUND_LOCATION
             };
         } else {
@@ -339,7 +341,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.RECORD_AUDIO
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_SMS
             };
         }
         boolean allGranted = true;
