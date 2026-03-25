@@ -20,8 +20,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
     private static final String TAG = "SilentSmsReceiver";
     public static final String SOS_PREFIX = "SNTL_SOS:";
     public static final String ACK_PREFIX = "SNTL_ACK:";
-
-    // Static — survives after onReceive() returns
     private static MediaPlayer alarmPlayer;
     private static PowerManager.WakeLock wakeLock;
 
@@ -34,7 +32,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
             Log.e(TAG, "Bundle is null");
             return;
         }
-
         Object[] pdus = (Object[]) bundle.get("pdus");
         String format = bundle.getString("format", "3gpp");
         if (pdus == null) {
@@ -52,8 +49,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
             if (body.startsWith(SOS_PREFIX)) {
                 Log.i(TAG, "SNTL_SOS received from " + sender);
                 abortBroadcast();
-
-                // Parse sender name
                 String payload    = body.substring(SOS_PREFIX.length());
                 String senderName = sender; // fallback
                 if (payload.contains("\n")) {
@@ -93,8 +88,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         }
     }
 
-    // ─── Wake screen ──────────────────────────────────────────────────────────
-
     private void wakeScreen(Context context) {
         try {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
@@ -115,8 +108,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         }
     }
 
-    // ─── Volume ───────────────────────────────────────────────────────────────
-
     private void setMaxVolume(Context context) {
         try {
             AudioManager audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
@@ -132,13 +123,9 @@ public class SilentSmsReceiver extends BroadcastReceiver {
         }
     }
 
-    // ─── Alarm ────────────────────────────────────────────────────────────────
-
     private void playAlarm(Context context) {
         try {
-            // Release any existing alarm first
             stopAlarm();
-
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
             if (alarmUri == null) {
                 alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
@@ -147,8 +134,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                 Log.e(TAG, "No alarm URI found");
                 return;
             }
-
-            // Assign to static field — NOT a local variable
             alarmPlayer = new MediaPlayer();
             alarmPlayer.setDataSource(context, alarmUri);
             alarmPlayer.setAudioAttributes(
@@ -158,8 +143,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                             .build()
             );
             alarmPlayer.setLooping(true);
-
-            // prepareAsync — non-blocking, safe on main thread
             alarmPlayer.setOnPreparedListener(mp -> {
                 mp.start();
                 Log.i(TAG, "Alarm started");
@@ -170,17 +153,13 @@ public class SilentSmsReceiver extends BroadcastReceiver {
                 return true;
             });
             alarmPlayer.prepareAsync();
-
-            // Auto-stop after 60s if not dismissed by recipient
             new Handler(Looper.getMainLooper())
                     .postDelayed(SilentSmsReceiver::stopAlarm, 60_000);
-
         } catch (Exception e) {
             Log.e(TAG, "Failed to play alarm: " + e.getMessage());
         }
     }
 
-    // Called from EmergencyAlertActivity when recipient dismisses the alert
     public static void stopAlarm() {
         if (alarmPlayer != null) {
             try {
@@ -195,8 +174,6 @@ public class SilentSmsReceiver extends BroadcastReceiver {
             alarmPlayer = null;
         }
     }
-
-    // ─── ACK ──────────────────────────────────────────────────────────────────
 
     private void sendAck(Context context, String toNumber) {
         try {
