@@ -30,7 +30,6 @@ import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.view.KeyEvent;
 import android.telephony.SmsManager;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,7 +38,6 @@ import androidx.core.content.ContextCompat;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.drawerlayout.widget.DrawerLayout;
-
 import com.bumptech.glide.Glide;
 import com.example.core.EmergencyShakeService;
 import com.example.data.EmergencyContactManager;
@@ -110,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
                         handleContactSelection(result.getData());
                     }
                 });
-
         initViews();
         loadUserProfile();
         checkPermissions();
@@ -124,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
         Button btnStartService = findViewById(R.id.btn_start_service);
-        //Button btnStopService = findViewById(R.id.btn_stop_service);
         tvStatus = findViewById(R.id.tv_status);
         statusIndicator = findViewById(R.id.status_indicator);
         contactDisplay = findViewById(R.id.contact_display);
@@ -135,21 +131,15 @@ public class MainActivity extends AppCompatActivity {
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
         btnStartService.setOnClickListener(v -> startShakeService());
-        //btnStopService.setOnClickListener(v -> stopShakeService());
         btnEditContact.setOnClickListener(v -> editContact());
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
-
         mAuth = FirebaseAuth.getInstance();
-
         View headerView = navigationView.getHeaderView(0);
         tvUserName = headerView.findViewById(R.id.tv_user_name);
         tvUserEmail = headerView.findViewById(R.id.tv_user_email);
         ivUserProfile = headerView.findViewById(R.id.iv_user_profile);
-
-        toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, R.string.drawer_open, R.string.drawer_close
-        );
+        toggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_close);
         drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         if (getSupportActionBar() != null) {
@@ -166,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
         return prefs.getBoolean("shake_detection_enabled", true);
     }
-
     private boolean isVolumeButtonsEnabled() {
         SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
         return prefs.getBoolean("volume_buttons_enabled", true);
@@ -276,34 +265,22 @@ public class MainActivity extends AppCompatActivity {
     private void handleNavigationItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.nav_home) {
-            //already on home
-            //Toast.makeText(this, "Home", Toast.LENGTH_SHORT).show();
         } else if (id == R.id.nav_settings) {
-            //Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show();
             //TODO: open settings activity
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_history) {
-            //Toast.makeText(this, "Alert History", Toast.LENGTH_SHORT).show();
             //TODO: open history activity
             Intent intent = new Intent(this, AlertHistoryActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_help) {
-            //Toast.makeText(this, "Help", Toast.LENGTH_SHORT).show();
             //TODO: open help activity
             Intent intent = new Intent(this, HelpActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_about) {
-            //Toast.makeText(this, "About", Toast.LENGTH_SHORT).show();
             //TODO: open  about dialog
             Intent intent = new Intent(this, AboutActivity.class);
             startActivity(intent);
-            //} else if (id == R.id.nav_aiSettings){
-            //Intent intent = new Intent(this, AISettingsActivity.class);
-            //startActivity(intent);
-        //} else if (id == R.id.nav_fall_detection) {
-            //Intent intent = new Intent(this, FallDetectionActivity.class);
-            //startActivity(intent);
         } else if (id == R.id.nav_sign_out) {
             signOut();
         }
@@ -362,7 +339,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestOverlayPermission() {
         if (!Settings.canDrawOverlays(this)) {
-            // Show explanation dialog
+            //shows explanation dialog
             new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Overlay Permission Needed")
                     .setMessage("To detect volume button gestures for emergency alerts, this app needs permission to display over other apps. This allows volume button detection to work even when the app is in the background.")
@@ -558,7 +535,6 @@ public class MainActivity extends AppCompatActivity {
             contactDisplay.setVisibility(View.GONE);
             contactForm.setVisibility(View.VISIBLE);
         }
-        // Update status
         updateStatusIndicator();
     }
 
@@ -590,7 +566,6 @@ public class MainActivity extends AppCompatActivity {
             if (allGranted) {
                 Toast.makeText(this, "All permissions granted", Toast.LENGTH_SHORT).show();
                 sendBroadcast(new Intent("com.example.sentinel.SETTINGS_CHANGED"));
-                // Now request background location if needed
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     checkBackgroundLocationPermission();
                 }
@@ -650,7 +625,6 @@ public class MainActivity extends AppCompatActivity {
             EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
                 @Override
                 public void onAlertSent() {
-                    // User confirmed - send the SMS
                     sendEmergencyAlertToService(emergencyType, currentEmergencyLocation);
                 }
                 @Override
@@ -702,7 +676,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        // Register receivers
         IntentFilter sentFilter = new IntentFilter("SMS_SENT");
         IntentFilter deliveredFilter = new IntentFilter("SMS_DELIVERED");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -727,7 +700,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveAlertToDatabase(String emergencyType, android.location.Location location) {
-        // Get AlertRepository instance
         com.example.data.AlertRepository alertRepository = com.example.data.AlertRepository.getInstance(getApplication());
         String alertType = (emergencyType != null) ? emergencyType : "EMERGENCY";
         long timestamp = System.currentTimeMillis();
@@ -753,13 +725,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MainActivity", "Failed to save alert to database");
             }
         });
-    }
-
-    private void saveGeminiApiKey() {
-        SharedPreferences securePrefs = getSharedPreferences("sentinel_secure", MODE_PRIVATE);
-        SharedPreferences.Editor editor = securePrefs.edit();
-        editor.putString("gemini_api_key", "YOUR_GEMINI_API_KEY_HERE");
-        editor.apply();
     }
 
     @Override
