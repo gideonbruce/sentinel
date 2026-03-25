@@ -26,12 +26,10 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
-
     private TextInputEditText etEmail, etPassword;
     private Button btnSignIn, btnGoogleSignIn;
     private TextView tvForgotPassword, tvSignUp;
     private ProgressBar progressBar;
-
     private FirebaseAuth mAuth;
     private GoogleSignInClient googleSignInClient;
     private ActivityResultLauncher<Intent> googleSignInLauncher;
@@ -40,7 +38,6 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
         // init Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 

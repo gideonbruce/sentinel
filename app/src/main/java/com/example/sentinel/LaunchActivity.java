@@ -7,7 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class LaunchActivity extends AppCompatActivity {
 
-    private static final int SPLASH_DELAY = 2500; // 2.5 seconds
+    private static final int SPLASH_DELAY = 1500;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
