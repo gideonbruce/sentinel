@@ -11,7 +11,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.CountDownTimer;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -26,12 +25,10 @@ import android.widget.Toast;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import androidx.core.content.ContextCompat;
-
 import com.example.core.SilentSmsReceiver;
 import com.example.data.EmergencyContactManager;
 import com.example.ai.AIMessageGenerator;
 import com.example.sentinel.R;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,12 +64,10 @@ public class EmergencyAlertDialog {
             showSetupContactDialog(context);
             return;
         }
-
         String contactName = contactManager.getContactName();
         String contactPhone = contactManager.getContactPhone();
         View customView = LayoutInflater.from(context).inflate(R.layout.dialog_emergency_alert, null);
         currentCustomView = customView;
-        // Get references to custom views
         TextView titleText = customView.findViewById(R.id.dialog_title);
         TextView messageText = customView.findViewById(R.id.dialog_message);
         TextView contactText = customView.findViewById(R.id.dialog_contact);
@@ -81,7 +76,6 @@ public class EmergencyAlertDialog {
         Button cancelButton = customView.findViewById(R.id.btn_cancel);
         String title = emergencyType != null ? emergencyType : "Emergency Alert";
         titleText.setText(title);
-
         if (useAI) {
             messageText.setText(R.string.preparing_intelligent_emergency_message);
             loadingProgress.setVisibility(View.VISIBLE);
@@ -94,10 +88,8 @@ public class EmergencyAlertDialog {
         contactText.setText("To: " + (contactName != null ? contactName : contactPhone));
                 //"Preparing intelligent emergency message..." :
                 //"Send emergency alert to " + (contactName != null ? contactName : contactPhone) + "?";
-
         Log.d(TAG, "Emergency contact - Name: " + contactName + ", Phone: " + (contactPhone != null ? contactPhone : "null"));
 
-        //creating dialog with custom view
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setView(customView);
         builder.setCancelable(false);
@@ -216,13 +208,12 @@ public class EmergencyAlertDialog {
                         Toast.LENGTH_SHORT).show();
                 try {
                     EmergencyContactManager cm = new EmergencyContactManager(context);
-                    // Re-send with last known location — use cached value
                     sendSMSWithDualSIMSupport(context, phoneNumber,
                             com.example.core.SilentSmsReceiver.SOS_PREFIX + "resend:" + retryCount);
                 } catch (Exception e) {
                     Log.e(TAG, "Retry send failed: " + e.getMessage());
                 }
-                scheduleAckCheck(context, phoneNumber); // schedule next retry
+                scheduleAckCheck(context, phoneNumber);
             } else {
                 Log.e(TAG, "Max retries reached — contact did not acknowledge");
                 Toast.makeText(context, "⚠️ Contact has not responded to your alert",
@@ -233,32 +224,26 @@ public class EmergencyAlertDialog {
 
     private static void sendSMSWithDualSIMSupport(Context context, String phoneNumber, String message) {
         Log.d(TAG, "sendSMSWithDualSIMSupport() called");
-        // Validate phone number format
         phoneNumber = normalizePhoneNumber(phoneNumber);
         if (phoneNumber == null) {
             throw new IllegalArgumentException("Invalid phone number format");
         }
-        // Double-check SMS permission
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS)
                 != PackageManager.PERMISSION_GRANTED) {
             throw new SecurityException("SMS permission not granted");
         }
         SmsManager smsManager = null;
         boolean usedDualSim = false;
-        // Try dual SIM first (API 22+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            // Check READ_PHONE_STATE permission (required for SubscriptionManager on API 29+)
             boolean hasPhoneStatePermission = true;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 hasPhoneStatePermission = ContextCompat.checkSelfPermission(context,
                         Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED;
-
                 if (!hasPhoneStatePermission) {
                     Log.w(TAG, "READ_PHONE_STATE permission not granted on Android 10+, " +
                             "skipping dual SIM detection");
                 }
             }
-            // Only try dual SIM if we have permission (or don't need it on older Android)
             if (hasPhoneStatePermission) {
                 try {
                     SubscriptionManager subscriptionManager =
@@ -289,16 +274,13 @@ public class EmergencyAlertDialog {
                 }
             }
         }
-        // Fallback to default SmsManager if dual SIM setup failed
         if (smsManager == null) {
             Log.d(TAG, "Using default SmsManager (fallback)");
             smsManager = SmsManager.getDefault();
         }
-        // Verify smsManager is not null before proceeding
         if (smsManager == null) {
             throw new IllegalStateException("Failed to get SmsManager instance");
         }
-        // Create pending intents
         Intent sentIntent = new Intent("SMS_SENT");
         sentIntent.putExtra("phone_number", phoneNumber);
         Intent deliveredIntent = new Intent("SMS_DELIVERED");
@@ -310,7 +292,6 @@ public class EmergencyAlertDialog {
                 context, 0, deliveredIntent,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
-        // Send SMS using multipart
         try {
             ArrayList<String> parts = smsManager.divideMessage(message);
             Log.d(TAG, "Message divided into " + parts.size() + " part(s)");

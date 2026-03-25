@@ -8,33 +8,25 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-
 import java.util.Objects;
 
 public class SignUpActivity extends AppCompatActivity {
-
     private TextInputEditText etName, etEmail, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private TextView tvSignIn;
     private ProgressBar progressBar;
-
     private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-
-        // init Firebase Auth
         mAuth = FirebaseAuth.getInstance();
-
         initViews();
         setupListeners();
     }
