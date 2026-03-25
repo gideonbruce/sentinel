@@ -160,8 +160,8 @@ public class AboutActivity extends AppCompatActivity {
                         "• Google Maps API\n" +
                         "• Glide (BSD, part MIT)\n" +
                         "• Android Telephony APIs\n" +
-                        ". VOSK Speech Recognition API\n" +
-                        ". TensorFlow\n" +
+                        "• VOSK Speech Recognition API\n" +
+                        "• TensorFlow\n" +
                         "• Java\n\n" +
                         "Full license texts available at:\n" +
                         "https://github.com/gideonbruce/sentinel/blob/sentinel/LICENSE")
