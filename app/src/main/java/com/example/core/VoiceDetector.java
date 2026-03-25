@@ -11,6 +11,8 @@ import androidx.core.app.ActivityCompat;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 import org.vosk.android.StorageService;
+
+import java.io.File;
 import java.io.IOException;
 
 public class VoiceDetector {
@@ -38,24 +40,58 @@ public class VoiceDetector {
     }
 
     public void start() {
-        if (isListening) {
-            Log.w(TAG, "Already listening — ignoring duplicate start()");
-            return;
+        if (isListening) return;
+
+        new Thread(() -> {
+            try {
+                String modelPath = unpackModel();
+                if (modelPath == null) {
+                    Log.e(TAG, "Model unpack failed — aborting");
+                    return;
+                }
+                this.model = new Model(modelPath);
+                this.recognizer = new Recognizer(model, SAMPLE_RATE,
+                        "[\"sentinel\", \"[unk]\"]");
+                startAudioCapture();
+                Log.i(TAG, "VoiceDetector started");
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to initialize Vosk: " + e.getMessage());
+            }
+        }, "VoiceDetectorInit").start();
+    }
+
+    private String unpackModel() {
+        File outputDir = new File(context.getFilesDir(), "vosk-model");
+
+        // If already unpacked, reuse it
+        if (outputDir.exists() && new File(outputDir, "am/final.mdl").exists()) {
+            Log.d(TAG, "Using cached model at: " + outputDir.getAbsolutePath());
+            return outputDir.getAbsolutePath();
         }
 
-        StorageService.unpack(context, "model", "model",
-                (model) -> {
-                    try {
-                        this.model = model;
-                        this.recognizer = new Recognizer(model, SAMPLE_RATE, "[\"sentinel\", \"[unk]\"]");
-                        startAudioCapture();
-                        Log.i(TAG, "VoiceDetector started — listening for: " + WAKE_WORD);
-                    } catch (IOException e) {
-                        Log.e(TAG, "Failed to create recognizer: " + e.getMessage());
-                    }
-                },
-                (exception) -> Log.e(TAG, "Failed to unpack model: " + exception.getMessage())
-        );
+        Log.d(TAG, "Unpacking model from assets...");
+        outputDir.mkdirs();
+
+        try {
+            copyAssetFolder(context.getAssets(), "model", outputDir.getAbsolutePath());
+            String[] requiredFiles = {
+                    "am/final.mdl",
+                    "conf/model.conf",
+                    "graph/HCLr.fst",
+                    "graph/Gr.fst"
+            };
+            for (String f : requiredFiles) {
+                boolean exists = new File(outputDir, f).exists();
+                Log.d(TAG, "Check " + f + ": " + (exists ? "OK" : "MISSING"));
+            }
+            Log.i(TAG, "Model unpacked to: " + outputDir.getAbsolutePath());
+            return outputDir.getAbsolutePath();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to unpack model: " + e.getMessage());
+            // Clean up partial unpack
+            deleteRecursive(outputDir);
+            return null;
+        }
     }
 
     private void startAudioCapture() {
@@ -121,6 +157,41 @@ public class VoiceDetector {
         lastTriggerTime = now;
         Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
         listener.onEmergencyDetected("EMERGENCY");
+    }
+
+    private void copyAssetFolder(android.content.res.AssetManager assets,
+                                 String fromAsset, String toPath) throws IOException {
+        String[] files = assets.list(fromAsset);
+        if (files == null) throw new IOException("Asset folder not found: " + fromAsset);
+
+        new File(toPath).mkdirs();
+
+        for (String file : files) {
+            String subAsset = fromAsset + "/" + file;
+            String subPath  = toPath + "/" + file;
+
+            String[] children = assets.list(subAsset);
+            if (children != null && children.length > 0) {
+                // It's a subfolder — recurse
+                copyAssetFolder(assets, subAsset, subPath);
+            } else {
+                // It's a file — copy it
+                try (java.io.InputStream in  = assets.open(subAsset);
+                     java.io.OutputStream out = new java.io.FileOutputStream(subPath)) {
+                    byte[] buf = new byte[8192];
+                    int len;
+                    while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                }
+                Log.d(TAG, "Copied: " + subAsset);
+            }
+        }
+    }
+
+    private void deleteRecursive(File file) {
+        if (file.isDirectory()) {
+            for (File child : file.listFiles()) deleteRecursive(child);
+        }
+        file.delete();
     }
 
     public void stop() {
