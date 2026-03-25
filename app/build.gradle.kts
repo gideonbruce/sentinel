@@ -78,7 +78,8 @@ android {
 }
 
 dependencies {
-    implementation("ai.picovoice:porcupine-android:4.0.0")
+    implementation("com.alphacephei:vosk-android:0.3.75")
+    //implementation("ai.picovoice:porcupine-android:4.0.0")
     kapt ("androidx.room:room-compiler:2.8.4")
     annotationProcessor("androidx.room:room-compiler:2.8.4")
     annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
