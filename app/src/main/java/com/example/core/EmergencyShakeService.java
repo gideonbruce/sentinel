@@ -144,10 +144,7 @@ public class EmergencyShakeService extends Service {
                 if ("com.example.sentinel.SEND_EMERGENCY_SMS".equals(intent.getAction())) {
                     String emergencyType = intent.getStringExtra("EMERGENCY_TYPE");
                     //getLocationAndSendSMS(emergencyType);
-
-                    //location from broadcast
-                    Location location = intent.getParcelableExtra("LOCATION");
-
+                    Location location = intent.getParcelableExtra("LOCATION");    //location from broadcast
                     //sendEmergencySMS(location, emergencyType);
                     saveAlertToDatabase(emergencyType, location);
                 }
@@ -214,57 +211,6 @@ public class EmergencyShakeService extends Service {
         }
     }
 
-    /*
-    private void initializeVoiceDetector() {
-        Log.d("EmergencyService", "initializeVoiceDetector() called");
-        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
-        Log.d("EmergencyService", "voice_detection_enabled = " + voiceEnabled);
-
-        if (!voiceEnabled) {
-            Log.d("EmergencyService", "Voice detection is disabled — skipping");
-            return;
-        }
-
-        boolean hasAudioPermission = ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
-        Log.d("EmergencyService", "RECORD_AUDIO granted = " + hasAudioPermission);
-
-        if (!hasAudioPermission) {
-            Log.w("EmergencyService", "RECORD_AUDIO not granted — voice detection skipped");
-            return;
-        }
-
-        try {
-            // List all files in assets to confirm .ppn is there
-            String[] assetFiles = getAssets().list("");
-            Log.d("EmergencyService", "Assets contents: " + java.util.Arrays.toString(assetFiles));
-
-            voiceDetector = new VoiceDetector(this, emergencyType -> {
-                Log.i("EmergencyService", "Voice emergency: " + emergencyType);
-                showEmergencyAlertDialog(emergencyType);
-            });
-            voiceDetector.start();
-            Log.i("EmergencyService", "VoiceDetector started successfully");
-        } catch (Exception e) {
-            Log.e("EmergencyService", "Failed to start voice detector: " + e.getMessage(), e);
-        }
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            Log.w("EmergencyService", "RECORD_AUDIO permission not granted — voice detection skipped");
-            return;
-        }
-        try {
-            voiceDetector = new VoiceDetector(this, emergencyType -> {
-                Log.i("EmergencyService", "Voice emergency detected: " + emergencyType);
-                showEmergencyAlertDialog(emergencyType);
-            });
-            voiceDetector.start();
-            Log.i("EmergencyService", "Voice detector started");
-        } catch (Exception e) {
-            Log.e("EmergencyService", "Failed to start voice detector: " + e.getMessage());
-        }
-    }
-    */
-
     private void initializeVoiceDetector() {
         Log.e("EmergencyService", "=== initializeVoiceDetector() entered ===");
         boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
@@ -273,7 +219,6 @@ public class EmergencyShakeService extends Service {
             Log.e("EmergencyService", "SKIPPING — voice detection disabled");
             return;
         }
-
         boolean hasAudio = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
         Log.e("EmergencyService", "RECORD_AUDIO granted = " + hasAudio);
