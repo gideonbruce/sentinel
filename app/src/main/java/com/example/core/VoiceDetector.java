@@ -16,19 +16,20 @@ import java.io.File;
 import java.io.IOException;
 
 public class VoiceDetector {
-    private static final String TAG = "VoiceDetector";
-    private static final String WAKE_WORD = "sentinel";
-    private static final long TRIGGER_COOLDOWN_MS = 10_000;
-    private final Context context;
-    private final OnVoiceEmergencyListener listener;
     private Model model;
     private Recognizer recognizer;
     private AudioRecord audioRecord;
     private Thread recognitionThread;
-    private volatile boolean isListening = false;
     private long lastTriggerTime = 0;
+    private final Context context;
+    private final OnVoiceEmergencyListener listener;
+    private static final String TAG = "VoiceDetector";
+    private static final String WAKE_WORD = "sentinel";
     private static final int SAMPLE_RATE = 16000;
     private static final int BUFFER_SIZE = 4096;
+    private static final long TRIGGER_COOLDOWN_MS = 10_000;
+    private volatile boolean isListening = false;
+    private static final float MIN_CONFIDENCE = 0.7f;
 
     public interface OnVoiceEmergencyListener {
         void onEmergencyDetected(String emergencyType);
