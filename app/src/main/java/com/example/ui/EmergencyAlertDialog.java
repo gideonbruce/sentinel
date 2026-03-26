@@ -613,6 +613,10 @@ public class EmergencyAlertDialog {
         }
     }
 
+    public static void showIncomingSOS(Context context, String senderName, String senderNumber, OnAlertActionListener listener) {
+        //
+    }
+
     public static void cleanup() {
         stopCountdown();
         if (aiGenerator != null) {
