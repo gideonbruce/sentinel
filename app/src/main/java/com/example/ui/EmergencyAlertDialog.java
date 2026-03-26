@@ -614,7 +614,48 @@ public class EmergencyAlertDialog {
     }
 
     public static void showIncomingSOS(Context context, String senderName, String senderNumber, OnAlertActionListener listener) {
-        //
+        Log.d(TAG, "showIncomingSOS() called from: " + senderName);
+        if (currentDialog != null && currentDialog.isShowing()) {currentDialog.dismiss();}
+        View customView = LayoutInflater.from(context)
+                .inflate(R.layout.dialog_emergency_alert, null);
+        currentCustomView = customView;
+        TextView titleText   = customView.findViewById(R.id.dialog_title);
+        TextView messageText = customView.findViewById(R.id.dialog_message);
+        TextView contactText = customView.findViewById(R.id.dialog_contact);
+        ProgressBar loading  = customView.findViewById(R.id.loading_progress);
+        Button sendButton    = customView.findViewById(R.id.btn_send);
+        Button cancelButton  = customView.findViewById(R.id.btn_cancel);
+        titleText.setText("🚨 SOS RECEIVED");
+        messageText.setText(senderName + " is in danger and needs help!");
+        contactText.setText("From: " + senderName + " (" + senderNumber + ")");
+        loading.setVisibility(View.GONE);
+        sendButton.setText("Call Now");
+        cancelButton.setText("Dismiss");
+        View countdownText = customView.findViewById(R.id.dialog_countdown);
+        if (countdownText != null) countdownText.setVisibility(View.GONE);
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setView(customView);
+        builder.setCancelable(false);
+        currentDialog = builder.create();
+        if (currentDialog.getWindow() != null) {
+            currentDialog.getWindow().setBackgroundDrawable(
+                    new ColorDrawable(Color.TRANSPARENT));
+        }
+        sendButton.setOnClickListener(v -> {
+            Intent callIntent = new Intent(Intent.ACTION_DIAL);
+            callIntent.setData(Uri.parse("tel:" + senderNumber));
+            callIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(callIntent);
+            SilentSmsReceiver.stopAlarm();
+            if (listener != null) listener.onAlertSent();
+            currentDialog.dismiss();
+        });
+        cancelButton.setOnClickListener(v -> {
+            SilentSmsReceiver.stopAlarm();
+            if (listener != null) listener.onAlertCancelled();
+            currentDialog.dismiss();
+        });
+        currentDialog.show();
     }
 
     public static void cleanup() {
