@@ -29,7 +29,7 @@ public class VoiceDetector {
     private static final int BUFFER_SIZE = 4096;
     private static final long TRIGGER_COOLDOWN_MS = 10_000;
     private volatile boolean isListening = false;
-    private static final float MIN_CONFIDENCE = 0.7f;
+    private static final float MIN_CONFIDENCE = 0.85f;
 
     public interface OnVoiceEmergencyListener {
         void onEmergencyDetected(String emergencyType);
@@ -148,13 +148,43 @@ public class VoiceDetector {
 
     private void handleResult(String result) {
         if (result == null || !result.contains(WAKE_WORD)) return;
-
-        long now = System.currentTimeMillis();
+        //parsing conf threshold for vosks JSON result
+        // Vosk returns: {"text": "sentinel", "result": [{"conf": 0.95, "word": "sentinel"}]}
+        try {
+            org.json.JSONObject json = new org.json.JSONObject(result);
+            org.json.JSONArray words = json.optJSONArray("result");
+            if (words != null) {
+                for (int i = 0; i < words.length(); i++) {
+                    org.json.JSONObject word = words.getJSONObject(i);
+                    float conf = (float) word.optDouble("conf", 0.0);
+                    String w = word.optString("word", "");
+                    Log.d(TAG, "Word: " + w + " confidence: " + conf);
+                    if (w.equals(WAKE_WORD) && conf >= MIN_CONFIDENCE) {
+                        triggerEmergency();
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing result JSON: " + e.getMessage());
+        }
+        /*long now = System.currentTimeMillis();
         if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
             Log.d(TAG, "Wake word detected but in cooldown — ignoring");
             return;
         }
 
+        lastTriggerTime = now;
+        Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
+        listener.onEmergencyDetected("EMERGENCY");*/
+    }
+
+    public void triggerEmergency() {
+        long now = System.currentTimeMillis();
+        if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
+            Log.d(TAG, "Wake word in cooldown — ignoring");
+            return;
+        }
         lastTriggerTime = now;
         Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
         listener.onEmergencyDetected("EMERGENCY");
