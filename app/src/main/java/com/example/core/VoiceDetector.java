@@ -152,27 +152,7 @@ public class VoiceDetector {
 
     private void handleResult(String result) {
         if (result == null || !result.contains(WAKE_WORD)) return;
-        //parsing conf threshold for vosks JSON result
-        // Vosk returns: {"text": "sentinel", "result": [{"conf": 0.95, "word": "sentinel"}]}
-        /*try {
-            org.json.JSONObject json = new org.json.JSONObject(result);
-            org.json.JSONArray words = json.optJSONArray("result");
-            if (words != null) {
-                for (int i = 0; i < words.length(); i++) {
-                    org.json.JSONObject word = words.getJSONObject(i);
-                    float conf = (float) word.optDouble("conf", 0.0);
-                    String w = word.optString("word", "");
-                    Log.d(TAG, "Word: " + w + " confidence: " + conf);
-                    if (w.equals(WAKE_WORD) && conf >= MIN_CONFIDENCE) {
-                        triggerEmergency();
-                        return;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error parsing result JSON: " + e.getMessage());
-        }*/
-        long now = System.currentTimeMillis();
+        /*long now = System.currentTimeMillis();
         if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
             Log.d(TAG, "Wake word detected but in cooldown — ignoring");
             return;
@@ -180,12 +160,16 @@ public class VoiceDetector {
 
         lastTriggerTime = now;
         Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
-        listener.onEmergencyDetected("EMERGENCY");
+        listener.onEmergencyDetected("EMERGENCY");*/
+        triggerEmergency();
     }
 
     public void triggerEmergency() {
         long now = System.currentTimeMillis();
-        if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) return;
+        if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
+            Log.d(TAG, "In cooldown — ignoring");
+            return;
+        }
         if (detectionCount == 0) {
             detectionCount = 1;
             firstDetectionTime = now;
@@ -193,10 +177,10 @@ public class VoiceDetector {
             return;
         }
         //within window count
-        if (now - firstDetectionTime <= DETECTION_WINDOW_MS) {
+        /*if (now - firstDetectionTime <= DETECTION_WINDOW_MS) {
             detectionCount++;
             Log.d(TAG, "Wake word detected (" + detectionCount + "/" + REQUIRED_DETECTIONS + ")");
-        }
+        }*/
         if (now - firstDetectionTime <= DETECTION_WINDOW_MS) {
             detectionCount++;
             Log.d(TAG, "Wake word detected (" + detectionCount + "/" + REQUIRED_DETECTIONS + ")");
