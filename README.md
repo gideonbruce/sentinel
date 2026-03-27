@@ -95,12 +95,6 @@ To enable location features, you need a Google Maps API key.
     MAPS_API_KEY=YOUR_API_KEY
     ```
 
-### Gemini API
-To use the AI-powered emergency messages, you need a Gemini API key.
-1.  Go to the [Google AI Studio](https://aistudio.google.com/).
-2.  Create a new API key.
-3.  In the `MainActivity.java` file, replace `"YOUR_GEMINI_API_KEY_HERE"` with your actual Gemini API key in the `saveGeminiApiKey()` method.
-
 ---
 
 ## Usage
