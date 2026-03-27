@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
         checkPermissions();
         //updateUI();
         handleEmergencyDialogIntent(getIntent());
+        autoStartService();
     }
 
     private void initViews() {
@@ -120,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         etContactPhone = findViewById(R.id.et_contact_phone);
         Button btnPickContact = findViewById(R.id.btn_pick_contact);
         Button btnSaveContact = findViewById(R.id.btn_save_contact);
-        Button btnStartService = findViewById(R.id.btn_start_service);
+        //Button btnStartService = findViewById(R.id.btn_start_service);
         tvStatus = findViewById(R.id.tv_status);
         statusIndicator = findViewById(R.id.status_indicator);
         contactDisplay = findViewById(R.id.contact_display);
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         ImageButton btnEditContact = findViewById(R.id.btn_edit_contact);
         btnPickContact.setOnClickListener(v -> pickContact());
         btnSaveContact.setOnClickListener(v -> saveContact());
-        btnStartService.setOnClickListener(v -> startShakeService());
+        //btnStartService.setOnClickListener(v -> startShakeService());
         btnEditContact.setOnClickListener(v -> editContact());
         drawerLayout = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.navigation_view);
@@ -450,6 +451,7 @@ public class MainActivity extends AppCompatActivity {
         contactManager.saveEmergencyContact(name, phone);
         Toast.makeText(this, "Emergency contact saved", Toast.LENGTH_SHORT).show();
         updateUI();
+        autoStartService();
     }
 
     private void editContact() {
@@ -725,6 +727,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("MainActivity", "Failed to save alert to database");
             }
         });
+    }
+
+    private void autoStartService() {
+        if (!contactManager.hasEmergencyContact()) return;
+        Intent serviceIntent = new Intent(this, EmergencyShakeService.class);
+        startForegroundService(serviceIntent);
+        isServiceRunning = true;
+        updateUI();
     }
 
     @Override
