@@ -39,5 +39,6 @@ public class EmergencyAlertActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         SilentSmsReceiver.stopAlarm();
+        EmergencyAlertDialog.dismiss();
     }
 }
