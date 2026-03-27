@@ -82,6 +82,12 @@ public class MainActivity extends AppCompatActivity {
     private boolean isServiceRunning = false;
     private android.location.Location currentEmergencyLocation;
     private static final int BACKGROUND_LOCATION_PERMISSION_CODE = 101;
+    private TextView tvServiceStatusLabel;
+    private View serviceStatusDot;
+    private LinearLayout llActiveFeatures;
+    private TextView chipShake, chipVoice, chipFall, chipVolume;
+    private TextView tvLocationStatus;
+    private Button btnSos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,6 +148,16 @@ public class MainActivity extends AppCompatActivity {
         ivUserProfile = headerView.findViewById(R.id.iv_user_profile);
         toggle = new ActionBarDrawerToggle(this, drawerLayout, R.string.drawer_open, R.string.drawer_close);
         drawerLayout.addDrawerListener(toggle);
+        tvServiceStatusLabel = findViewById(R.id.tv_service_status_label);
+        serviceStatusDot     = findViewById(R.id.service_status_dot);
+        llActiveFeatures     = findViewById(R.id.ll_active_features);
+        chipShake            = findViewById(R.id.chip_shake);
+        chipVoice            = findViewById(R.id.chip_voice);
+        chipFall             = findViewById(R.id.chip_fall);
+        chipVolume           = findViewById(R.id.chip_volume);
+        tvLocationStatus     = findViewById(R.id.tv_location_status);
+        btnSos               = findViewById(R.id.btn_sos);
+        setupSosButton();
         toggle.syncState();
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -538,6 +554,7 @@ public class MainActivity extends AppCompatActivity {
             contactForm.setVisibility(View.VISIBLE);
         }
         updateStatusIndicator();
+        updateServiceStatusCard();
     }
 
     private void updateStatusIndicator() {
@@ -735,6 +752,80 @@ public class MainActivity extends AppCompatActivity {
         startForegroundService(serviceIntent);
         isServiceRunning = true;
         updateUI();
+    }
+
+    private void setupSosButton() {
+        btnSos.setOnLongClickListener(v -> {
+            // 2 second hold triggers alert
+            String emergencyType = "SOS";
+            SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+            boolean useAI = prefs.getBoolean("use_ai_messages", false);
+            EmergencyAlertDialog.show(this, new EmergencyAlertDialog.OnAlertActionListener() {
+                @Override
+                public void onAlertSent() {
+                    sendEmergencyAlertToService(emergencyType, currentEmergencyLocation);
+                }
+                @Override
+                public void onAlertCancelled() {
+                    Toast.makeText(MainActivity.this, "Alert cancelled", Toast.LENGTH_SHORT).show();
+                }
+            }, currentEmergencyLocation, emergencyType, useAI);
+            return true;
+        });
+
+        // Brief visual feedback on regular tap
+        btnSos.setOnClickListener(v ->
+                Toast.makeText(this, "Hold the SOS button for 2 seconds to send alert",
+                        Toast.LENGTH_SHORT).show()
+        );
+    }
+
+    private void updateServiceStatusCard() {
+        SharedPreferences prefs = getSharedPreferences("sentinel_prefs", MODE_PRIVATE);
+        boolean shakeOn  = prefs.getBoolean("shake_detection_enabled", true);
+        boolean volumeOn = prefs.getBoolean("volume_buttons_enabled", true);
+        boolean fallOn   = prefs.getBoolean("fall_detection_enabled", false);
+        boolean voiceOn  = prefs.getBoolean("voice_detection_enabled", false);
+
+        GradientDrawable dot = (GradientDrawable) serviceStatusDot.getBackground();
+
+        if (isServiceRunning) {
+            dot.setColor(Color.parseColor("#4CAF50"));
+            tvServiceStatusLabel.setText("Service Active");
+            llActiveFeatures.setVisibility(View.VISIBLE);
+
+            chipShake.setVisibility(shakeOn   ? View.VISIBLE : View.GONE);
+            chipVoice.setVisibility(voiceOn   ? View.VISIBLE : View.GONE);
+            chipFall.setVisibility(fallOn     ? View.VISIBLE : View.GONE);
+            chipVolume.setVisibility(volumeOn ? View.VISIBLE : View.GONE);
+        } else {
+            dot.setColor(Color.parseColor("#BDBDBD"));
+            tvServiceStatusLabel.setText("Service Inactive");
+            llActiveFeatures.setVisibility(View.GONE);
+        }
+
+        updateLocationStatus();
+    }
+
+    private void updateLocationStatus() {
+        boolean locationGranted = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        android.location.LocationManager lm = (android.location.LocationManager)
+                getSystemService(Context.LOCATION_SERVICE);
+        boolean gpsOn = lm != null &&
+                lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER);
+
+        if (!locationGranted) {
+            tvLocationStatus.setText("📍 Location: Permission denied");
+            tvLocationStatus.setTextColor(Color.parseColor("#D32F2F"));
+        } else if (!gpsOn) {
+            tvLocationStatus.setText("📍 Location: GPS off — alerts won't include location");
+            tvLocationStatus.setTextColor(Color.parseColor("#FF9800"));
+        } else {
+            tvLocationStatus.setText("📍 Location: Active");
+            tvLocationStatus.setTextColor(Color.parseColor("#388E3C"));
+        }
     }
 
     @Override
