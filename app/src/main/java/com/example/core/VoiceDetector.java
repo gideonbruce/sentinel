@@ -150,7 +150,7 @@ public class VoiceDetector {
         if (result == null || !result.contains(WAKE_WORD)) return;
         //parsing conf threshold for vosks JSON result
         // Vosk returns: {"text": "sentinel", "result": [{"conf": 0.95, "word": "sentinel"}]}
-        try {
+        /*try {
             org.json.JSONObject json = new org.json.JSONObject(result);
             org.json.JSONArray words = json.optJSONArray("result");
             if (words != null) {
@@ -167,8 +167,8 @@ public class VoiceDetector {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error parsing result JSON: " + e.getMessage());
-        }
-        /*long now = System.currentTimeMillis();
+        }*/
+        long now = System.currentTimeMillis();
         if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
             Log.d(TAG, "Wake word detected but in cooldown — ignoring");
             return;
@@ -176,7 +176,7 @@ public class VoiceDetector {
 
         lastTriggerTime = now;
         Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
-        listener.onEmergencyDetected("EMERGENCY");*/
+        listener.onEmergencyDetected("EMERGENCY");
     }
 
     public void triggerEmergency() {

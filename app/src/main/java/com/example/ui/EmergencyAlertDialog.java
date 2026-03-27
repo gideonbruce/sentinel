@@ -658,6 +658,14 @@ public class EmergencyAlertDialog {
         currentDialog.show();
     }
 
+    public static void dismiss() {
+        stopCountdown();
+        if (currentDialog != null && currentDialog.isShowing()) {
+            currentDialog.dismiss();
+            currentDialog = null;
+        }
+    }
+
     public static void cleanup() {
         stopCountdown();
         if (aiGenerator != null) {
