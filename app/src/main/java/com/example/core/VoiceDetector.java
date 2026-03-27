@@ -134,14 +134,14 @@ public class VoiceDetector {
                 int bytesRead = audioRecord.read(buffer, 0, buffer.length);
                 if (bytesRead > 0 && recognizer != null) {
                     if (recognizer.acceptWaveForm(buffer, bytesRead)) {
+                        //removing partial check
                         String result = recognizer.getResult();
                         handleResult(result);
                     }
-                    // Also check partial results for faster response
-                    String partial = recognizer.getPartialResult();
+                    /*String partial = recognizer.getPartialResult();
                     if (partial.contains(WAKE_WORD)) {
                         handleResult(partial);
-                    }
+                    }*/
                 }
             }
             Log.d(TAG, "Recognition thread stopped");
