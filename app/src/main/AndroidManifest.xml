@@ -120,7 +120,7 @@
         <service
             android:name="com.example.core.EmergencyShakeService"
             android:enabled="true"
-            android:foregroundServiceType="location"
+            android:foregroundServiceType="location|microphone"
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
