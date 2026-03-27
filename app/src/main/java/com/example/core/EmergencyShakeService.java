@@ -465,6 +465,10 @@ public class EmergencyShakeService extends Service {
         if (sensorManager != null && shakeDetector != null) {
             sensorManager.unregisterListener(shakeDetector);
         }
+        boolean voiceEnabled = prefs.getBoolean("voice_detection_enabled", false);
+        if (voiceEnabled && voiceDetector == null) {
+            initializeVoiceDetector();
+        }
         // Register sensor listener
         if (accelerometer != null && isShakeDetectionEnabled()) {
             sensorManager.registerListener(shakeDetector, accelerometer,
