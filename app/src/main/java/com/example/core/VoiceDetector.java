@@ -20,6 +20,8 @@ public class VoiceDetector {
     private Recognizer recognizer;
     private AudioRecord audioRecord;
     private Thread recognitionThread;
+    private int detectionCount = 0;
+    private long firstDetectionTime = 0;
     private long lastTriggerTime = 0;
     private final Context context;
     private final OnVoiceEmergencyListener listener;
@@ -27,6 +29,8 @@ public class VoiceDetector {
     private static final String WAKE_WORD = "sentinel";
     private static final int SAMPLE_RATE = 16000;
     private static final int BUFFER_SIZE = 4096;
+    private static final int REQUIRED_DETECTIONS = 2;
+    private static final long DETECTION_WINDOW_MS = 3000;
     private static final long TRIGGER_COOLDOWN_MS = 10_000;
     private volatile boolean isListening = false;
     private static final float MIN_CONFIDENCE = 0.85f;
@@ -181,13 +185,36 @@ public class VoiceDetector {
 
     public void triggerEmergency() {
         long now = System.currentTimeMillis();
-        if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) {
-            Log.d(TAG, "Wake word in cooldown — ignoring");
+        if (now - lastTriggerTime < TRIGGER_COOLDOWN_MS) return;
+        if (detectionCount == 0) {
+            detectionCount = 1;
+            firstDetectionTime = now;
+            Log.d(TAG, "Wake word detected (1/" + REQUIRED_DETECTIONS + ") — waiting for confirmation");
             return;
         }
-        lastTriggerTime = now;
+        //within window count
+        if (now - firstDetectionTime <= DETECTION_WINDOW_MS) {
+            detectionCount++;
+            Log.d(TAG, "Wake word detected (" + detectionCount + "/" + REQUIRED_DETECTIONS + ")");
+        }
+        if (now - firstDetectionTime <= DETECTION_WINDOW_MS) {
+            detectionCount++;
+            Log.d(TAG, "Wake word detected (" + detectionCount + "/" + REQUIRED_DETECTIONS + ")");
+            if (detectionCount >= REQUIRED_DETECTIONS) {
+                detectionCount = 0;
+                lastTriggerTime = now;
+                Log.i(TAG, "Wake word confirmed — triggering emergency");
+                listener.onEmergencyDetected("EMERGENCY");
+            }
+        } else {
+            //window expired reset & start
+            Log.d(TAG, "Detection window expired - resetting count ...");
+            detectionCount = 1;
+            firstDetectionTime = now;
+        }
+        /*lastTriggerTime = now;
         Log.i(TAG, "Wake word '" + WAKE_WORD + "' detected!");
-        listener.onEmergencyDetected("EMERGENCY");
+        listener.onEmergencyDetected("EMERGENCY");*/
     }
 
     private void copyAssetFolder(android.content.res.AssetManager assets,
